@@ -1,0 +1,3 @@
+[submodule "codemeta/schema"]
+	path = codemeta/schema
+	url = https://github.com/codemeta/codemeta
