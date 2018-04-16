@@ -14,7 +14,10 @@ import json
 import os.path
 import csv
 from collections import OrderedDict, defaultdict
-import yaml
+try:
+    import yaml
+except ImportError:
+    yaml = None
 from nameparser import HumanName
 
 class CWKey:
@@ -43,18 +46,20 @@ CONTEXT =  [
     "http://schema.org"
 ]
 
-def represent_ordereddict(dumper, data):
-    value = []
 
-    for item_key, item_value in data.items():
-        node_key = dumper.represent_data(item_key)
-        node_value = dumper.represent_data(item_value)
+if yaml is not None:
+    def represent_ordereddict(dumper, data):
+        value = []
 
-        value.append((node_key, node_value))
+        for item_key, item_value in data.items():
+            node_key = dumper.represent_data(item_key)
+            node_value = dumper.represent_data(item_value)
 
-    return yaml.nodes.MappingNode('tag:yaml.org,2002:map', value)
+            value.append((node_key, node_value))
 
-yaml.add_representer(OrderedDict, represent_ordereddict)
+        return yaml.nodes.MappingNode('tag:yaml.org,2002:map', value)
+
+    yaml.add_representer(OrderedDict, represent_ordereddict)
 
 
 def readcrosswalk(sourcekeys=(CWKey.PYPI,)):
@@ -180,6 +185,8 @@ def main():
     if args.output == "json":
         print(json.dumps(data, ensure_ascii=False, indent=4))
     elif args.output == "yaml":
+        if not yaml:
+            raise Exception("Yaml support not available", args.output)
         yaml.dump(data, sys.stdout, default_flow_style=False)
     else:
         raise Exception("No such output type: ", args.output)
