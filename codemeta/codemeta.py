@@ -80,24 +80,13 @@ def readcrosswalk(sourcekeys=(CWKey.PYPI,)):
     return props, mapping
 
 
-def parsepip(lines, mapping=None, with_entrypoints=False):
+def parsepip(data, lines, mapping=None, with_entrypoints=False):
     """Parses pip -v output and converts to codemeta"""
     if mapping is None:
         _, mapping = readcrosswalk((CWKey.PYPI,))
     section = None
-    data = OrderedDict({ #values are overriden/extended later
-        '@context': CONTEXT,
-        "@type": "SoftwareSourceCode",
-        "identifier":"",
-        "name":"",
-        "version":"",
-        "description":"",
-        "license":"Unknown",
-        "author": [],
-        "provider": PROVIDER_PYPI,
-        "runtimePlatform": "Python " + str(sys.version_info.major) + "." + str(sys.version_info.minor) + "." + str(sys.version_info.micro),
-        "softwareRequirements": [],
-    })
+    data["provider"] = PROVIDER_PYPI
+    data["runtimePlatform"] =  "Python " + str(sys.version_info.major) + "." + str(sys.version_info.minor) + "." + str(sys.version_info.micro),
     if with_entrypoints:
         #not in official specification!!!
         data['entryPoints'] = []
@@ -169,24 +158,53 @@ def main():
     parser = argparse.ArgumentParser(description="Python Distutils (PyPI) Metadata to CodeMeta (JSON-LD) converter")
     #parser.add_argument('--pip', help="Parse pip -v output", action='store_true',required=False)
     #parser.add_argument('--yaml', help="Read metadata from standard input (YAML format)", action='store_true',required=False)
-    parser.add_argument('--with-entrypoints', dest="with_entrypoints", help="Add entry points (this is not in the official codemeta specification)", action='store_true',required=False)
-    parser.add_argument('--output', type=str,help="Metadata output type: json, yaml", action='store',required=False, default="json")
+    parser.add_argument('-e','--with-entrypoints', dest="with_entrypoints", help="Add entry points (this is not in the official codemeta specification)", action='store_true',required=False)
+    parser.add_argument('-o', dest='output',type=str,help="Metadata output type: json (default), yaml", action='store',required=False, default="json")
+    parser.add_argument('-i', dest='input',type=str,help="Metadata input type: pip (default), json, yaml. May be a comma seperated list of multiple types if files are passed on the command line", action='store',required=False, default="pip")
+    parser.add_argument('inputfiles', nargs='*', help='Input files, set -i accordingly with the types (must contain as many items as passed!')
     for key, prop in sorted(props.items()):
         if key:
             parser.add_argument('--' + key,dest=key, type=str, help=prop['DESCRIPTION'] + " (Type: "  + prop['TYPE'] + ", Parent: " + prop['PARENT'] + ") [you can format the value string in json if needed]", action='store',required=False)
     args = parser.parse_args()
 
-    data = parsepip(sys.stdin.read().split("\n"), mapping, args.with_entrypoints)
+    inputfiles = []
+    if args.inputfiles:
+        if ',' in args.input:
+            if len(args.input.split(",")) != len(args.inputfiles):
+                print("Passed " + str(len(args.inputfiles)) + " files but specified only " + str(len(args.input)) + " input types!",file=sys.stderr)
+            else:
+                inputfiles = [ (open(f,'r',encoding='utf-8'), t) if f != '-' else (sys.stdin,t) for f,t in zip(args.inputfiles, args.input.split(',')) ]
+        else:
+            inputfiles = [ (open(f,'r',encoding='utf-8'), args.input) if f != '-' else (sys.stdin,args.input) for f in args.inputfiles ] #same type for all
+    else:
+        inputfiles = [(sys.stdin,args.input)]
 
-    for key, prop in props.items():
-        if hasattr(args,key) and getattr(args,key) is not None:
-            value = getattr(args, key)
-            try:
-                value = json.loads(value)
-            except json.decoder.JSONDecodeError: #not JSON, take to be a literal string
-                if '[' in value or '{' in value: #surely this was meant to be json
-                    raise
-            data[key] = value
+    data = OrderedDict({ #values are overriden/extended later
+        '@context': CONTEXT,
+        "@type": "SoftwareSourceCode",
+        "identifier":"",
+        "name":"",
+        "version":"unknown",
+        "description":"",
+        "license":"unknown",
+        "author": [],
+        "softwareRequirements": [],
+    })
+    for stream, inputtype in inputfiles:
+        if inputtype == "pip":
+            data = parsepip(data, stream.read().split("\n"), mapping, args.with_entrypoints)
+        elif inputtype == "json":
+            data.update(json.load(stream))
+
+        for key, prop in props.items():
+            if hasattr(args,key) and getattr(args,key) is not None:
+                value = getattr(args, key)
+                try:
+                    value = json.loads(value)
+                except json.decoder.JSONDecodeError: #not JSON, take to be a literal string
+                    if '[' in value or '{' in value: #surely this was meant to be json
+                        raise
+                data[key] = value
 
     if args.output == "json":
         print(json.dumps(data, ensure_ascii=False, indent=4))
