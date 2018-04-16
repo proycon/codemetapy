@@ -16,13 +16,9 @@ Usage
 
 Query and convert any package installed through pip:
 
-```
-$ pip show -v somepackage | codemetadapy
-```
+``$ pip show -v somepackage | codemetadapy``
 
 To pipe to an output file:
 
-```
-$ pip show -v somepackage | codemetadapy > somepackage.json
-```
+``$ pip show -v somepackage | codemetadapy > somepackage.json``
 
