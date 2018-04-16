@@ -16,7 +16,7 @@ setup(
     author_email = "proycon@anaproy.nl",
     description = ("Generate CodeMeta metadata for Python packages"),
     license = "GPL",
-    keywords = "nlp computational_linguistics entities wikipedia dbpedia linguistics tramooc",
+    keywords = "software metadata codemeta doap pip pypi distutils admssw",
     url = "https://github.com/proycon/codemeta",
     packages=['codemeta'],
     long_description=read('README.rst'),
