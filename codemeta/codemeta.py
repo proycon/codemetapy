@@ -161,11 +161,21 @@ def main():
     parser.add_argument('-e','--with-entrypoints', dest="with_entrypoints", help="Add entry points (this is not in the official codemeta specification)", action='store_true',required=False)
     parser.add_argument('-o', dest='output',type=str,help="Metadata output type: json (default), yaml", action='store',required=False, default="json")
     parser.add_argument('-i', dest='input',type=str,help="Metadata input type: pip (default), json, yaml. May be a comma seperated list of multiple types if files are passed on the command line", action='store',required=False, default="pip")
+    parser.add_argument('-r', dest='registry',type=str,help="The given registry file groups multiple JSON-LD metadata together in one JSON file. If specified, the file will be read (or created), and updated. This is a custom extension not part of the CodeMeta specification", action='store',required=False)
     parser.add_argument('inputfiles', nargs='*', help='Input files, set -i accordingly with the types (must contain as many items as passed!')
     for key, prop in sorted(props.items()):
         if key:
             parser.add_argument('--' + key,dest=key, type=str, help=prop['DESCRIPTION'] + " (Type: "  + prop['TYPE'] + ", Parent: " + prop['PARENT'] + ") [you can format the value string in json if needed]", action='store',required=False)
     args = parser.parse_args()
+
+    if args.registry:
+        if os.path.exists(args.registry):
+            with open(args.registry, 'r', encoding='utf-8') as f:
+                registry = json.load(f)
+        else:
+            print("Registry " + args.registry + " does not exist yet, creating anew...",file=sys.stderr)
+            registry = {}
+
 
     inputfiles = []
     if args.inputfiles:
@@ -215,6 +225,10 @@ def main():
     else:
         raise Exception("No such output type: ", args.output)
 
+    if args.registry:
+        registry[data['identifier']] = data
+        with open(args.registry,'w',encoding='utf-8') as f:
+            print(json.dumps(registry, ensure_ascii=False, indent=4), file=f)
 
 if __name__ == '__main__':
     main()
