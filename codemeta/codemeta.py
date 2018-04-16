@@ -115,7 +115,7 @@ def parsepip(lines, mapping=None, with_entrypoints=False):
             elif fields[0].lower() in mapping[CWKey.PYPI]:
                 data[mapping[CWKey.PYPI][fields[0].lower()]] = " :: ".join(fields[1:])
             else:
-                print("WARNING: Classifier "  + fields[0] + " has no translation",file=sys.stderr)
+                print("NOTICE: Classifier "  + fields[0] + " has no translation",file=sys.stderr)
         elif section == "interfaces" and with_entrypoints:
             if line.strip() == "[console_scripts]":
                 pass
@@ -173,14 +173,20 @@ def main():
     parser.add_argument('--output', type=str,help="Metadata output type: json, yaml", action='store',required=False, default="json")
     for key, prop in sorted(props.items()):
         if key:
-            parser.add_argument('--' + key,dest=key, type=str, help=prop['DESCRIPTION'] + " (Type: "  + prop['TYPE'] + ", Parent: " + prop['PARENT'] + ")", action='store',required=False)
+            parser.add_argument('--' + key,dest=key, type=str, help=prop['DESCRIPTION'] + " (Type: "  + prop['TYPE'] + ", Parent: " + prop['PARENT'] + ") [you can format the value string in json if needed]", action='store',required=False)
     args = parser.parse_args()
 
     data = parsepip(sys.stdin.read().split("\n"), mapping, args.with_entrypoints)
 
     for key, prop in props.items():
         if hasattr(args,key) and getattr(args,key) is not None:
-            data[key] = getattr(args,key)
+            value = getattr(args, key)
+            try:
+                value = json.loads(value)
+            except json.decoder.JSONDecodeError: #not JSON, take to be a literal string
+                if '[' in value or '{' in value: #surely this was meant to be json
+                    raise
+            data[key] = value
 
     if args.output == "json":
         print(json.dumps(data, ensure_ascii=False, indent=4))
