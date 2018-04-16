@@ -1,0 +1,65 @@
+{
+    "@context": [
+        "https://doi.org/10.5063/schema/codemeta-2.0",
+        "http://schema.org"
+    ],
+    "@type": "SoftwareSourceCode",
+    "identifier": "CodeMetaPy",
+    "name": "CodeMetaPy",
+    "version": "0.1",
+    "description": "Generate CodeMeta metadata for Python packages",
+    "license": "OSI Approved :: GNU General Public License v3 (GPLv3)",
+    "author": [
+        {
+            "@type": "Person",
+            "givenName": "Maarten",
+            "familyName": "van Gompel",
+            "email": "proycon@anaproy.nl"
+        }
+    ],
+    "provider": {
+        "@id": "https://pypi.org",
+        "@type": "Organization",
+        "name": "The Python Package Index",
+        "url": "https://pypi.org"
+    },
+    "runtimePlatform": "Python 3.6.4",
+    "softwareRequirements": [
+        {
+            "@type": "SoftwareApplication",
+            "identifier": "nameparser",
+            "name": "nameparser",
+            "provider": {
+                "@id": "https://pypi.org",
+                "@type": "Organization",
+                "name": "The Python Package Index",
+                "url": "https://pypi.org"
+            },
+            "runtimePlatform": "Python 3.6.4"
+        },
+        {
+            "@type": "SoftwareApplication",
+            "identifier": "pyyaml",
+            "name": "pyyaml",
+            "provider": {
+                "@id": "https://pypi.org",
+                "@type": "Organization",
+                "name": "The Python Package Index",
+                "url": "https://pypi.org"
+            },
+            "runtimePlatform": "Python 3.6.4"
+        }
+    ],
+    "entryPoints": [
+        {
+            "@type": "EntryPoint",
+            "name": "codemetapy",
+            "url": "file:///codemetapy"
+        }
+    ],
+    "url": "https://github.com/proycon/codemeta",
+    "developmentStatus": "4 - Beta",
+    "applicationCategory": "Software Development",
+    "programmingLanguage": "Python :: 3",
+    "operatingSystem": "POSIX"
+}

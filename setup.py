@@ -32,5 +32,5 @@ setup(
     include_package_data=True,
     package_data = { 'codemeta': 'schema/*' },
     install_requires=[ 'nameparser', 'pyyaml'  ],
-    entry_points = {    'console_scripts': [ 'codemetapy = codemetapy.codemeta:main' ] }
+    entry_points = {    'console_scripts': [ 'codemetapy = codemeta.codemeta:main' ] }
 )
