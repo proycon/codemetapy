@@ -22,7 +22,7 @@ setup(
     long_description=read('README.rst'),
     classifiers=[
         "Development Status :: 4 - Beta",
-        "Topic :: Text Processing :: Linguistic",
+        "Topic :: Software Development",
         "Programming Language :: Python :: 3",
         "Operating System :: POSIX",
         "Intended Audience :: Science/Research",
@@ -30,7 +30,7 @@ setup(
     ],
     zip_safe=False,
     include_package_data=True,
-    package_data = { },
-    install_requires=[ 'nameparser', 'json' ],
+    package_data = { 'codemeta': 'schema/*' },
+    install_requires=[ 'nameparser', 'pyyaml'  ],
     entry_points = {    'console_scripts': [ 'codemetapy = codemetapy.codemeta:main' ] }
 )
