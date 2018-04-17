@@ -1,5 +1,4 @@
 include README.rst
 include COPYING
-include requirements.txt
 include codemeta/*.py
 include codemeta/schema/*
