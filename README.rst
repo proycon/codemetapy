@@ -20,5 +20,23 @@ Query and convert any package installed through pip:
 
 To pipe to an output file:
 
-``$ pip show -v somepackage | codemetapy > somepackage.json``
+``$ pip show -v somepackage | codemetapy > codemeta.json``
+
+The tool also supports adding properties through parameters:
+
+``$ pip show -v somepackage | codemetapy --developmentStatus active > codemeta.json``
+
+To read an existing codemeta.json and extend it:
+
+``$ pip show -v somepackage | codemetapy -i json,pip codemeta.json - > codemeta.json``
+
+Here ``-`` represents standard input and ``-i`` denotes the input types, you can chain as many as you want.
+
+Entrypoint Extension
+----------------------
+
+Though this is not part of the codemeta specification, the tool currently supports an extra ``entryPoints`` property
+with type ``EntryPoint``. This can be used to describe the entry points specified in a python package (entry points will
+have use a ``file://`` url to refer to the actual entrypoints, this is a bit of a liberal use...). Because this is a
+non-standard extension it has to be explicitly enabled using ``--with-entrypoints``.
 
