@@ -30,7 +30,7 @@ setup(
     ],
     zip_safe=False,
     include_package_data=True,
-    package_data = { 'codemeta': 'schema/*' },
+    package_data = { 'codemeta': ['schema/*'] },
     install_requires=[ 'nameparser'  ],
     entry_points = {    'console_scripts': [ 'codemetapy = codemeta.codemeta:main' ] }
 )
