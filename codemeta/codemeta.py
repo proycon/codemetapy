@@ -153,6 +153,20 @@ def parsepip(data, lines, mapping=None, with_entrypoints=False):
                 print("WARNING: No translation for pip key " + key,file=sys.stderr)
     return data
 
+def clean(data):
+    """Purge empty values"""
+    purgekeys = []
+    for k,v in data.items():
+        if v is "" or v is None or (isinstance(v,(tuple, list)) and len(v) == 0):
+            purgekeys.append(k)
+        elif isinstance(v, (dict, OrderedDict)):
+            clean(v)
+        elif isinstance(v, (tuple, list)):
+            data[k] = [ clean(x) if isinstance(x, (dict,OrderedDict)) else x for x in v ]
+    for k in purgekeys:
+        del data[k]
+    return data
+
 def main():
     props, mapping = readcrosswalk()
     parser = argparse.ArgumentParser(description="Python Distutils (PyPI) Metadata to CodeMeta (JSON-LD) converter")
@@ -215,6 +229,8 @@ def main():
                     if '[' in value or '{' in value: #surely this was meant to be json
                         raise
                 data[key] = value
+
+    data = clean(data)
 
     if args.output == "json":
         print(json.dumps(data, ensure_ascii=False, indent=4))
