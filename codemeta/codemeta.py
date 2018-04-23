@@ -192,8 +192,8 @@ def main():
     data = OrderedDict({ #values are overriden/extended later
         '@context': CONTEXT,
         "@type": "SoftwareSourceCode",
-        "identifier":"",
-        "name":"",
+        "identifier":"unknown",
+        "name":"unknown",
         "version":"unknown",
         "description":"",
         "license":"unknown",
@@ -226,7 +226,7 @@ def main():
         raise Exception("No such output type: ", args.output)
 
     if args.registry:
-        registry[data['identifier']] = data
+        registry[data['identifier'].lower()] = data
         with open(args.registry,'w',encoding='utf-8') as f:
             print(json.dumps(registry, ensure_ascii=False, indent=4), file=f)
 
