@@ -205,7 +205,7 @@ def main():
             registry = {"@context": CONTEXT + extracontext, "@graph": []}
     else:
         registry = None
-    if registry and '@context' not in registry:
+    if registry and ('@context' not in registry or '@graph' not in registry):
         print("Registry " + args.registry + " has invalid (outdated?) format, ignoring and creating a new one...",file=sys.stderr)
         registry = {"@context": CONTEXT + extracontext, "@graph": []}
 
