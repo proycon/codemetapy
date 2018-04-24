@@ -47,10 +47,10 @@ CONTEXT =  [
 ]
 
 ENTRYPOINT_CONTEXT = { #these are all custom extensions not in codemeta (yet)
-      "entryPoints": { "@reverse": "schema:actionApplication" },
-      "interfaceType": { "@id": "codemeta:interfaceType" }, #Type of the interface (e.g CLI, GUI, WUI, TUI, REST, SOAP, XMLRPC)
-      "specification": { "@id": "codemeta:specification" , "@type":"@id"}, #A technical specification of the interface
-      "mediatorApplication": {"@id": "codemeta:mediatorApplication", "@type":"@id" } #auxiliary software that provided/enabled this entrypoint
+    "entryPoints": { "@reverse": "schema:actionApplication" },
+    "interfaceType": { "@id": "codemeta:interfaceType" }, #Type of the entrypoint's interface (e.g CLI, GUI, WUI, TUI, REST, SOAP, XMLRPC)
+    "specification": { "@id": "codemeta:specification" , "@type":"@id"}, #A technical specification of the interface
+    "mediatorApplication": {"@id": "codemeta:mediatorApplication", "@type":"@id" } #auxiliary software that provided/enabled this entrypoint
 }
 
 
@@ -93,7 +93,7 @@ def parsepip(data, lines, mapping=None, with_entrypoints=False):
         _, mapping = readcrosswalk((CWKey.PYPI,))
     section = None
     data["provider"] = PROVIDER_PYPI
-    data["runtimePlatform"] =  "Python " + str(sys.version_info.major) + "." + str(sys.version_info.minor) + "." + str(sys.version_info.micro),
+    data["runtimePlatform"] =  "Python " + str(sys.version_info.major) + "." + str(sys.version_info.minor) + "." + str(sys.version_info.micro)
     if with_entrypoints:
         #not in official specification!!!
         data['entryPoints'] = []
@@ -174,6 +174,7 @@ def clean(data):
         del data[k]
     return data
 
+
 def main():
     props, mapping = readcrosswalk()
     parser = argparse.ArgumentParser(description="Python Distutils (PyPI) Metadata to CodeMeta (JSON-LD) converter")
@@ -189,14 +190,23 @@ def main():
             parser.add_argument('--' + key,dest=key, type=str, help=prop['DESCRIPTION'] + " (Type: "  + prop['TYPE'] + ", Parent: " + prop['PARENT'] + ") [you can format the value string in json if needed]", action='store',required=False)
     args = parser.parse_args()
 
+    if args.with_entrypoints:
+        extracontext = [ENTRYPOINT_CONTEXT]
+    else:
+        extracontext = []
+
     if args.registry:
         if os.path.exists(args.registry):
             with open(args.registry, 'r', encoding='utf-8') as f:
                 registry = json.load(f)
         else:
             print("Registry " + args.registry + " does not exist yet, creating anew...",file=sys.stderr)
-            registry = {}
-
+            registry = {"@context": CONTEXT + extracontext, "@graph": []}
+    else:
+        registry = None
+    if registry and '@context' not in registry:
+        print("Registry " + args.registry + " has invalid (outdated?) format, ignoring and creating a new one...",file=sys.stderr)
+        registry = {"@context": CONTEXT + extracontext, "@graph": []}
 
     inputfiles = []
     if args.inputfiles:
@@ -210,10 +220,6 @@ def main():
     else:
         inputfiles = [(sys.stdin,args.input)]
 
-    if args.with_entrypoints:
-        extracontext = [ENTRYPOINT_CONTEXT]
-    else:
-        extracontext = []
     data = OrderedDict({ #values are overriden/extended later
         '@context': CONTEXT + extracontext,
         "@type": "SoftwareSourceCode",
@@ -253,7 +259,17 @@ def main():
         raise Exception("No such output type: ", args.output)
 
     if args.registry:
-        registry[data['identifier'].lower()] = data
+        if '@context' in data:
+            del data['@context'] #already in registry at top level
+        data["@id"] = "#" + data['identifier'].lower()
+        found = False
+        for i, d in enumerate(registry["@graph"]):
+            if d['identifier'].lower() == data['identifier'].lower():
+                registry['@graph'][i] = data #overwrite existing entry
+                found = True
+                break
+        if not found:
+            registry["@graph"].append(data) #add new entry
         with open(args.registry,'w',encoding='utf-8') as f:
             print(json.dumps(registry, ensure_ascii=False, indent=4), file=f)
 
