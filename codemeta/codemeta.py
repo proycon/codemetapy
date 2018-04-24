@@ -46,8 +46,8 @@ CONTEXT =  [
     "http://schema.org"
 ]
 
-ENTRYPOINT_CONTEXT = {
-      "entryPoints": { "@id": "codemeta:entryPoints" },
+ENTRYPOINT_CONTEXT = { #these are all custom extensions not in codemeta (yet)
+      "entryPoints": { "@reverse": "schema:actionApplication" },
       "interfaceType": { "@id": "codemeta:interfaceType" }, #Type of the interface (e.g CLI, GUI, WUI, TUI, REST, SOAP, XMLRPC)
       "specification": { "@id": "codemeta:specification" , "@type":"@id"}, #A technical specification of the interface
       "mediatorApplication": {"@id": "codemeta:mediatorApplication", "@type":"@id" } #auxiliary software that provided/enabled this entrypoint
