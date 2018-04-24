@@ -120,7 +120,8 @@ def parsepip(data, lines, mapping=None, with_entrypoints=False):
                 data['entryPoints'].append({ #the entryPoints relation is not in the specification, but our own invention, it is the reverse of the EntryPoint.actionApplication property
                     "@type": "EntryPoint", #we are interpreting this a bit liberally because it's usually used with HTTP webservices
                     "name": fields[0],
-                    "url": "file:///" + fields[0], #three slashes because we omit host, the 'file' is an executable/binary (rather liberal use)
+                    "urlTemplate": "file:///" + fields[0], #three slashes because we omit host, the 'file' is an executable/binary (rather liberal use)
+                    "interfaceType": "CLI", #custom property, this needs to be moved to a more formal vocabulary  at some point
                 })
         else:
             try:
