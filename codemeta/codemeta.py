@@ -46,6 +46,13 @@ CONTEXT =  [
     "http://schema.org"
 ]
 
+ENTRYPOINT_CONTEXT = {
+      "entryPoints": { "@id": "codemeta:entryPoints" },
+      "interfaceType": { "@id": "codemeta:interfaceType" }, #Type of the interface (e.g CLI, GUI, WUI, TUI, REST, SOAP, XMLRPC)
+      "specification": { "@id": "codemeta:specification" , "@type":"@id"}, #A technical specification of the interface
+      "mediatorApplication": {"@id": "codemeta:mediatorApplication", "@type":"@id" } #auxiliary software that provided/enabled this entrypoint
+}
+
 
 if yaml is not None:
     def represent_ordereddict(dumper, data):
@@ -203,8 +210,12 @@ def main():
     else:
         inputfiles = [(sys.stdin,args.input)]
 
+    if args.with_entrypoints:
+        extracontext = [ENTRYPOINT_CONTEXT]
+    else:
+        extracontext = []
     data = OrderedDict({ #values are overriden/extended later
-        '@context': CONTEXT,
+        '@context': CONTEXT + extracontext,
         "@type": "SoftwareSourceCode",
         "identifier":"unknown",
         "name":"unknown",
