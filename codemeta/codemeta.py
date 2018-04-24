@@ -162,7 +162,7 @@ def parsepip(data, lines, mapping=None, with_entrypoints=False):
     return data
 
 def clean(data):
-    """Purge empty values"""
+    """Purge empty values, lowercase identifier"""
     purgekeys = []
     for k,v in data.items():
         if v is "" or v is None or (isinstance(v,(tuple, list)) and len(v) == 0):
@@ -173,6 +173,8 @@ def clean(data):
             data[k] = [ clean(x) if isinstance(x, (dict,OrderedDict)) else x for x in v ]
     for k in purgekeys:
         del data[k]
+    if 'identifier' in data:
+        data['identifier'] = data['identifier'].lower()
     return data
 
 
