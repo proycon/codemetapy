@@ -160,7 +160,7 @@ def parsepip(data, lines, mapping=None, with_entrypoints=False):
             else:
                 print("WARNING: No translation for pip key " + key,file=sys.stderr)
     if with_entrypoints:
-        if not data['entrypoints'] or ('applicationCategory' in data and 'libraries' in data['applicationCategory'].lower()):
+        if not data['entryPoints'] or ('applicationCategory' in data and 'libraries' in data['applicationCategory'].lower()):
             #no entry points defined, assume this is a library
             data['interfaceType'] = "LIB"
     return data
