@@ -48,7 +48,7 @@ CONTEXT =  [
 
 ENTRYPOINT_CONTEXT = { #these are all custom extensions not in codemeta (yet)
     "entryPoints": { "@reverse": "schema:actionApplication" },
-    "interfaceType": { "@id": "codemeta:interfaceType" }, #Type of the entrypoint's interface (e.g CLI, GUI, WUI, TUI, REST, SOAP, XMLRPC)
+    "interfaceType": { "@id": "codemeta:interfaceType" }, #Type of the entrypoint's interface (e.g CLI, GUI, WUI, TUI, REST, SOAP, XMLRPC, LIB)
     "specification": { "@id": "codemeta:specification" , "@type":"@id"}, #A technical specification of the interface
     "mediatorApplication": {"@id": "codemeta:mediatorApplication", "@type":"@id" } #auxiliary software that provided/enabled this entrypoint
 }
@@ -159,6 +159,10 @@ def parsepip(data, lines, mapping=None, with_entrypoints=False):
                     data["identifier"] = value
             else:
                 print("WARNING: No translation for pip key " + key,file=sys.stderr)
+    if with_entrypoints:
+        if not data['entrypoints'] or ('applicationCategory' in data and 'libraries' in data['applicationCategory'].lower()):
+            #no entry points defined, assume this is a library
+            data['interfaceType'] = "LIB"
     return data
 
 def clean(data):
