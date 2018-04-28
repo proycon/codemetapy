@@ -43,7 +43,7 @@ PROGLANG_PYTHON = {
 
 CONTEXT =  [
     "https://doi.org/10.5063/schema/codemeta-2.0",
-    "http://schema.org"
+    "http://schema.org",
 ]
 
 ENTRYPOINT_CONTEXT = { #these are all custom extensions not in codemeta (yet)
@@ -186,6 +186,12 @@ def clean(data):
         data['identifier'] = data['identifier'].lower()
     return data
 
+def getregistry(identifier, registry):
+    for tool in registry['@graph']:
+        if tool['identifier'].lower() == identifier.lower():
+            return tool
+    raise KeyError(identifier)
+
 
 def main():
     props, mapping = readcrosswalk()
@@ -194,7 +200,7 @@ def main():
     #parser.add_argument('--yaml', help="Read metadata from standard input (YAML format)", action='store_true',required=False)
     parser.add_argument('-e','--with-entrypoints', dest="with_entrypoints", help="Add entry points (this is not in the official codemeta specification)", action='store_true',required=False)
     parser.add_argument('-o', dest='output',type=str,help="Metadata output type: json (default), yaml", action='store',required=False, default="json")
-    parser.add_argument('-i', dest='input',type=str,help="Metadata input type: pip (default), json, yaml. May be a comma seperated list of multiple types if files are passed on the command line", action='store',required=False, default="pip")
+    parser.add_argument('-i', dest='input',type=str,help="Metadata input type: pip (default), registry, json, yaml. May be a comma seperated list of multiple types if files are passed on the command line", action='store',required=False, default="pip")
     parser.add_argument('-r', dest='registry',type=str,help="The given registry file groups multiple JSON-LD metadata together in one JSON file. If specified, the file will be read (or created), and updated. This is a custom extension not part of the CodeMeta specification", action='store',required=False)
     parser.add_argument('inputfiles', nargs='*', help='Input files, set -i accordingly with the types (must contain as many items as passed!')
     for key, prop in sorted(props.items()):
@@ -245,8 +251,11 @@ def main():
         "audience": []
     })
     for stream, inputtype in inputfiles:
-        if inputtype == "pip":
-            data = parsepip(data, stream.read().split("\n"), mapping, args.with_entrypoints)
+        if inputtype == "registry":
+            data = getregistry(inputtype, registry)
+        elif inputtype == "pip":
+            piplines = stream.read().split("\n")
+            data = parsepip(data, piplines, mapping, args.with_entrypoints)
         elif inputtype == "json":
             data.update(json.load(stream))
 
