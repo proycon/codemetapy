@@ -110,6 +110,11 @@ def parsepip(data, lines, mapping=None, with_entrypoints=False):
                 data[mapping[CWKey.PYPI][pipkey]] = " :: ".join(fields[1:])
             elif fields[0].lower() in mapping[CWKey.PYPI]:
                 data[mapping[CWKey.PYPI][fields[0].lower()]] = " :: ".join(fields[1:])
+            elif fields[0] == "Intended Audience":
+                data["audience"].append({
+                    "@type": "Audience",
+                    "audienceType": " :: ".join(fields[1:])
+                })
             else:
                 print("NOTICE: Classifier "  + fields[0] + " has no translation",file=sys.stderr)
         elif section == "interfaces" and with_entrypoints:
@@ -237,6 +242,7 @@ def main():
         "license":"unknown",
         "author": [],
         "softwareRequirements": [],
+        "audience": []
     })
     for stream, inputtype in inputfiles:
         if inputtype == "pip":
