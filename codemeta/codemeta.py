@@ -192,6 +192,20 @@ def getregistry(identifier, registry):
             return tool
     raise KeyError(identifier)
 
+def update(data, newdata):
+    """recursive update, adds values whenever possible instead of replacing"""
+    for key, value in newdata.items():
+        if key in data:
+            if isinstance(value, dict):
+                update(data[key], value)
+            elif isinstance(value, list):
+                for x in value:
+                    if x not in data[key]:
+                        data[key].append(x)
+            else:
+                data[key] = value
+        else:
+            data[key] = value
 
 def main():
     props, mapping = readcrosswalk()
@@ -252,12 +266,12 @@ def main():
     })
     for stream, inputtype in inputfiles:
         if inputtype == "registry":
-            data = getregistry(stream, registry)
+            update(data, getregistry(stream, registry))
         elif inputtype == "pip":
             piplines = stream.read().split("\n")
-            data = parsepip(data, piplines, mapping, args.with_entrypoints)
+            update(data, parsepip(data, piplines, mapping, args.with_entrypoints))
         elif inputtype == "json":
-            data.update(json.load(stream))
+            update(data, json.load(stream))
 
         for key, prop in props.items():
             if hasattr(args,key) and getattr(args,key) is not None:
