@@ -232,7 +232,7 @@ def main():
             if len(args.input.split(",")) != len(args.inputfiles):
                 print("Passed " + str(len(args.inputfiles)) + " files but specified only " + str(len(args.input)) + " input types!",file=sys.stderr)
             else:
-                inputfiles = [ (open(f,'r',encoding='utf-8'), t) if f != '-' else (sys.stdin,t) for f,t in zip(args.inputfiles, args.input.split(',')) ]
+                inputfiles = [ (open(f,'r',encoding='utf-8'), t) if f != '-' else (sys.stdin,t) if t != 'registry' else (None,t) for f,t in zip(args.inputfiles, args.input.split(',')) ]
         else:
             inputfiles = [ (open(f,'r',encoding='utf-8'), args.input) if f != '-' else (sys.stdin,args.input) for f in args.inputfiles ] #same type for all
     else:
