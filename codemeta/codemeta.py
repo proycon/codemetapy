@@ -186,6 +186,26 @@ def clean(data):
         data['identifier'] = data['identifier'].lower()
     return data
 
+def resolve(data, idmap=None):
+    """Resolve nodes that refer to an ID mentioned earlier"""
+    if idmap is None: idmap = {}
+    for k,v in data.items():
+        if isinstance(v, (dict, OrderedDict)):
+            if '@id' in v:
+                if len(v) > 1:
+                    #this is not a reference, register in idmap (possibly overwriting earlier definition!)
+                    idmap[v['@id']] = v
+                elif len(v) == 1:
+                    #this is a reference
+                    if v['@id'] in idmap:
+                        data[k] = idmap[v['@id']]
+                    else:
+                        print("NOTICE: Unable to resolve @id " + v['@id'] ,file=sys.stderr)
+            resolve(v, idmap)
+        elif isinstance(v, (tuple, list)):
+            data[k] = [ resolve(x,idmap) if isinstance(x, (dict,OrderedDict)) else x for x in v ]
+    return data
+
 def getregistry(identifier, registry):
     for tool in registry['@graph']:
         if tool['identifier'].lower() == identifier.lower():
