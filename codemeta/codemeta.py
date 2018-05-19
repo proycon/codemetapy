@@ -220,8 +220,11 @@ def update(data, newdata):
                 update(data[key], value)
             elif isinstance(value, list):
                 for x in value:
-                    if x not in data[key]:
-                        data[key].append(x)
+                    if isinstance(data[key], dict ):
+                        data[key] = [ data[key], x ]
+                    elif x not in data[key]:
+                        if isinstance(data[key], list):
+                           data[key].append(x)
             else:
                 data[key] = value
         else:
