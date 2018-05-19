@@ -214,21 +214,22 @@ def getregistry(identifier, registry):
 
 def update(data, newdata):
     """recursive update, adds values whenever possible instead of replacing"""
-    for key, value in newdata.items():
-        if key in data:
-            if isinstance(value, dict):
-                update(data[key], value)
-            elif isinstance(value, list):
-                for x in value:
-                    if isinstance(data[key], dict ):
-                        data[key] = [ data[key], x ]
-                    elif x not in data[key]:
-                        if isinstance(data[key], list):
-                           data[key].append(x)
+    if isinstance(data, dict):
+        for key, value in newdata.items():
+            if key in data:
+                if isinstance(value, dict):
+                    update(data[key], value)
+                elif isinstance(value, list):
+                    for x in value:
+                        if isinstance(data[key], dict ):
+                            data[key] = [ data[key], x ]
+                        elif x not in data[key]:
+                            if isinstance(data[key], list):
+                               data[key].append(x)
+                else:
+                    data[key] = value
             else:
                 data[key] = value
-        else:
-            data[key] = value
 
 def main():
     props, mapping = readcrosswalk()
