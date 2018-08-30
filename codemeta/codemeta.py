@@ -87,7 +87,7 @@ def readcrosswalk(sourcekeys=(CWKey.PYPI,)):
     return props, mapping
 
 
-def parsepip(data, lines, mapping=None, with_entrypoints=False):
+def parsepip(data, lines, mapping=None, with_entrypoints=False, orcid_placeholder=False):
     """Parses pip -v output and converts to codemeta"""
     if mapping is None:
         _, mapping = readcrosswalk((CWKey.PYPI,))
@@ -136,6 +136,8 @@ def parsepip(data, lines, mapping=None, with_entrypoints=False):
             if key == "Author":
                 humanname = HumanName(value.strip())
                 data["author"].append({"@type":"Person", "givenName": humanname.first, "familyName": " ".join((humanname.middle, humanname.last)).strip() })
+                if orcid_placeholder:
+                    data["author"][-1]["@id"] = "https://orcid.org/EDIT_ME!"
             elif key == "Author-email":
                 data["author"][-1]["email"] = value
             elif key == "Requires":
@@ -237,6 +239,7 @@ def main():
     #parser.add_argument('--pip', help="Parse pip -v output", action='store_true',required=False)
     #parser.add_argument('--yaml', help="Read metadata from standard input (YAML format)", action='store_true',required=False)
     parser.add_argument('-e','--with-entrypoints', dest="with_entrypoints", help="Add entry points (this is not in the official codemeta specification)", action='store_true',required=False)
+    parser.add_argument('--with-orcid', dest="with_orcid", help="Add placeholders for ORCID, requires manual editing of the output to insert the actual ORCIDs", action='store_true',required=False)
     parser.add_argument('-o', dest='output',type=str,help="Metadata output type: json (default), yaml", action='store',required=False, default="json")
     parser.add_argument('-i', dest='input',type=str,help="Metadata input type: pip (default), registry, json, yaml. May be a comma seperated list of multiple types if files are passed on the command line", action='store',required=False, default="pip")
     parser.add_argument('-r', dest='registry',type=str,help="The given registry file groups multiple JSON-LD metadata together in one JSON file. If specified, the file will be read (or created), and updated. This is a custom extension not part of the CodeMeta specification", action='store',required=False)
@@ -293,7 +296,7 @@ def main():
             update(data, getregistry(stream, registry))
         elif inputtype == "pip":
             piplines = stream.read().split("\n")
-            update(data, parsepip(data, piplines, mapping, args.with_entrypoints))
+            update(data, parsepip(data, piplines, mapping, args.with_entrypoints, args.with_orcid))
         elif inputtype == "json":
             update(data, json.load(stream))
 
