@@ -139,7 +139,8 @@ def parsepip(data, lines, mapping=None, with_entrypoints=False, orcid_placeholde
                 if orcid_placeholder:
                     data["author"][-1]["@id"] = "https://orcid.org/EDIT_ME!"
             elif key == "Author-email":
-                data["author"][-1]["email"] = value
+                if data["author"]:
+                    data["author"][-1]["email"] = value
             elif key == "Requires":
                 for dependency in value.split(','):
                     dependency = dependency.strip()
