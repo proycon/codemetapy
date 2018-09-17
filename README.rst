@@ -32,6 +32,10 @@ To read an existing codemeta.json and extend it:
 
 Here ``-`` represents standard input and ``-i`` denotes the input types, you can chain as many as you want.
 
+This tool can also deal with debian packages (albeit limited):
+
+``$ apt show somepackage | codemetapy -i apt``
+
 Entrypoint Extension
 ----------------------
 
