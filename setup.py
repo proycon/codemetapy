@@ -11,7 +11,7 @@ def read(fname):
 
 setup(
     name = "CodeMetaPy",
-    version = "0.1.6",
+    version = "0.2.0",
     author = "Maarten van Gompel",
     author_email = "proycon@anaproy.nl",
     description = ("Generate CodeMeta metadata for Python packages"),

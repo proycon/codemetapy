@@ -27,12 +27,23 @@ class CWKey:
     TYPE = "Type"
     DESCRIPTION = "Description"
     PYPI = "Python Distutils (PyPI)"
+    DEBIAN = "Debian Package"
+    R = "R Package Description"
+    NODEJS = "NodeJS"
+    MAVEN = "Java (Maven)"
+    DOAP = "DOAP"
 
 PROVIDER_PYPI = {
     "@id": "https://pypi.org",
     "@type": "Organization",
     "name": "The Python Package Index",
     "url": "https://pypi.org",
+}
+PROVIDER_DEBIAN = {
+    "@id": "https://www.debian.org",
+    "@type": "Organization",
+    "name": "The Debian Project",
+    "url": "https://www.debian.org",
 }
 PROGLANG_PYTHON = {
     "@type": "ComputerLanguage",
@@ -69,7 +80,7 @@ if yaml is not None:
     yaml.add_representer(OrderedDict, represent_ordereddict)
 
 
-def readcrosswalk(sourcekeys=(CWKey.PYPI,)):
+def readcrosswalk(sourcekeys=(CWKey.PYPI,CWKey.DEBIAN)):
     mapping = defaultdict(dict)
     #pip may output things differently than recorded in distutils/setup.py, so we register some aliases:
     mapping[CWKey.PYPI]["home-page"] = "url"
@@ -88,7 +99,7 @@ def readcrosswalk(sourcekeys=(CWKey.PYPI,)):
 
 
 def parsepip(data, lines, mapping=None, with_entrypoints=False, orcid_placeholder=False):
-    """Parses pip -v output and converts to codemeta"""
+    """Parses pip show -v output and converts to codemeta"""
     if mapping is None:
         _, mapping = readcrosswalk((CWKey.PYPI,))
     section = None
@@ -173,6 +184,64 @@ def parsepip(data, lines, mapping=None, with_entrypoints=False, orcid_placeholde
             data['interfaceType'] = "LIB"
     return data
 
+def parseapt(data, lines, mapping=None, with_entrypoints=False, orcid_placeholder=False):
+    """Parses apt show output and converts to codemeta"""
+    if mapping is None:
+        _, mapping = readcrosswalk((CWKey.DEBIAN,))
+    provider = PROVIDER_DEBIAN
+    description = ""
+    parsedescription = False
+    if with_entrypoints:
+        #not in official specification!!!
+        data['entryPoints'] = []
+    for line in lines:
+        if parsedescription and line and line[0] == ' ':
+            description += line[1:] + " "
+        else:
+            try:
+                key, value = (x.strip() for x in line.split(':',1))
+            except:
+                continue
+            if key == "Origin":
+                data["provider"] = value
+            elif key == "Depends":
+                for dependency in value.split(","):
+                    dependency = dependency.strip().split(" ")[0].strip()
+                    if dependency:
+                        data['softwareRequirements'].append({
+                            "@type": "SoftwareApplication",
+                            "identifier": dependency,
+                            "name": dependency,
+                        })
+            elif key == "Section":
+                if "libs" in value or "libraries" in value:
+                    if with_entrypoints: data['interfaceType'] = "LIB"
+                    data['audience'] = "Developers"
+                elif "utils" in value or "text" in value:
+                    if with_entrypoints: data['interfaceType'] = "CLI"
+                elif "devel" in value:
+                    data['audience'] = "Developers"
+                elif "science" in value:
+                    data['audience'] = "Researchers"
+            elif key == "Description":
+                parsedescription = True
+                description = value + "\n\n"
+            elif key == "Homepage":
+                data["url"] = value
+            elif key == "Version":
+                data["version"] = value
+            elif key.lower() in mapping[CWKey.DEBIAN]:
+                data[mapping[CWKey.DEBIAN][key.lower()]] = value
+                if key == "Package":
+                    data["identifier"] = value
+                    data["name"] = value
+            else:
+                print("WARNING: No translation for APT key " + key,file=sys.stderr)
+    if description:
+        data["description"] = description
+    return data
+
+
 def clean(data):
     """Purge empty values, lowercase identifier"""
     purgekeys = []
@@ -236,13 +305,11 @@ def update(data, newdata):
 
 def main():
     props, mapping = readcrosswalk()
-    parser = argparse.ArgumentParser(description="Python Distutils (PyPI) Metadata to CodeMeta (JSON-LD) converter")
-    #parser.add_argument('--pip', help="Parse pip -v output", action='store_true',required=False)
-    #parser.add_argument('--yaml', help="Read metadata from standard input (YAML format)", action='store_true',required=False)
+    parser = argparse.ArgumentParser(description="Converter for Python Distutils (PyPI) Metadata to CodeMeta (JSON-LD) converter. Also supports conversion from other metadata types such as those from Debian packages. The tool can combine metadata from multiple sources.")
     parser.add_argument('-e','--with-entrypoints', dest="with_entrypoints", help="Add entry points (this is not in the official codemeta specification)", action='store_true',required=False)
     parser.add_argument('--with-orcid', dest="with_orcid", help="Add placeholders for ORCID, requires manual editing of the output to insert the actual ORCIDs", action='store_true',required=False)
     parser.add_argument('-o', dest='output',type=str,help="Metadata output type: json (default), yaml", action='store',required=False, default="json")
-    parser.add_argument('-i', dest='input',type=str,help="Metadata input type: pip (default), registry, json, yaml. May be a comma seperated list of multiple types if files are passed on the command line", action='store',required=False, default="pip")
+    parser.add_argument('-i', dest='input',type=str,help="Metadata input type: pip (python distutils packages, default), apt (debian packages), registry, json, yaml. May be a comma seperated list of multiple types if files are passed on the command line", action='store',required=False, default="pip")
     parser.add_argument('-r', dest='registry',type=str,help="The given registry file groups multiple JSON-LD metadata together in one JSON file. If specified, the file will be read (or created), and updated. This is a custom extension not part of the CodeMeta specification", action='store',required=False)
     parser.add_argument('inputfiles', nargs='*', help='Input files, set -i accordingly with the types (must contain as many items as passed!')
     for key, prop in sorted(props.items()):
@@ -295,9 +362,12 @@ def main():
     for stream, inputtype in inputfiles:
         if inputtype == "registry":
             update(data, getregistry(stream, registry))
-        elif inputtype == "pip":
+        elif inputtype in ("pip","python","distutils"):
             piplines = stream.read().split("\n")
             update(data, parsepip(data, piplines, mapping, args.with_entrypoints, args.with_orcid))
+        elif inputtype in ("apt","debian","deb"):
+            aptlines = stream.read().split("\n")
+            update(data, parseapt(data, aptlines, mapping, args.with_entrypoints))
         elif inputtype == "json":
             update(data, json.load(stream))
 
