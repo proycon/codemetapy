@@ -361,7 +361,11 @@ def main():
     })
     for stream, inputtype in inputfiles:
         if inputtype == "registry":
-            update(data, getregistry(stream, registry))
+            try:
+                update(data, getregistry(stream, registry))
+            except KeyError as e:
+                print("ERROR: No such identifier in registry: ", stream,file=sys.stderr)
+                sys.exit(3)
         elif inputtype in ("pip","python","distutils"):
             piplines = stream.read().split("\n")
             update(data, parsepip(data, piplines, mapping, args.with_entrypoints, args.with_orcid))
