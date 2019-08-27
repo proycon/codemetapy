@@ -13,6 +13,7 @@ import argparse
 import json
 import os.path
 import csv
+import importlib
 from collections import OrderedDict, defaultdict
 try:
     import yaml
@@ -133,12 +134,24 @@ def parsepip(data, lines, mapping=None, with_entrypoints=False, orcid_placeholde
                 pass
             elif line.find('=') != -1:
                 fields = [ x.strip() for x in line.split('=') ]
-                data['entryPoints'].append({ #the entryPoints relation is not in the specification, but our own invention, it is the reverse of the EntryPoint.actionApplication property
+                if len(fields) > 1:
+                    module_name = fields[1].strip().split(':')[0]
+                    try:
+                        module = importlib.import_module(module_name)
+                        description = module.__doc__
+                    except:
+                        description = ""
+                else:
+                    description = ""
+                entrypoint = {
                     "@type": "EntryPoint", #we are interpreting this a bit liberally because it's usually used with HTTP webservices
                     "name": fields[0],
                     "urlTemplate": "file:///" + fields[0], #three slashes because we omit host, the 'file' is an executable/binary (rather liberal use)
                     "interfaceType": "CLI", #custom property, this needs to be moved to a more formal vocabulary  at some point
-                })
+                }
+                if description:
+                    entrypoint['description'] = description
+                data['entryPoints'].append(entrypoint) #the entryPoints relation is not in the specification, but our own invention, it is the reverse of the EntryPoint.actionApplication property
         else:
             try:
                 key, value = (x.strip() for x in line.split(':',1))
