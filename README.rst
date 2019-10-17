@@ -1,3 +1,17 @@
+.. image:: https://travis-ci.com/proycon/codemetapy.svg?branch=master
+    :target: https://travis-ci.com/proycon/codemetapy
+
+.. image:: http://applejack.science.ru.nl/lamabadge.php/codemetapy
+   :target: http://applejack.science.ru.nl/languagemachines/
+
+.. image:: https://www.repostatus.org/badges/latest/active.svg
+   :alt: Project Status: Active – The project has reached a stable, usable state and is being actively developed.
+   :target: https://www.repostatus.org/#active
+
+.. image:: https://img.shields.io/pypi/v/codemetapy
+   :alt: Latest release in the Python Package Index
+   :target: https://pypi.org/project/codemetapy/
+
 CodeMetaPy
 =================
 
