@@ -539,6 +539,7 @@ def main():
                 print("ERROR: No such identifier in registry: ", source,file=sys.stderr)
                 sys.exit(3)
         elif inputtype in ("python","distutils"):
+            print("Querying python package: " + source,file=sys.stderr)
             #source is a name of a package
             update(data, parsepython(data, source, mapping, args.with_entrypoints, args.with_orcid))
         elif inputtype == "pip":
@@ -548,6 +549,7 @@ def main():
             aptlines = getstream(source).read().split("\n")
             update(data, parseapt(data, aptlines, mapping, args.with_entrypoints))
         elif inputtype == "json":
+            print("Parsing json file: " + source,file=sys.stderr)
             update(data, json.load(getstream(source)))
 
         for key, prop in props.items():
