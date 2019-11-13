@@ -6,7 +6,7 @@
     "@type": "SoftwareSourceCode",
     "identifier": "CodeMetaPy",
     "name": "CodeMetaPy",
-    "version": "0.2.0",
+    "version": "0.3.0",
     "description": "Generate CodeMeta metadata for Python packages and others",
     "license": "OSI Approved :: GNU General Public License v3 (GPLv3)",
     "author": [

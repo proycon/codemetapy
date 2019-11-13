@@ -15,11 +15,16 @@ import os.path
 import csv
 import importlib
 from collections import OrderedDict, defaultdict
+from nameparser import HumanName
 try:
     import yaml
 except ImportError:
     yaml = None
-from nameparser import HumanName
+if sys.version_info.minor < 8:
+    import importlib_metadata #backported
+else:
+    import importlib.metadata as importlib_metadata #python 3.8 and above: in standard library
+
 
 class CWKey:
     """Crosswalk Keys, correspond with header label in crosswalk.csv"""
@@ -58,7 +63,7 @@ CONTEXT =  [
     "http://schema.org",
 ]
 
-ENTRYPOINT_CONTEXT = { #these are all custom extensions not in codemeta (yet)
+ENTRYPOINT_CONTEXT = { #these are all custom extensions not in codemeta (yet), they are proposed in https://github.com/codemeta/codemeta/issues/183
     "entryPoints": { "@reverse": "schema:actionApplication" },
     "interfaceType": { "@id": "codemeta:interfaceType" }, #Type of the entrypoint's interface (e.g CLI, GUI, WUI, TUI, REST, SOAP, XMLRPC, LIB)
     "specification": { "@id": "codemeta:specification" , "@type":"@id"}, #A technical specification of the interface
@@ -98,9 +103,160 @@ def readcrosswalk(sourcekeys=(CWKey.PYPI,CWKey.DEBIAN)):
 
     return props, mapping
 
+def parsepython(data, packagename, mapping=None, with_entrypoints=False, orcid_placeholder=False):
+    """Parses python package metadata and converts it to codemeta"""
+    if mapping is None:
+        _, mapping = readcrosswalk((CWKey.PYPI,))
+    section = None
+    data["provider"] = PROVIDER_PYPI
+    data["runtimePlatform"] =  "Python " + str(sys.version_info.major) + "." + str(sys.version_info.minor) + "." + str(sys.version_info.micro)
+    if with_entrypoints:
+        #not in official specification!!!
+        data['entryPoints'] = []
+    pkg = importlib_metadata.distribution(packagename)
+    for key, value in pkg.items():
+        if key == "Classifier":
+            fields = [ x.strip() for x in value.strip().split('::') ]
+            pipkey = "classifiers['" + fields[0] + "']"
+            pipkey = pipkey.lower()
+            if pipkey in mapping[CWKey.PYPI]:
+                data[mapping[CWKey.PYPI][pipkey]] = " :: ".join(fields[1:])
+            elif fields[0].lower() in mapping[CWKey.PYPI]:
+                data[mapping[CWKey.PYPI][fields[0].lower()]] = " :: ".join(fields[1:])
+            elif fields[0] == "Intended Audience":
+                data["audience"].append({
+                    "@type": "Audience",
+                    "audienceType": " :: ".join(fields[1:])
+                })
+            else:
+                print("NOTICE: Classifier "  + fields[0] + " has no translation",file=sys.stderr)
+        else:
+            if key == "Author":
+                humanname = HumanName(value.strip())
+                data["author"].append({"@type":"Person", "givenName": humanname.first, "familyName": " ".join((humanname.middle, humanname.last)).strip() })
+                if orcid_placeholder:
+                    data["author"][-1]["@id"] = "https://orcid.org/EDIT_ME!"
+            elif key == "Author-email":
+                if data["author"]:
+                    data["author"][-1]["email"] = value
+            elif key == "Requires-dist":
+                for dependency in value.split(','):
+                    dependency = dependency.strip()
+                    if dependency:
+                        data['softwareRequirements'].append({
+                            "@type": "SoftwareApplication",
+                            "identifier": dependency,
+                            "name": dependency,
+                            "provider": PROVIDER_PYPI,
+                            "runtimePlatform": "Python " + str(sys.version_info.major) + "." + str(sys.version_info.minor) + "." + str(sys.version_info.micro)
+                        })
+            elif key == "Requires-External":
+                for dependency in value.split(','):
+                    dependency = dependency.strip()
+                    if dependency:
+                        data['softwareRequirements'].append({
+                            "@type": "SoftwareApplication",
+                            "identifier": dependency,
+                            "name": dependency,
+                        })
+            elif key.lower() in mapping[CWKey.PYPI]:
+                data[mapping[CWKey.PYPI][key.lower()]] = value
+                if key == "Name":
+                    data["identifier"] = value
+            else:
+                print("WARNING: No translation for pip key " + key,file=sys.stderr)
+    if with_entrypoints:
+        for rawentrypoint in pkg.entry_points:
+            if rawentrypoint.group == "console_scripts":
+                interfacetype = "CLI"
+            elif rawentrypoint.group == "gui_scripts":
+                interfacetype = "GUI"
+            else:
+                continue
+            if rawentrypoint.value:
+                module_name = rawentrypoint.value.strip().split(':')[0]
+                try:
+                    module = importlib.import_module(module_name)
+                    description = module.__doc__
+                except:
+                    description = ""
+            else:
+                description = ""
+            entrypoint = {
+                "@type": "EntryPoint", #we are interpreting this a bit liberally because it's usually used with HTTP webservices
+                "name": rawentrypoint.name,
+                "urlTemplate": "file:///" + rawentrypoint.name, #three slashes because we omit host, the 'file' is an executable/binary (rather liberal use)
+                "interfaceType": interfacetype, #custom property, this needs to be moved to a more formal vocabulary  at some point
+            }
+            if description:
+                entrypoint['description'] = description
+            data['entryPoints'].append(entrypoint) #the entryPoints relation is not in the specification, but our own invention, it is the reverse of the EntryPoint.actionApplication property
+        if not data['entryPoints'] or ('applicationCategory' in data and 'libraries' in data['applicationCategory'].lower()):
+            #no entry points defined, assume this is a library
+            data['interfaceType'] = "LIB"
+    return data
+
+def parseapt(data, lines, mapping=None, with_entrypoints=False, orcid_placeholder=False):
+    """Parses apt show output and converts to codemeta"""
+    if mapping is None:
+        _, mapping = readcrosswalk((CWKey.DEBIAN,))
+    provider = PROVIDER_DEBIAN
+    description = ""
+    parsedescription = False
+    if with_entrypoints:
+        #not in official specification!!!
+        data['entryPoints'] = []
+    for line in lines:
+        if parsedescription and line and line[0] == ' ':
+            description += line[1:] + " "
+        else:
+            try:
+                key, value = (x.strip() for x in line.split(':',1))
+            except:
+                continue
+            if key == "Origin":
+                data["provider"] = value
+            elif key == "Depends":
+                for dependency in value.split(","):
+                    dependency = dependency.strip().split(" ")[0].strip()
+                    if dependency:
+                        data['softwareRequirements'].append({
+                            "@type": "SoftwareApplication",
+                            "identifier": dependency,
+                            "name": dependency,
+                        })
+            elif key == "Section":
+                if "libs" in value or "libraries" in value:
+                    if with_entrypoints: data['interfaceType'] = "LIB"
+                    data['audience'] = "Developers"
+                elif "utils" in value or "text" in value:
+                    if with_entrypoints: data['interfaceType'] = "CLI"
+                elif "devel" in value:
+                    data['audience'] = "Developers"
+                elif "science" in value:
+                    data['audience'] = "Researchers"
+            elif key == "Description":
+                parsedescription = True
+                description = value + "\n\n"
+            elif key == "Homepage":
+                data["url"] = value
+            elif key == "Version":
+                data["version"] = value
+            elif key.lower() in mapping[CWKey.DEBIAN]:
+                data[mapping[CWKey.DEBIAN][key.lower()]] = value
+                if key == "Package":
+                    data["identifier"] = value
+                    data["name"] = value
+            else:
+                print("WARNING: No translation for APT key " + key,file=sys.stderr)
+    if description:
+        data["description"] = description
+    return data
+
 
 def parsepip(data, lines, mapping=None, with_entrypoints=False, orcid_placeholder=False):
-    """Parses pip show -v output and converts to codemeta"""
+    """Parses pip show -v output and converts to codemeta (this is obsolete, use parsepython instead!)"""
+
     if mapping is None:
         _, mapping = readcrosswalk((CWKey.PYPI,))
     section = None
@@ -316,15 +472,21 @@ def update(data, newdata):
             else:
                 data[key] = value
 
+def getstream(source):
+    if source == '-':
+        return sys.stdin
+    else:
+        return open(source,'r',encoding='utf-8')
+
 def main():
     props, mapping = readcrosswalk()
     parser = argparse.ArgumentParser(description="Converter for Python Distutils (PyPI) Metadata to CodeMeta (JSON-LD) converter. Also supports conversion from other metadata types such as those from Debian packages. The tool can combine metadata from multiple sources.")
     parser.add_argument('-e','--with-entrypoints', dest="with_entrypoints", help="Add entry points (this is not in the official codemeta specification)", action='store_true',required=False)
     parser.add_argument('--with-orcid', dest="with_orcid", help="Add placeholders for ORCID, requires manual editing of the output to insert the actual ORCIDs", action='store_true',required=False)
     parser.add_argument('-o', dest='output',type=str,help="Metadata output type: json (default), yaml", action='store',required=False, default="json")
-    parser.add_argument('-i', dest='input',type=str,help="Metadata input type: pip (python distutils packages, default), apt (debian packages), registry, json, yaml. May be a comma seperated list of multiple types if files are passed on the command line", action='store',required=False, default="pip")
+    parser.add_argument('-i', dest='input',type=str,help="Metadata input type: python, apt (debian packages), registry, json, yaml. May be a comma seperated list of multiple types if files are passed on the command line", action='store',required=False, default="python")
     parser.add_argument('-r', dest='registry',type=str,help="The given registry file groups multiple JSON-LD metadata together in one JSON file. If specified, the file will be read (or created), and updated. This is a custom extension not part of the CodeMeta specification", action='store',required=False)
-    parser.add_argument('inputfiles', nargs='*', help='Input files, set -i accordingly with the types (must contain as many items as passed!')
+    parser.add_argument('inputfiles', nargs='*', help='Input files, set -i accordingly with the types (must contain as many items as passed!)')
     for key, prop in sorted(props.items()):
         if key:
             parser.add_argument('--' + key,dest=key, type=str, help=prop['DESCRIPTION'] + " (Type: "  + prop['TYPE'] + ", Parent: " + prop['PARENT'] + ") [you can format the value string in json if needed]", action='store',required=False)
@@ -350,14 +512,12 @@ def main():
 
     inputfiles = []
     if args.inputfiles:
-        if ',' in args.input:
-            if len(args.input.split(",")) != len(args.inputfiles):
-                print("Passed " + str(len(args.inputfiles)) + " files but specified " + str(len(args.input.split(','))) + " input types!",file=sys.stderr)
-            inputfiles = [ (open(f,'r',encoding='utf-8'), t) if f != '-' and t != 'registry' else ( (f,t) if t == 'registry' else (sys.stdin,t) ) for f,t in zip(args.inputfiles, args.input.split(',')) ]
-        else:
-            inputfiles = [ (open(f,'r',encoding='utf-8'), args.input) if f != '-' else (sys.stdin,args.input) for f in args.inputfiles ] #same type for all
+        if len(args.input.split(",")) != len(args.inputfiles):
+            print("Passed " + str(len(args.inputfiles)) + " files but specified " + str(len(args.input.split(','))) + " input types!",file=sys.stderr)
+        inputfiles = list(zip(args.inputfiles, args.input.split(',')))
     else:
-        inputfiles = [(sys.stdin,args.input)]
+        print("No input files specified (use - for stdin)",file=sys.stderr)
+        sys.exit(2)
 
     data = OrderedDict({ #values are overriden/extended later
         '@context': CONTEXT + extracontext,
@@ -371,21 +531,24 @@ def main():
         "softwareRequirements": [],
         "audience": []
     })
-    for stream, inputtype in inputfiles:
+    for source, inputtype in inputfiles:
         if inputtype == "registry":
             try:
-                update(data, getregistry(stream, registry))
+                update(data, getregistry(getsteam(source), registry))
             except KeyError as e:
-                print("ERROR: No such identifier in registry: ", stream,file=sys.stderr)
+                print("ERROR: No such identifier in registry: ", source,file=sys.stderr)
                 sys.exit(3)
-        elif inputtype in ("pip","python","distutils"):
-            piplines = stream.read().split("\n")
+        elif inputtype in ("python","distutils"):
+            #source is a name of a package
+            update(data, parsepip(data, source, mapping, args.with_entrypoints, args.with_orcid))
+        elif inputtype == "pip":
+            piplines = getstream(source).read().split("\n")
             update(data, parsepip(data, piplines, mapping, args.with_entrypoints, args.with_orcid))
         elif inputtype in ("apt","debian","deb"):
-            aptlines = stream.read().split("\n")
+            aptlines = getstream(source).read().split("\n")
             update(data, parseapt(data, aptlines, mapping, args.with_entrypoints))
         elif inputtype == "json":
-            update(data, json.load(stream))
+            update(data, json.load(getstream(source)))
 
         for key, prop in props.items():
             if hasattr(args,key) and getattr(args,key) is not None:
