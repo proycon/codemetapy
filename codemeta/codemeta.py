@@ -114,7 +114,7 @@ def parsepython(data, packagename, mapping=None, with_entrypoints=False, orcid_p
         #not in official specification!!!
         data['entryPoints'] = []
     pkg = importlib_metadata.distribution(packagename)
-    for key, value in pkg.items():
+    for key, value in pkg.metadata.items():
         if key == "Classifier":
             fields = [ x.strip() for x in value.strip().split('::') ]
             pipkey = "classifiers['" + fields[0] + "']"
@@ -139,7 +139,7 @@ def parsepython(data, packagename, mapping=None, with_entrypoints=False, orcid_p
             elif key == "Author-email":
                 if data["author"]:
                     data["author"][-1]["email"] = value
-            elif key == "Requires-dist":
+            elif key == "Requires-Dist":
                 for dependency in value.split(','):
                     dependency = dependency.strip()
                     if dependency:
@@ -540,7 +540,7 @@ def main():
                 sys.exit(3)
         elif inputtype in ("python","distutils"):
             #source is a name of a package
-            update(data, parsepip(data, source, mapping, args.with_entrypoints, args.with_orcid))
+            update(data, parsepython(data, source, mapping, args.with_entrypoints, args.with_orcid))
         elif inputtype == "pip":
             piplines = getstream(source).read().split("\n")
             update(data, parsepip(data, piplines, mapping, args.with_entrypoints, args.with_orcid))
