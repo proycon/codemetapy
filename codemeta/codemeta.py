@@ -93,6 +93,7 @@ def readcrosswalk(sourcekeys=(CWKey.PYPI,CWKey.DEBIAN)):
     #pip may output things differently than recorded in distutils/setup.py, so we register some aliases:
     mapping[CWKey.PYPI]["home-page"] = "url"
     mapping[CWKey.PYPI]["summary"] = "description"
+    mapping[CWKey.PYPI]["description"] = "description"
     props = {}
     crosswalkfile = os.path.join(os.path.dirname(__file__), 'schema','crosswalk.csv')
     with open(crosswalkfile, 'r') as f:
@@ -135,9 +136,16 @@ def parsepython(data, packagename, mapping=None, with_entrypoints=False, orcid_p
         else:
             if key == "Author":
                 humanname = HumanName(value.strip())
-                data["author"].append({"@type":"Person", "givenName": humanname.first, "familyName": " ".join((humanname.middle, humanname.last)).strip() })
-                if orcid_placeholder:
-                    data["author"][-1]["@id"] = "https://orcid.org/EDIT_ME!"
+                author = {"@type":"Person", "givenName": humanname.first, "familyName": " ".join((humanname.middle, humanname.last)).strip() }
+                found = False
+                for a in data["author"]:
+                    if a['givenName'] == author['givenName'] and a['familyName'] == author['familyName']:
+                        found = True
+                        break
+                if not found:
+                    data["author"].append(author)
+                    if orcid_placeholder:
+                        data["author"][-1]["@id"] = "https://orcid.org/EDIT_ME!"
             elif key == "Author-email":
                 if data["author"]:
                     data["author"][-1]["email"] = value
@@ -166,7 +174,7 @@ def parsepython(data, packagename, mapping=None, with_entrypoints=False, orcid_p
                 if key == "Name":
                     data["identifier"] = value
             else:
-                print("WARNING: No translation for pip key " + key,file=sys.stderr)
+                print("WARNING: No translation for distutils key " + key,file=sys.stderr)
     if with_entrypoints:
         for rawentrypoint in pkg.entry_points:
             if rawentrypoint.group == "console_scripts":
@@ -317,9 +325,16 @@ def parsepip(data, lines, mapping=None, with_entrypoints=False, orcid_placeholde
                 continue
             if key == "Author":
                 humanname = HumanName(value.strip())
-                data["author"].append({"@type":"Person", "givenName": humanname.first, "familyName": " ".join((humanname.middle, humanname.last)).strip() })
-                if orcid_placeholder:
-                    data["author"][-1]["@id"] = "https://orcid.org/EDIT_ME!"
+                author = {"@type":"Person", "givenName": humanname.first, "familyName": " ".join((humanname.middle, humanname.last)).strip() }
+                found = False
+                for a in data["author"]:
+                    if a['givenName'] == author['givenName'] and a['familyName'] == author['familyName']:
+                        found = True
+                        break
+                if not found:
+                    data["author"].append(author)
+                    if orcid_placeholder:
+                        data["author"][-1]["@id"] = "https://orcid.org/EDIT_ME!"
             elif key == "Author-email":
                 if data["author"]:
                     data["author"][-1]["email"] = value
