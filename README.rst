@@ -63,3 +63,36 @@ with type ``EntryPoint``. This can be used to describe the entry points specifie
 have use a ``file://`` url to refer to the actual entrypoints, this is a bit of a liberal use...). Because this is a
 non-standard extension it has to be explicitly enabled using ``--with-entrypoints``.
 
+Integration in setup.py
+-------------------------
+
+You can integrate ``codemeta.json`` generation in your project's ``setup.py``, this will add an extra ``python setup.py
+codemeta`` command that will generate a new metadata or update an already existing metadata. Note that this must be run
+*after* ``python setup.py install`` (or ``python setup.py develop``).
+
+To integrate this, add the following to your ``setup.py``:
+
+.. code:: python
+
+    try:
+        from codemeta.codemeta import CodeMetaCommand
+        cmdclass={
+            'codemeta': CodeMetaCommand,
+        }
+    except ImportError:
+        cmdclass={}
+
+And in your ``setup()`` call add the parameter:
+
+.. code:: python
+
+    cmdclass=cmdclass
+
+This will ensure your ``setup.py`` works in all cases, even if codemetapy is not installed, and that the command will be
+available if codemetapy is available.
+
+To make use of the entrypoint extension, you need to explicitly specify ``python setup.py codemeta --with-entrypoints``.
+
+
+
+

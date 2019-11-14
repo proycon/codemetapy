@@ -14,6 +14,8 @@ import json
 import os.path
 import csv
 import importlib
+import distutils
+import setuptools
 from collections import OrderedDict, defaultdict
 from nameparser import HumanName
 try:
@@ -478,8 +480,46 @@ def getstream(source):
     else:
         return open(source,'r',encoding='utf-8')
 
+
+
+
+#class PostDevelopCommand(setuptools.command.develop.develop):
+#    """Post development installation hook"""
+#    def run(self):
+#        setuptools_update(self)
+#        super(PostDevelopCommand, self).run()
+#
+#class PostInstallCommand(setuptools.command.install.install):
+#    """Post installation hook"""
+#    def run(self):
+#        setuptools_update(self)
+#        super(PostInstallCommand, self).run()
+
+class CodeMetaCommand(distutils.cmd.Command):
+    description = "Generate a codemeta.json file or update an existing one, note that the package must be installed first for this to work!"
+    user_options = [
+        ('with-entrypoints','e','Generate entrypoints as well (custom codemeta extension not part of the official specification')
+    ]
+
+    def initialize_options(self):
+        self.with_entrypoints = False
+
+    def finalize_options(self):
+        self.with_entrypoints = bool(self.with_entrypoints)
+
+    def run(self):
+        """Updates the codemeta.json for this package during the setup process. Hook to be (indirectly) called from setuptools"""
+        codemetafile = "codemeta.json"
+        print("Writing codemeta metadata to " + codemetafile,file=sys.stderr)
+        if os.path.exists(codemetafile):
+            build(input="json,python",output="json",outputfile=codemetafile, inputsources=[codemetafile, self.distribution.metadata.name], with_entrypoints=self.with_entrypoints)
+        else:
+            build(input="python",output="json",outputfile=codemetafile, inputsources=[self.distribution.metadata.name], with_entrypoints=self.with_entrypoints)
+
+
+props, mapping = readcrosswalk()
+
 def main():
-    props, mapping = readcrosswalk()
     parser = argparse.ArgumentParser(description="Converter for Python Distutils (PyPI) Metadata to CodeMeta (JSON-LD) converter. Also supports conversion from other metadata types such as those from Debian packages. The tool can combine metadata from multiple sources.")
     parser.add_argument('-e','--with-entrypoints', dest="with_entrypoints", help="Add entry points (this is not in the official codemeta specification)", action='store_true',required=False)
     parser.add_argument('--with-orcid', dest="with_orcid", help="Add placeholders for ORCID, requires manual editing of the output to insert the actual ORCIDs", action='store_true',required=False)
@@ -492,7 +532,22 @@ def main():
         if key:
             parser.add_argument('--' + key,dest=key, type=str, help=prop['DESCRIPTION'] + " (Type: "  + prop['TYPE'] + ", Parent: " + prop['PARENT'] + ") [you can format the value string in json if needed]", action='store',required=False)
     args = parser.parse_args()
+    build(**args.__dict__)
 
+
+class AttribDict(dict):
+    def __init__(self, d):
+        self.__dict__ = d
+
+    def __getattr__(self, key):
+        if key in self:
+            return self[key]
+        else:
+            return None
+
+def build(**kwargs):
+    """Build a codemeta file"""
+    args = AttribDict(kwargs)
     if args.with_entrypoints:
         extracontext = [ENTRYPOINT_CONTEXT]
     else:
@@ -535,7 +590,7 @@ def main():
     for source, inputtype in inputsources:
         if inputtype == "registry":
             try:
-                update(data, getregistry(getsteam(source), registry))
+                update(data, getregistry(getstream(source), registry))
             except KeyError as e:
                 print("ERROR: No such identifier in registry: ", source,file=sys.stderr)
                 sys.exit(3)
