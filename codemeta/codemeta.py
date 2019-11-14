@@ -280,63 +280,6 @@ def parseapt(data, lines, mapping=None, with_entrypoints=False, orcid_placeholde
         data["description"] = description
     return data
 
-def parseapt(data, lines, mapping=None, with_entrypoints=False, orcid_placeholder=False):
-    """Parses apt show output and converts to codemeta"""
-    if mapping is None:
-        _, mapping = readcrosswalk((CWKey.DEBIAN,))
-    provider = PROVIDER_DEBIAN
-    description = ""
-    parsedescription = False
-    if with_entrypoints:
-        #not in official specification!!!
-        data['entryPoints'] = []
-    for line in lines:
-        if parsedescription and line and line[0] == ' ':
-            description += line[1:] + " "
-        else:
-            try:
-                key, value = (x.strip() for x in line.split(':',1))
-            except:
-                continue
-            if key == "Origin":
-                data["provider"] = value
-            elif key == "Depends":
-                for dependency in value.split(","):
-                    dependency = dependency.strip().split(" ")[0].strip()
-                    if dependency:
-                        data['softwareRequirements'].append({
-                            "@type": "SoftwareApplication",
-                            "identifier": dependency,
-                            "name": dependency,
-                        })
-            elif key == "Section":
-                if "libs" in value or "libraries" in value:
-                    if with_entrypoints: data['interfaceType'] = "LIB"
-                    data['audience'] = "Developers"
-                elif "utils" in value or "text" in value:
-                    if with_entrypoints: data['interfaceType'] = "CLI"
-                elif "devel" in value:
-                    data['audience'] = "Developers"
-                elif "science" in value:
-                    data['audience'] = "Researchers"
-            elif key == "Description":
-                parsedescription = True
-                description = value + "\n\n"
-            elif key == "Homepage":
-                data["url"] = value
-            elif key == "Version":
-                data["version"] = value
-            elif key.lower() in mapping[CWKey.DEBIAN]:
-                data[mapping[CWKey.DEBIAN][key.lower()]] = value
-                if key == "Package":
-                    data["identifier"] = value
-                    data["name"] = value
-            else:
-                print("WARNING: No translation for APT key " + key,file=sys.stderr)
-    if description:
-        data["description"] = description
-    return data
-
 
 def clean(data):
     """Purge empty values, lowercase identifier"""
