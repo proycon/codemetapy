@@ -93,7 +93,6 @@ def readcrosswalk(sourcekeys=(CWKey.PYPI,CWKey.DEBIAN)):
     #pip may output things differently than recorded in distutils/setup.py, so we register some aliases:
     mapping[CWKey.PYPI]["home-page"] = "url"
     mapping[CWKey.PYPI]["summary"] = "description"
-    mapping[CWKey.PYPI]["description"] = "description"
     props = {}
     crosswalkfile = os.path.join(os.path.dirname(__file__), 'schema','crosswalk.csv')
     with open(crosswalkfile, 'r') as f:
@@ -279,113 +278,6 @@ def parseapt(data, lines, mapping=None, with_entrypoints=False, orcid_placeholde
                 print("WARNING: No translation for APT key " + key,file=sys.stderr)
     if description:
         data["description"] = description
-    return data
-
-
-def parsepip(data, lines, mapping=None, with_entrypoints=False, orcid_placeholder=False):
-    """Parses pip show -v output and converts to codemeta (this is obsolete, use parsepython instead!)"""
-
-    if mapping is None:
-        _, mapping = readcrosswalk((CWKey.PYPI,))
-    section = None
-    data["provider"] = PROVIDER_PYPI
-    data["runtimePlatform"] =  "Python " + str(sys.version_info.major) + "." + str(sys.version_info.minor) + "." + str(sys.version_info.micro)
-    if with_entrypoints:
-        #not in official specification!!!
-        data['entryPoints'] = []
-    for line in lines:
-        if line.strip() == "Classifiers:":
-            section = "classifiers"
-        elif line.strip() == "Entry-points:":
-            section = "interfaces"
-        elif section == "classifiers":
-            fields = [ x.strip() for x in line.strip().split('::') ]
-            pipkey = "classifiers['" + fields[0] + "']"
-            pipkey = pipkey.lower()
-            if pipkey in mapping[CWKey.PYPI]:
-                data[mapping[CWKey.PYPI][pipkey]] = " :: ".join(fields[1:])
-            elif fields[0].lower() in mapping[CWKey.PYPI]:
-                data[mapping[CWKey.PYPI][fields[0].lower()]] = " :: ".join(fields[1:])
-            elif fields[0] == "Intended Audience":
-                data["audience"].append({
-                    "@type": "Audience",
-                    "audienceType": " :: ".join(fields[1:])
-                })
-            else:
-                print("NOTICE: Classifier "  + fields[0] + " has no translation",file=sys.stderr)
-        elif section == "interfaces" and with_entrypoints:
-            if line.strip() == "[console_scripts]":
-                pass
-            elif line.find('=') != -1:
-                fields = [ x.strip() for x in line.split('=') ]
-                if len(fields) > 1:
-                    module_name = fields[1].strip().split(':')[0]
-                    try:
-                        module = importlib.import_module(module_name)
-                        description = module.__doc__
-                    except:
-                        description = ""
-                else:
-                    description = ""
-                entrypoint = {
-                    "@type": "EntryPoint", #we are interpreting this a bit liberally because it's usually used with HTTP webservices
-                    "name": fields[0],
-                    "urlTemplate": "file:///" + fields[0], #three slashes because we omit host, the 'file' is an executable/binary (rather liberal use)
-                    "interfaceType": "CLI", #custom property, this needs to be moved to a more formal vocabulary  at some point
-                }
-                if description:
-                    entrypoint['description'] = description
-                data['entryPoints'].append(entrypoint) #the entryPoints relation is not in the specification, but our own invention, it is the reverse of the EntryPoint.actionApplication property
-        else:
-            try:
-                key, value = (x.strip() for x in line.split(':',1))
-            except:
-                continue
-            if key == "Author":
-                humanname = HumanName(value.strip())
-                author = {"@type":"Person", "givenName": humanname.first, "familyName": " ".join((humanname.middle, humanname.last)).strip() }
-                found = False
-                for a in data["author"]:
-                    if a['givenName'] == author['givenName'] and a['familyName'] == author['familyName']:
-                        found = True
-                        break
-                if not found:
-                    data["author"].append(author)
-                    if orcid_placeholder:
-                        data["author"][-1]["@id"] = "https://orcid.org/EDIT_ME!"
-            elif key == "Author-email":
-                if data["author"]:
-                    data["author"][-1]["email"] = value
-            elif key == "Requires":
-                for dependency in value.split(','):
-                    dependency = dependency.strip()
-                    if dependency:
-                        data['softwareRequirements'].append({
-                            "@type": "SoftwareApplication",
-                            "identifier": dependency,
-                            "name": dependency,
-                            "provider": PROVIDER_PYPI,
-                            "runtimePlatform": "Python " + str(sys.version_info.major) + "." + str(sys.version_info.minor) + "." + str(sys.version_info.micro)
-                        })
-            elif key == "Requires-External":
-                for dependency in value.split(','):
-                    dependency = dependency.strip()
-                    if dependency:
-                        data['softwareRequirements'].append({
-                            "@type": "SoftwareApplication",
-                            "identifier": dependency,
-                            "name": dependency,
-                        })
-            elif key.lower() in mapping[CWKey.PYPI]:
-                data[mapping[CWKey.PYPI][key.lower()]] = value
-                if key == "Name":
-                    data["identifier"] = value
-            else:
-                print("WARNING: No translation for pip key " + key,file=sys.stderr)
-    if with_entrypoints:
-        if not data['entryPoints'] or ('applicationCategory' in data and 'libraries' in data['applicationCategory'].lower()):
-            #no entry points defined, assume this is a library
-            data['interfaceType'] = "LIB"
     return data
 
 def parseapt(data, lines, mapping=None, with_entrypoints=False, orcid_placeholder=False):
@@ -633,8 +525,8 @@ def build(**kwargs):
             #source is a name of a package
             update(data, parsepython(data, source, mapping, args.with_entrypoints, args.with_orcid, args.exactplatformversion))
         elif inputtype == "pip":
-            piplines = getstream(source).read().split("\n")
-            update(data, parsepip(data, piplines, mapping, args.with_entrypoints, args.with_orcid))
+            print("Pip output parsing is obsolete since codemetapy 0.3.0, please use input type 'python' instead",file=sys.stderr)
+            sys.exit(2)
         elif inputtype in ("apt","debian","deb"):
             aptlines = getstream(source).read().split("\n")
             update(data, parseapt(data, aptlines, mapping, args.with_entrypoints))

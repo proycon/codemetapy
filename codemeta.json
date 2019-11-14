@@ -4,11 +4,11 @@
         "http://schema.org"
     ],
     "@type": "SoftwareSourceCode",
-    "identifier": "CodeMetaPy",
+    "identifier": "codemetapy",
     "name": "CodeMetaPy",
-    "version": "0.3.0",
-    "description": "Generate CodeMeta metadata for Python packages and others",
-    "license": "OSI Approved :: GNU General Public License v3 (GPLv3)",
+    "version": "0.2.2",
+    "description": "Generate CodeMeta metadata for Python packages",
+    "license": "GPL, OSI Approved :: GNU General Public License v3 (GPLv3)",
     "author": [
         {
             "@type": "Person",
@@ -17,13 +17,6 @@
             "email": "proycon@anaproy.nl"
         }
     ],
-    "provider": {
-        "@id": "https://pypi.org",
-        "@type": "Organization",
-        "name": "The Python Package Index",
-        "url": "https://pypi.org"
-    },
-    "runtimePlatform": "Python 3.6.4",
     "softwareRequirements": [
         {
             "@type": "SoftwareApplication",
@@ -50,6 +43,19 @@
             "runtimePlatform": "Python 3.6.4"
         }
     ],
+    "audience": [
+        {
+            "@type": "Audience",
+            "audienceType": "Science/Research"
+        }
+    ],
+    "provider": {
+        "@id": "https://pypi.org",
+        "@type": "Organization",
+        "name": "The Python Package Index",
+        "url": "https://pypi.org"
+    },
+    "runtimePlatform": "Python 3",
     "entryPoints": [
         {
             "@type": "EntryPoint",
@@ -60,6 +66,7 @@
     "url": "https://github.com/proycon/codemeta",
     "developmentStatus": "4 - Beta",
     "applicationCategory": "Software Development",
-    "programmingLanguage": "Python :: 3",
-    "operatingSystem": "POSIX"
+    "programmingLanguage": "Python :: 3, Python 3",
+    "operatingSystem": "POSIX",
+    "keywords": "software metadata codemeta doap pip pypi distutils admssw"
 }
