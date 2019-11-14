@@ -483,9 +483,10 @@ def main():
     parser = argparse.ArgumentParser(description="Converter for Python Distutils (PyPI) Metadata to CodeMeta (JSON-LD) converter. Also supports conversion from other metadata types such as those from Debian packages. The tool can combine metadata from multiple sources.")
     parser.add_argument('-e','--with-entrypoints', dest="with_entrypoints", help="Add entry points (this is not in the official codemeta specification)", action='store_true',required=False)
     parser.add_argument('--with-orcid', dest="with_orcid", help="Add placeholders for ORCID, requires manual editing of the output to insert the actual ORCIDs", action='store_true',required=False)
-    parser.add_argument('-o', dest='output',type=str,help="Metadata output type: json (default), yaml", action='store',required=False, default="json")
-    parser.add_argument('-i', dest='input',type=str,help="Metadata input type: python, apt (debian packages), registry, json, yaml. May be a comma seperated list of multiple types if files are passed on the command line", action='store',required=False, default="python")
-    parser.add_argument('-r', dest='registry',type=str,help="The given registry file groups multiple JSON-LD metadata together in one JSON file. If specified, the file will be read (or created), and updated. This is a custom extension not part of the CodeMeta specification", action='store',required=False)
+    parser.add_argument('-o', '--outputtype', dest='output',type=str,help="Metadata output type: json (default), yaml", action='store',required=False, default="json")
+    parser.add_argument('-O','--outputfile',  dest='outputfile',type=str,help="Output file", action='store',required=False)
+    parser.add_argument('-i','--inputtype', dest='input',type=str,help="Metadata input type: python, apt (debian packages), registry, json, yaml. May be a comma seperated list of multiple types if files are passed on the command line", action='store',required=False, default="python")
+    parser.add_argument('-r','--registry', dest='registry',type=str,help="The given registry file groups multiple JSON-LD metadata together in one JSON file. If specified, the file will be read (or created), and updated. This is a custom extension not part of the CodeMeta specification", action='store',required=False)
     parser.add_argument('inputfiles', nargs='*', help='Input files, set -i accordingly with the types (must contain as many items as passed!)')
     for key, prop in sorted(props.items()):
         if key:
@@ -565,11 +566,19 @@ def main():
     data = clean(data)
 
     if args.output == "json":
-        print(json.dumps(data, ensure_ascii=False, indent=4))
+        if args.outputfile and args.outputfile != "-":
+            with open(args.outputfile,'w',encoding='utf-8') as fp:
+                json.dump(data,fp, ensure_ascii=False, indent=4)
+        else:
+            print(json.dumps(data, ensure_ascii=False, indent=4))
     elif args.output == "yaml":
         if not yaml:
             raise Exception("Yaml support not available", args.output)
-        yaml.dump(data, sys.stdout, default_flow_style=False)
+        if args.outputfile and args.outputfile != "-":
+            with open(args.outputfile,'w',encoding='utf-8') as fp:
+                yaml.dump(data, fp, default_flow_style=False)
+        else:
+            yaml.dump(data, sys.stdout, default_flow_style=False)
     else:
         raise Exception("No such output type: ", args.output)
 

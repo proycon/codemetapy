@@ -28,27 +28,31 @@ Installation
 Usage
 ---------------
 
-Query and convert any package installed through pip:
+Query and convert any install python package:
 
-``$ pip show -v somepackage | codemetapy``
+``$ codemetapy somepackage``
 
-To pipe to an output file:
+Output will be to standard output by defualt, to write it to an output file, do:
 
-``$ pip show -v somepackage | codemetapy > codemeta.json``
+``$ codemetapy somepackage > codemeta.json``
+
+or use the ``-O`` parameter:
+
+``$ codemetapy -O codemeta.json somepackage``
 
 The tool also supports adding properties through parameters:
 
-``$ pip show -v somepackage | codemetapy --developmentStatus active > codemeta.json``
+``$ codemetapy --developmentStatus active somepackage > codemeta.json``
 
 To read an existing codemeta.json and extend it:
 
-``$ pip show -v somepackage | codemetapy -i json,pip codemeta.json - > codemeta.json``
-
-Here ``-`` represents standard input and ``-i`` denotes the input types, you can chain as many as you want.
+``$ codemetapy -i json,python codemeta.json somepackage > codemeta.json``
 
 This tool can also deal with debian packages (albeit limited):
 
-``$ apt show somepackage | codemetapy -i apt``
+``$ apt show somepackage | codemetapy -i apt -``
+
+Here ``-`` represents standard input,  ``-i`` denotes the input types, you can chain as many as you want.
 
 Entrypoint Extension
 ----------------------
