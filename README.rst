@@ -42,7 +42,7 @@ Query and convert any installed python package:
 
 ``$ codemetapy somepackage``
 
-Output will be to standard output by defualt, to write it to an output file instead, do either:
+Output will be to standard output by default, to write it to an output file instead, do either:
 
 ``$ codemetapy somepackage > codemeta.json``
 
@@ -58,12 +58,13 @@ To read an existing codemeta.json and extend it:
 
 ``$ codemetapy -i json,python codemeta.json somepackage > codemeta.json``
 
-This tool can also deal with debian packages (albeit limited):
+This tool can also deal with debian packages  by parsing the output of ``apt show`` (albeit limited):
 
 ``$ apt show somepackage | codemetapy -i apt -``
 
-Here ``-`` represents standard input,  ``-i`` denotes the input types, you can chain as many as you want. The number of
-input types specifies must correspond exactly to the number of input sources (the positional arguments).
+Here ``-`` represents standard input, which enables you to use piping solutions on a unix shell, ``-i`` denotes the
+input types, you can chain as many as you want. The number of input types specifies must correspond exactly to the
+number of input sources (the positional arguments).
 
 Entrypoint Extension
 ----------------------
@@ -80,7 +81,7 @@ You can integrate ``codemeta.json`` generation in your project's ``setup.py``, t
 codemeta`` command that will generate a new metadata file or update an already existing metadata file. Note that this
 must be run *after* ``python setup.py install`` (or ``python setup.py develop``).
 
-To integrate this, add the following to your ``setup.py``:
+To integrate this, add the following to your project's ``setup.py``:
 
 .. code:: python
 
@@ -103,6 +104,8 @@ available if codemetapy is available.
 
 To make use of the entrypoint extension, you need to explicitly specify ``python setup.py codemeta --with-entrypoints``.
 
+If you want to ship your package with the generated ``codemeta.json``, then simply add a line saying ``codemeta.json`` to
+the file ``MANIFEST.in`` in the root of your project.
 
 
 
