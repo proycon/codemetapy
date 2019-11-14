@@ -127,10 +127,11 @@ def parsepython(data, packagename, mapping=None, with_entrypoints=False, orcid_p
             elif fields[0].lower() in mapping[CWKey.PYPI]:
                 data[mapping[CWKey.PYPI][fields[0].lower()]] = " :: ".join(fields[1:])
             elif fields[0] == "Intended Audience":
-                data["audience"].append({
-                    "@type": "Audience",
-                    "audienceType": " :: ".join(fields[1:])
-                })
+                if not any(( 'audienceType' in a and a['audienceType'] == " :: ".join(fields[1:]) for a in data["audience"] )):
+                    data["audience"].append({
+                        "@type": "Audience",
+                        "audienceType": " :: ".join(fields[1:])
+                    })
             else:
                 print("NOTICE: Classifier "  + fields[0] + " has no translation",file=sys.stderr)
         else:
@@ -152,7 +153,7 @@ def parsepython(data, packagename, mapping=None, with_entrypoints=False, orcid_p
             elif key == "Requires-Dist":
                 for dependency in value.split(','):
                     dependency = dependency.strip()
-                    if dependency:
+                    if dependency and not any(( 'identifier' in d and d['identifier'] == dependency for d in data['softwareRequirements'])):
                         data['softwareRequirements'].append({
                             "@type": "SoftwareApplication",
                             "identifier": dependency,
@@ -163,7 +164,7 @@ def parsepython(data, packagename, mapping=None, with_entrypoints=False, orcid_p
             elif key == "Requires-External":
                 for dependency in value.split(','):
                     dependency = dependency.strip()
-                    if dependency:
+                    if dependency and not any(( 'identifier' in d and d['identifier'] == dependency for d in data['softwareRequirements'])):
                         data['softwareRequirements'].append({
                             "@type": "SoftwareApplication",
                             "identifier": dependency,
