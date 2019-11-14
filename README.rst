@@ -52,7 +52,8 @@ This tool can also deal with debian packages (albeit limited):
 
 ``$ apt show somepackage | codemetapy -i apt -``
 
-Here ``-`` represents standard input,  ``-i`` denotes the input types, you can chain as many as you want.
+Here ``-`` represents standard input,  ``-i`` denotes the input types, you can chain as many as you want. The number of
+input types specifies must correspond exactly to the number of input sources (the positional arguments).
 
 Entrypoint Extension
 ----------------------

@@ -487,7 +487,7 @@ def main():
     parser.add_argument('-O','--outputfile',  dest='outputfile',type=str,help="Output file", action='store',required=False)
     parser.add_argument('-i','--inputtype', dest='input',type=str,help="Metadata input type: python, apt (debian packages), registry, json, yaml. May be a comma seperated list of multiple types if files are passed on the command line", action='store',required=False, default="python")
     parser.add_argument('-r','--registry', dest='registry',type=str,help="The given registry file groups multiple JSON-LD metadata together in one JSON file. If specified, the file will be read (or created), and updated. This is a custom extension not part of the CodeMeta specification", action='store',required=False)
-    parser.add_argument('inputfiles', nargs='*', help='Input files, set -i accordingly with the types (must contain as many items as passed!)')
+    parser.add_argument('inputsources', nargs='*', help='Input sources, the nature of the source depends on the type, often a file (or use - for standard input), set -i accordingly with the types (must contain as many items as passed!)')
     for key, prop in sorted(props.items()):
         if key:
             parser.add_argument('--' + key,dest=key, type=str, help=prop['DESCRIPTION'] + " (Type: "  + prop['TYPE'] + ", Parent: " + prop['PARENT'] + ") [you can format the value string in json if needed]", action='store',required=False)
@@ -511,11 +511,11 @@ def main():
         print("Registry " + args.registry + " has invalid (outdated?) format, ignoring and creating a new one...",file=sys.stderr)
         registry = {"@context": CONTEXT + extracontext, "@graph": []}
 
-    inputfiles = []
-    if args.inputfiles:
-        if len(args.input.split(",")) != len(args.inputfiles):
-            print("Passed " + str(len(args.inputfiles)) + " files but specified " + str(len(args.input.split(','))) + " input types!",file=sys.stderr)
-        inputfiles = list(zip(args.inputfiles, args.input.split(',')))
+    inputsources = []
+    if args.inputsources:
+        if len(args.input.split(",")) != len(args.inputsources):
+            print("Passed " + str(len(args.inputsources)) + " files but specified " + str(len(args.input.split(','))) + " input types!",file=sys.stderr)
+        inputsources = list(zip(args.inputsources, args.input.split(',')))
     else:
         print("No input files specified (use - for stdin)",file=sys.stderr)
         sys.exit(2)
@@ -532,7 +532,7 @@ def main():
         "softwareRequirements": [],
         "audience": []
     })
-    for source, inputtype in inputfiles:
+    for source, inputtype in inputsources:
         if inputtype == "registry":
             try:
                 update(data, getregistry(getsteam(source), registry))
