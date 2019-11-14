@@ -188,7 +188,7 @@ def parsepython(data, packagename, mapping=None, with_entrypoints=False, orcid_p
                         })
             elif key.lower() in mapping[CWKey.PYPI]:
                 data[mapping[CWKey.PYPI][key.lower()]] = value
-                if key == "Name":
+                if key == "Name" and 'identifier' not in data:
                     data["identifier"] = value
             else:
                 print("WARNING: No translation for distutils key " + key,file=sys.stderr)
