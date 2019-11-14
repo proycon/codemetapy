@@ -119,6 +119,7 @@ def parsepython(data, packagename, mapping=None, with_entrypoints=False, orcid_p
         #not in official specification!!!
         data['entryPoints'] = []
     pkg = importlib_metadata.distribution(packagename)
+    print("Found metadata in " , pkg._path,file=sys.stderr)
     for key, value in pkg.metadata.items():
         if key == "Classifier":
             fields = [ x.strip() for x in value.strip().split('::') ]
@@ -188,7 +189,7 @@ def parsepython(data, packagename, mapping=None, with_entrypoints=False, orcid_p
                         })
             elif key.lower() in mapping[CWKey.PYPI]:
                 data[mapping[CWKey.PYPI][key.lower()]] = value
-                if key == "Name" and 'identifier' not in data:
+                if key == "Name" and ('identifier' not in data or data['identifier'] in ("unknown","")):
                     data["identifier"] = value
             else:
                 print("WARNING: No translation for distutils key " + key,file=sys.stderr)
@@ -366,23 +367,30 @@ def getstream(source):
 class CodeMetaCommand(distutils.cmd.Command):
     description = "Generate a codemeta.json file or update an existing one, note that the package must be installed first for this to work!"
     user_options = [
-        ('with-entrypoints','e','Generate entrypoints as well (custom codemeta extension not part of the official specification')
+        ('with-entrypoints','e','Generate entrypoints as well (custom codemeta extension not part of the official specification'),
+        ('dry-run','n','Write to stdout instead of codemeta.json')
     ]
 
     def initialize_options(self):
         self.with_entrypoints = False
+        self.dry_run = False
 
     def finalize_options(self):
         self.with_entrypoints = bool(self.with_entrypoints)
+        self.dry_run = bool(self.dry_run)
 
     def run(self):
         """Updates the codemeta.json for this package during the setup process. Hook to be (indirectly) called from setuptools"""
         codemetafile = "codemeta.json"
-        print("Writing codemeta metadata to " + codemetafile,file=sys.stderr)
-        if os.path.exists(codemetafile):
-            build(input="json,python",output="json",outputfile=codemetafile, inputsources=[codemetafile, self.distribution.metadata.name], with_entrypoints=self.with_entrypoints)
+        if self.dry_run:
+            outputfile = "-"
         else:
-            build(input="python",output="json",outputfile=codemetafile, inputsources=[self.distribution.metadata.name], with_entrypoints=self.with_entrypoints)
+            outputfile = codemetafile
+        print("Writing codemeta metadata to " + outputfile,file=sys.stderr)
+        if os.path.exists(codemetafile):
+            build(input="json,python",output="json",outputfile=outputfile, inputsources=[codemetafile, self.distribution.metadata.name], with_entrypoints=self.with_entrypoints)
+        else:
+            build(input="python",output="json",outputfile=outputfile, inputsources=[self.distribution.metadata.name], with_entrypoints=self.with_entrypoints)
 
 
 props, mapping = readcrosswalk()
@@ -456,7 +464,9 @@ def build(**kwargs):
         "softwareRequirements": [],
         "audience": []
     })
-    for source, inputtype in inputsources:
+    l = len(inputsources)
+    for i, (source, inputtype) in enumerate(inputsources):
+        print("Processing source #%d of %d" % (i+1,l),file=sys.stderr)
         if inputtype == "registry":
             try:
                 update(data, getregistry(getstream(source), registry))
@@ -464,7 +474,7 @@ def build(**kwargs):
                 print("ERROR: No such identifier in registry: ", source,file=sys.stderr)
                 sys.exit(3)
         elif inputtype in ("python","distutils"):
-            print("Querying python package: " + source,file=sys.stderr)
+            print("Obtaining python package metadata for: " + source,file=sys.stderr)
             #source is a name of a package
             update(data, parsepython(data, source, mapping, args.with_entrypoints, args.with_orcid, args.exactplatformversion))
         elif inputtype == "pip":
