@@ -106,13 +106,16 @@ def readcrosswalk(sourcekeys=(CWKey.PYPI,CWKey.DEBIAN)):
 
     return props, mapping
 
-def parsepython(data, packagename, mapping=None, with_entrypoints=False, orcid_placeholder=False):
+def parsepython(data, packagename, mapping=None, with_entrypoints=False, orcid_placeholder=False, exactplatformversion=False):
     """Parses python package metadata and converts it to codemeta"""
     if mapping is None:
         _, mapping = readcrosswalk((CWKey.PYPI,))
     section = None
     data["provider"] = PROVIDER_PYPI
-    data["runtimePlatform"] =  "Python " + str(sys.version_info.major) + "." + str(sys.version_info.minor) + "." + str(sys.version_info.micro)
+    if exactplatformversion:
+        data["runtimePlatform"] =  "Python " + str(sys.version_info.major) + "." + str(sys.version_info.minor) + "." + str(sys.version_info.micro)
+    else:
+        data["runtimePlatform"] =  "Python 3"
     if with_entrypoints:
         #not in official specification!!!
         data['entryPoints'] = []
@@ -123,9 +126,23 @@ def parsepython(data, packagename, mapping=None, with_entrypoints=False, orcid_p
             pipkey = "classifiers['" + fields[0] + "']"
             pipkey = pipkey.lower()
             if pipkey in mapping[CWKey.PYPI]:
-                data[mapping[CWKey.PYPI][pipkey]] = " :: ".join(fields[1:])
+                key = mapping[CWKey.PYPI][pipkey]
+                det = " :: " if key != "programmingLanguage" else " "
+                value = det.join(fields[1:])
+                if key in data:
+                    if not any( x.strip() == value for x in data[key].split(",") ):
+                        data[key] += ", " + value
+                else:
+                    data[key] = value
             elif fields[0].lower() in mapping[CWKey.PYPI]:
-                data[mapping[CWKey.PYPI][fields[0].lower()]] = " :: ".join(fields[1:])
+                key = mapping[CWKey.PYPI][fields[0].lower()]
+                det = " :: " if key != "programmingLanguage" else " "
+                value = det.join(fields[1:])
+                if key in data:
+                    if not any( x.strip() == value for x in data[key].split(",") ):
+                        data[key] += ", " + value
+                else:
+                    data[key] = value
             elif fields[0] == "Intended Audience":
                 if not any(( 'audienceType' in a and a['audienceType'] == " :: ".join(fields[1:]) for a in data["audience"] )):
                     data["audience"].append({
@@ -159,7 +176,7 @@ def parsepython(data, packagename, mapping=None, with_entrypoints=False, orcid_p
                             "identifier": dependency,
                             "name": dependency,
                             "provider": PROVIDER_PYPI,
-                            "runtimePlatform": "Python " + str(sys.version_info.major) + "." + str(sys.version_info.minor) + "." + str(sys.version_info.micro)
+                            "runtimePlatform": data["runtimePlatform"]
                         })
             elif key == "Requires-External":
                 for dependency in value.split(','):
@@ -538,6 +555,7 @@ props, mapping = readcrosswalk()
 def main():
     parser = argparse.ArgumentParser(description="Converter for Python Distutils (PyPI) Metadata to CodeMeta (JSON-LD) converter. Also supports conversion from other metadata types such as those from Debian packages. The tool can combine metadata from multiple sources.")
     parser.add_argument('-e','--with-entrypoints', dest="with_entrypoints", help="Add entry points (this is not in the official codemeta specification)", action='store_true',required=False)
+    parser.add_argument('--exact-python-version', dest="exactplatformversion", help="Register the exact python interpreter used to generate the metadata as the runtime platform. Will only register the major version otherwise.", action='store_true',required=False)
     parser.add_argument('--with-orcid', dest="with_orcid", help="Add placeholders for ORCID, requires manual editing of the output to insert the actual ORCIDs", action='store_true',required=False)
     parser.add_argument('-o', '--outputtype', dest='output',type=str,help="Metadata output type: json (default), yaml", action='store',required=False, default="json")
     parser.add_argument('-O','--outputfile',  dest='outputfile',type=str,help="Output file", action='store',required=False)
@@ -613,7 +631,7 @@ def build(**kwargs):
         elif inputtype in ("python","distutils"):
             print("Querying python package: " + source,file=sys.stderr)
             #source is a name of a package
-            update(data, parsepython(data, source, mapping, args.with_entrypoints, args.with_orcid))
+            update(data, parsepython(data, source, mapping, args.with_entrypoints, args.with_orcid, args.exactplatformversion))
         elif inputtype == "pip":
             piplines = getstream(source).read().split("\n")
             update(data, parsepip(data, piplines, mapping, args.with_entrypoints, args.with_orcid))
