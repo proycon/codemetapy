@@ -20,6 +20,16 @@ package. For more general information about the CodeMeta Project for defining so
 https://codemeta.github.io. In particular, new users might want to start with the User Guide, while those looking to
 learn more about JSON-LD and consuming existing codemeta files should see the Developer Guide.
 
+For Python packages, codemetapy uses ``importlib.metadata`` (Python 3.8+) or its backported variant (for older Python
+versions) to read the metadata of installed packages. It should therefore be compatible irregardless of whether you
+specified in your metadata in ``setup.py``, ``setup.cfg``, ``pyproject.toml`` or using any other backend.
+
+Moreover, CodeMetaPy also supports conversions from other package types, such as debian packages (APT) (but this is
+limited). For R, see `codemetar <https://github.com/ropensci/codemetar>`_ instead.
+
+One of the most notable features of this tool is that it allows chaining to successively update metadata based on
+multiple sources.
+
 Installation
 ----------------
 
@@ -67,8 +77,8 @@ Integration in setup.py
 -------------------------
 
 You can integrate ``codemeta.json`` generation in your project's ``setup.py``, this will add an extra ``python setup.py
-codemeta`` command that will generate a new metadata or update an already existing metadata. Note that this must be run
-*after* ``python setup.py install`` (or ``python setup.py develop``).
+codemeta`` command that will generate a new metadata file or update an already existing metadata file. Note that this
+must be run *after* ``python setup.py install`` (or ``python setup.py develop``).
 
 To integrate this, add the following to your ``setup.py``:
 
