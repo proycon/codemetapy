@@ -130,8 +130,12 @@ def parsepython(data, packagename, mapping=None, with_entrypoints=False, orcid_p
                 det = " :: " if key != "programmingLanguage" else " "
                 value = det.join(fields[1:])
                 if key in data:
-                    if not any( x.strip() == value for x in data[key].split(",") ):
-                        data[key] += ", " + value
+                    if isinstance(data[key],str):
+                        if not any( x.strip() == value for x in data[key].split(",") ):
+                            data[key] += ", " + value
+                    elif isinstance(data[key],list):
+                        if value not in data[key]:
+                            data[key].append(value)
                 else:
                     data[key] = value
             elif fields[0].lower() in mapping[CWKey.PYPI]:
