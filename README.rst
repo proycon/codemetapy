@@ -38,11 +38,11 @@ Installation
 Usage
 ---------------
 
-Query and convert any install python package:
+Query and convert any installed python package:
 
 ``$ codemetapy somepackage``
 
-Output will be to standard output by defualt, to write it to an output file, do:
+Output will be to standard output by defualt, to write it to an output file instead, do either:
 
 ``$ codemetapy somepackage > codemeta.json``
 

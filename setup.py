@@ -5,6 +5,13 @@ from __future__ import print_function
 
 import os
 from setuptools import setup
+try:
+    from codemeta.codemeta import CodeMetaCommand
+    cmdclass={
+        'codemeta': CodeMetaCommand,
+    }
+except ImportError:
+    cmdclass={}
 
 def read(fname):
     return open(os.path.join(os.path.dirname(__file__), fname),'r',encoding='utf-8').read()
@@ -36,5 +43,6 @@ setup(
     include_package_data=True,
     package_data = { 'codemeta': ['schema/crosswalk.csv', 'schema/codemeta.jsonld'] },
     install_requires=[ 'nameparser','importlib_metadata'  ],
-    entry_points = {    'console_scripts': [ 'codemetapy = codemeta.codemeta:main' ] }
+    entry_points = {    'console_scripts': [ 'codemetapy = codemeta.codemeta:main' ] },
+    cmdclass=cmdclass
 )
