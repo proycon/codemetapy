@@ -115,7 +115,7 @@ def parsepython(data, packagename, mapping=None, with_entrypoints=False, orcid_p
         data["runtimePlatform"] =  "Python " + str(sys.version_info.major) + "." + str(sys.version_info.minor) + "." + str(sys.version_info.micro)
     else:
         data["runtimePlatform"] =  "Python 3"
-    if with_entrypoints:
+    if with_entrypoints and not 'entryPoints' in data:
         #not in official specification!!!
         data['entryPoints'] = []
     pkg = importlib_metadata.distribution(packagename)
@@ -235,7 +235,7 @@ def parseapt(data, lines, mapping=None, with_entrypoints=False, orcid_placeholde
     provider = PROVIDER_DEBIAN
     description = ""
     parsedescription = False
-    if with_entrypoints:
+    if with_entrypoints and not 'entryPoints' in data:
         #not in official specification!!!
         data['entryPoints'] = []
     for line in lines:
