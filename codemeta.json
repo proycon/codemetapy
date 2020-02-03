@@ -22,7 +22,7 @@
     "@type": "SoftwareSourceCode",
     "identifier": "codemetapy",
     "name": "CodeMetaPy",
-    "version": "0.3.0",
+    "version": "0.3.2",
     "description": "Generate CodeMeta metadata for Python packages",
     "license": "GPL, OSI Approved :: GNU General Public License v3 (GPLv3)",
     "author": [

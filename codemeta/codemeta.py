@@ -222,7 +222,8 @@ def parsepython(data, packagename, mapping=None, with_entrypoints=False, orcid_p
             }
             if description:
                 entrypoint['description'] = description
-            data['entryPoints'].append(entrypoint) #the entryPoints relation is not in the specification, but our own invention, it is the reverse of the EntryPoint.actionApplication property
+            if entrypoint not in data['entryPoints']:
+                data['entryPoints'].append(entrypoint) #the entryPoints relation is not in the specification, but our own invention, it is the reverse of the EntryPoint.actionApplication property
         if not data['entryPoints'] or ('applicationCategory' in data and 'libraries' in data['applicationCategory'].lower()):
             #no entry points defined, assume this is a library
             data['interfaceType'] = "LIB"
