@@ -173,8 +173,8 @@ def parsepython(data, packagename, mapping=None, with_entrypoints=False, orcid_p
                     data["author"][-1]["email"] = value
             elif key == "Requires-Dist":
                 for dependency in value.split(','):
-                    dependency = dependency.strip()
-                    if dependency and not any(( 'identifier' in d and d['identifier'] == dependency for d in data['softwareRequirements'])):
+                    dependency, depversion = parsedependency(dependency.strip())
+                    if dependency and dependency[0].isalnum() and not any(( 'identifier' in d and d['identifier'] == dependency for d in data['softwareRequirements'])):
                         data['softwareRequirements'].append({
                             "@type": "SoftwareApplication",
                             "identifier": dependency,
@@ -182,6 +182,8 @@ def parsepython(data, packagename, mapping=None, with_entrypoints=False, orcid_p
                             "provider": PROVIDER_PYPI,
                             "runtimePlatform": data["runtimePlatform"]
                         })
+                        if depversion:
+                            data['softwareRequirements'][-1]['version'] = depversion
             elif key == "Requires-External":
                 for dependency in value.split(','):
                     dependency = dependency.strip()
@@ -228,6 +230,18 @@ def parsepython(data, packagename, mapping=None, with_entrypoints=False, orcid_p
             #no entry points defined, assume this is a library
             data['interfaceType'] = "LIB"
     return data
+
+def parsedependency(s):
+    """Parses a pip dependency specification, returning the identifier, version"""
+    identifier = s.split(" ")[0]
+    begin = s.find("(")
+    if begin != -1:
+        end = s.find(")")
+        version = s[begin+1:end].strip().replace("==","")
+    else:
+        version = None
+    return identifier, version
+
 
 def parseapt(data, lines, mapping=None, with_entrypoints=False, orcid_placeholder=False):
     """Parses apt show output and converts to codemeta"""
