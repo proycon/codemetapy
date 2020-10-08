@@ -172,11 +172,12 @@ def parsepython(data, packagename, mapping=None, with_entrypoints=False, orcid_p
                 if data["author"]:
                     data["author"][-1]["email"] = value
             elif key == "Requires-Dist":
-                for dependency in value.split(','):
+                for dependency in splitdeps(value):
                     if dependency.find("extra =") != -1 and not extras:
+                        print("Skipping extra dependency: ",dependency,file=sys.stderr)
                         continue
                     dependency, depversion = parsedependency(dependency.strip())
-                    if dependency and dependency[0].isalnum() and not any(( 'identifier' in d and d['identifier'] == dependency for d in data['softwareRequirements'])):
+                    if dependency and not any(( 'identifier' in d and d['identifier'] == dependency for d in data['softwareRequirements'])):
                         data['softwareRequirements'].append({
                             "@type": "SoftwareApplication",
                             "identifier": dependency,
@@ -232,6 +233,22 @@ def parsepython(data, packagename, mapping=None, with_entrypoints=False, orcid_p
             #no entry points defined, assume this is a library
             data['interfaceType'] = "LIB"
     return data
+
+def splitdeps(s):
+    """Split a string of multiple dependencies into a list"""
+    begin = 0
+    depth = 0
+    for i, c in enumerate(s):
+        if c == '(':
+            depth += 1
+        elif c == ')':
+            depth -= 1
+        if c == ',' and depth == 0:
+            yield s[begin:i].strip()
+            begin = i + 1
+    if s[begin:].strip():
+        yield s[begin:].strip()
+
 
 def parsedependency(s):
     """Parses a pip dependency specification, returning the identifier, version"""
