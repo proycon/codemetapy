@@ -105,7 +105,7 @@ def readcrosswalk(sourcekeys=(CWKey.PYPI,CWKey.DEBIAN)):
 
     return props, mapping
 
-def parsepython(data, packagename, mapping=None, with_entrypoints=False, orcid_placeholder=False, exactplatformversion=False):
+def parsepython(data, packagename, mapping=None, with_entrypoints=False, orcid_placeholder=False, exactplatformversion=False,extras=True):
     """Parses python package metadata and converts it to codemeta"""
     if mapping is None:
         _, mapping = readcrosswalk((CWKey.PYPI,))
@@ -173,6 +173,8 @@ def parsepython(data, packagename, mapping=None, with_entrypoints=False, orcid_p
                     data["author"][-1]["email"] = value
             elif key == "Requires-Dist":
                 for dependency in value.split(','):
+                    if dependency.find("extra =") != -1 and not extras:
+                        continue
                     dependency, depversion = parsedependency(dependency.strip())
                     if dependency and dependency[0].isalnum() and not any(( 'identifier' in d and d['identifier'] == dependency for d in data['softwareRequirements'])):
                         data['softwareRequirements'].append({
@@ -424,6 +426,7 @@ def main():
     parser.add_argument('-i','--inputtype', dest='input',type=str,help="Metadata input type: python, apt (debian packages), registry, json, yaml. May be a comma seperated list of multiple types if files are passed on the command line", action='store',required=False, default="python")
     parser.add_argument('-r','--registry', dest='registry',type=str,help="The given registry file groups multiple JSON-LD metadata together in one JSON file. If specified, the file will be read (or created), and updated. This is a custom extension not part of the CodeMeta specification", action='store',required=False)
     parser.add_argument('inputsources', nargs='*', help='Input sources, the nature of the source depends on the type, often a file (or use - for standard input), set -i accordingly with the types (must contain as many items as passed!)')
+    parser.add_argument('--no-extras',dest="no_extras",help="Do not parse any extras in the dependency specification", action='store_true', required=False)
     for key, prop in sorted(props.items()):
         if key:
             parser.add_argument('--' + key,dest=key, type=str, help=prop['DESCRIPTION'] + " (Type: "  + prop['TYPE'] + ", Parent: " + prop['PARENT'] + ") [you can format the value string in json if needed]", action='store',required=False)
@@ -495,7 +498,7 @@ def build(**kwargs):
         elif inputtype in ("python","distutils"):
             print("Obtaining python package metadata for: " + source,file=sys.stderr)
             #source is a name of a package
-            update(data, parsepython(data, source, mapping, args.with_entrypoints, args.with_orcid, args.exactplatformversion))
+            update(data, parsepython(data, source, mapping, args.with_entrypoints, args.with_orcid, args.exactplatformversion, not args.no_extras))
         elif inputtype == "pip":
             print("Pip output parsing is obsolete since codemetapy 0.3.0, please use input type 'python' instead",file=sys.stderr)
             sys.exit(2)
