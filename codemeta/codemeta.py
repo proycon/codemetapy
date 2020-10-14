@@ -183,7 +183,7 @@ def parsepython(data, packagename, mapping=None, with_entrypoints=False, orcid_p
                         mails = value.split(",")
                         if len(mails) == len(authorindex):
                             for i, mail in zip(authorindex, mails):
-                                data["author"][i]["email"] = mail
+                                data["author"][i]["email"] = mail.strip()
                         else:
                             print("WARNING: Unable to unambiguously assign e-mail addresses to multiple authors",file=sys.stderr)
                     else:
