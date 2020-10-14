@@ -105,11 +105,11 @@ def readcrosswalk(sourcekeys=(CWKey.PYPI,CWKey.DEBIAN)):
 
     return props, mapping
 
-def parsepython(data, packagename, mapping=None, with_entrypoints=False, orcid_placeholder=False, exactplatformversion=False,extras=True):
+def parsepython(data, packagename, mapping=None, with_entrypoints=False, orcid_placeholder=False, exactplatformversion=False,extras=True, multi_author=True):
     """Parses python package metadata and converts it to codemeta"""
     if mapping is None:
         _, mapping = readcrosswalk((CWKey.PYPI,))
-    section = None
+    authorindex = []
     data["provider"] = PROVIDER_PYPI
     if exactplatformversion:
         data["runtimePlatform"] =  "Python " + str(sys.version_info.major) + "." + str(sys.version_info.minor) + "." + str(sys.version_info.micro)
@@ -157,20 +157,39 @@ def parsepython(data, packagename, mapping=None, with_entrypoints=False, orcid_p
                 print("NOTICE: Classifier "  + fields[0] + " has no translation",file=sys.stderr)
         else:
             if key == "Author":
-                humanname = HumanName(value.strip())
-                author = {"@type":"Person", "givenName": humanname.first, "familyName": " ".join((humanname.middle, humanname.last)).strip() }
-                found = False
-                for a in data["author"]:
-                    if a['givenName'] == author['givenName'] and a['familyName'] == author['familyName']:
-                        found = True
-                        break
-                if not found:
-                    data["author"].append(author)
-                    if orcid_placeholder:
-                        data["author"][-1]["@id"] = "https://orcid.org/EDIT_ME!"
+                if multi_author:
+                    names = value.strip().split(",")
+                else:
+                    names = [value.strip()]
+                for name in names:
+                    humanname = HumanName(name.strip())
+                    lastname = " ".join((humanname.middle, humanname.last)).strip()
+                    found = False
+                    for i, a in enumerate(data["author"]):
+                        if a['givenName'] == humanname.first and a['familyName'] == lastname:
+                            authorindex.append(i)
+                            found = True
+                            break
+                    if not found:
+                        authorindex.append(len(data["author"]))
+                        data["author"].append(
+                            {"@type":"Person", "givenName": humanname.first, "familyName": lastname }
+                        )
+                        if orcid_placeholder:
+                            data["author"][-1]["@id"] = "https://orcid.org/EDIT_ME!"
             elif key == "Author-email":
                 if data["author"]:
-                    data["author"][-1]["email"] = value
+                    if multi_author:
+                        mails = value.split(",")
+                        if len(mails) == len(authorindex):
+                            for i, mail in zip(authorindex, mails):
+                                data["author"][i]["email"] = mail
+                        else:
+                            print("WARNING: Unable to unambiguously assign e-mail addresses to multiple authors",file=sys.stderr)
+                    else:
+                        data["author"][-1]["email"] = value
+                else:
+                    print("WARNING: No author provided, unable to attach author e-mail",file=sys.stderr)
             elif key == "Requires-Dist":
                 for dependency in splitdeps(value):
                     if dependency.find("extra =") != -1 and not extras:
@@ -437,6 +456,7 @@ def main():
     parser = argparse.ArgumentParser(description="Converter for Python Distutils (PyPI) Metadata to CodeMeta (JSON-LD) converter. Also supports conversion from other metadata types such as those from Debian packages. The tool can combine metadata from multiple sources.")
     parser.add_argument('-e','--with-entrypoints', dest="with_entrypoints", help="Add entry points (this is not in the official codemeta specification)", action='store_true',required=False)
     parser.add_argument('--exact-python-version', dest="exactplatformversion", help="Register the exact python interpreter used to generate the metadata as the runtime platform. Will only register the major version otherwise.", action='store_true',required=False)
+    parser.add_argument('--single-author', dest="single_author", help="CodemetaPy will attempt to check if there are multiple authors specified in the author field, if you want to disable this behaviour, set this flag", action='store_true',required=False)
     parser.add_argument('--with-orcid', dest="with_orcid", help="Add placeholders for ORCID, requires manual editing of the output to insert the actual ORCIDs", action='store_true',required=False)
     parser.add_argument('-o', '--outputtype', dest='output',type=str,help="Metadata output type: json (default), yaml", action='store',required=False, default="json")
     parser.add_argument('-O','--outputfile',  dest='outputfile',type=str,help="Output file", action='store',required=False)
@@ -515,7 +535,7 @@ def build(**kwargs):
         elif inputtype in ("python","distutils"):
             print("Obtaining python package metadata for: " + source,file=sys.stderr)
             #source is a name of a package
-            update(data, parsepython(data, source, mapping, args.with_entrypoints, args.with_orcid, args.exactplatformversion, not args.no_extras))
+            update(data, parsepython(data, source, mapping, args.with_entrypoints, args.with_orcid, args.exactplatformversion, not args.no_extras, not args.single_author))
         elif inputtype == "pip":
             print("Pip output parsing is obsolete since codemetapy 0.3.0, please use input type 'python' instead",file=sys.stderr)
             sys.exit(2)
