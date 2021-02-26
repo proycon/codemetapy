@@ -62,7 +62,7 @@ PROGLANG_PYTHON = {
 
 CONTEXT =  [
     "https://doi.org/10.5063/schema/codemeta-2.0",
-    "http://schema.org",
+    "http://schema.org/",
 ]
 
 ENTRYPOINT_CONTEXT = { #these are all custom extensions not in codemeta (yet), they are proposed in https://github.com/codemeta/codemeta/issues/183
