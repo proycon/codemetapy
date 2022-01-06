@@ -124,7 +124,15 @@ def parsepython(data, packagename: str, crosswalk=None, with_entrypoints=False, 
     if with_entrypoints and not 'entryPoints' in data:
         #not in official specification!!!
         data['entryPoints'] = []
-    pkg = importlib_metadata.distribution(packagename)
+    try:
+        pkg = importlib_metadata.distribution(packagename)
+    except importlib_metadata.PackageNotFoundError:
+        #fallback if package is not installed but in local directory:
+        context = importlib.metadata.DistributionFinder.Context(name=packagename,path=".")
+        try:
+            pkg = next(importlib_metadata.MetadataPathFinder().find_distributions(context))
+        except StopIteration:
+            print(f"No such package: {packagename}",file=sys.stderr)
     print(f"Found metadata in {pkg._path}",file=sys.stderr) #pylint: disable=W0212
     for key, value in pkg.metadata.items():
         if key == "Classifier":
@@ -539,7 +547,7 @@ def build(**kwargs):
                 print(f"ERROR: No such identifier in registry: {source}", file=sys.stderr)
                 sys.exit(3)
         elif inputtype in ("python","distutils"):
-            print("Obtaining python package metadata for: {source}",file=sys.stderr)
+            print(f"Obtaining python package metadata for: {source}",file=sys.stderr)
             #source is a name of a package
             update(data, parsepython(data, source, crosswalk, args.with_entrypoints, args.with_orcid, args.exactplatformversion, not args.no_extras, not args.single_author))
         elif inputtype == "pip":
