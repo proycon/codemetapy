@@ -15,7 +15,7 @@ import json
 import os.path
 import csv
 import importlib
-import distutils
+import distutils #note: will be removed in python 3.12!
 import setuptools
 from collections import OrderedDict, defaultdict
 from nameparser import HumanName
