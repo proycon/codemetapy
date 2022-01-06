@@ -18,7 +18,7 @@ def read(fname):
 
 setup(
     name = "CodeMetaPy",
-    version = "0.3.5",
+    version = "0.3.6",
     author = "Maarten van Gompel",
     author_email = "proycon@anaproy.nl",
     description = ("Generate CodeMeta metadata for Python packages"),
@@ -30,11 +30,11 @@ setup(
     classifiers=[
         "Development Status :: 4 - Beta",
         "Topic :: Software Development",
-        "Programming Language :: Python :: 3.4",
-        "Programming Language :: Python :: 3.5",
         "Programming Language :: Python :: 3.6",
         "Programming Language :: Python :: 3.7",
         "Programming Language :: Python :: 3.8",
+        "Programming Language :: Python :: 3.9",
+        "Programming Language :: Python :: 3.10",
         "Operating System :: POSIX",
         "Intended Audience :: Science/Research",
         "License :: OSI Approved :: GNU General Public License v3 (GPLv3)",

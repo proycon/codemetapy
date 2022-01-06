@@ -47,12 +47,14 @@ PROVIDER_PYPI = {
     "name": "The Python Package Index",
     "url": "https://pypi.org",
 }
+
 PROVIDER_DEBIAN = {
     "@id": "https://www.debian.org",
     "@type": "Organization",
     "name": "The Debian Project",
     "url": "https://www.debian.org",
 }
+
 PROGLANG_PYTHON = {
     "@type": "ComputerLanguage",
     "name": "Python",
@@ -75,6 +77,7 @@ ENTRYPOINT_CONTEXT = { #these are all custom extensions not in codemeta (yet), t
 
 if yaml is not None:
     def represent_ordereddict(dumper, data):
+        """function to represent an ordered dictionary in yaml"""
         value = []
 
         for item_key, item_value in data.items():
@@ -89,26 +92,29 @@ if yaml is not None:
 
 
 def readcrosswalk(sourcekeys=(CWKey.PYPI,CWKey.DEBIAN)):
-    mapping = defaultdict(dict)
+    """Read the crosswalk.csv as provided by codemeta into memory"""
+    #pylint: disable=W0621
+    crosswalk = defaultdict(dict)
     #pip may output things differently than recorded in distutils/setup.py, so we register some aliases:
-    mapping[CWKey.PYPI]["home-page"] = "url"
-    mapping[CWKey.PYPI]["summary"] = "description"
+    crosswalk[CWKey.PYPI]["home-page"] = "url"
+    crosswalk[CWKey.PYPI]["summary"] = "description"
     props = {}
     crosswalkfile = os.path.join(os.path.dirname(__file__), 'schema','crosswalk.csv')
-    with open(crosswalkfile, 'r') as f:
+    with open(crosswalkfile, 'r', encoding="utf-8") as f:
         reader = csv.DictReader(f)
         for row in reader:
             props[row[CWKey.PROP]] = {"PARENT": row[CWKey.PARENT], "TYPE": row[CWKey.TYPE], "DESCRIPTION": row[CWKey.DESCRIPTION] }
             for sourcekey in sourcekeys:
                 if row[sourcekey]:
-                    mapping[sourcekey][row[sourcekey].lower()] = row[CWKey.PROP]
+                    crosswalk[sourcekey][row[sourcekey].lower()] = row[CWKey.PROP]
 
-    return props, mapping
+    return props, crosswalk
 
-def parsepython(data, packagename, mapping=None, with_entrypoints=False, orcid_placeholder=False, exactplatformversion=False,extras=True, multi_author=True):
+#pylint: disable=W0621
+def parsepython(data, packagename: str, crosswalk=None, with_entrypoints=False, orcid_placeholder=False, exactplatformversion=False,extras=True, multi_author=True):
     """Parses python package metadata and converts it to codemeta"""
-    if mapping is None:
-        _, mapping = readcrosswalk((CWKey.PYPI,))
+    if crosswalk is None:
+        _, crosswalk = readcrosswalk((CWKey.PYPI,))
     authorindex = []
     data["provider"] = PROVIDER_PYPI
     if exactplatformversion:
@@ -119,14 +125,14 @@ def parsepython(data, packagename, mapping=None, with_entrypoints=False, orcid_p
         #not in official specification!!!
         data['entryPoints'] = []
     pkg = importlib_metadata.distribution(packagename)
-    print("Found metadata in " , pkg._path,file=sys.stderr)
+    print(f"Found metadata in {pkg._path}",file=sys.stderr) #pylint: disable=W0212
     for key, value in pkg.metadata.items():
         if key == "Classifier":
             fields = [ x.strip() for x in value.strip().split('::') ]
             pipkey = "classifiers['" + fields[0] + "']"
             pipkey = pipkey.lower()
-            if pipkey in mapping[CWKey.PYPI]:
-                key = mapping[CWKey.PYPI][pipkey]
+            if pipkey in crosswalk[CWKey.PYPI]:
+                key = crosswalk[CWKey.PYPI][pipkey]
                 det = " :: " if key != "programmingLanguage" else " "
                 value = det.join(fields[1:])
                 if key in data:
@@ -138,8 +144,8 @@ def parsepython(data, packagename, mapping=None, with_entrypoints=False, orcid_p
                             data[key].append(value)
                 else:
                     data[key] = value
-            elif fields[0].lower() in mapping[CWKey.PYPI]:
-                key = mapping[CWKey.PYPI][fields[0].lower()]
+            elif fields[0].lower() in crosswalk[CWKey.PYPI]:
+                key = crosswalk[CWKey.PYPI][fields[0].lower()]
                 det = " :: " if key != "programmingLanguage" else " "
                 value = det.join(fields[1:])
                 if key in data:
@@ -191,7 +197,7 @@ def parsepython(data, packagename, mapping=None, with_entrypoints=False, orcid_p
                 else:
                     print("WARNING: No author provided, unable to attach author e-mail",file=sys.stderr)
             elif key == "Requires-Dist":
-                for dependency in splitdeps(value):
+                for dependency in splitdependencies(value):
                     if dependency.find("extra =") != -1 and not extras:
                         print("Skipping extra dependency: ",dependency,file=sys.stderr)
                         continue
@@ -215,8 +221,8 @@ def parsepython(data, packagename, mapping=None, with_entrypoints=False, orcid_p
                             "identifier": dependency,
                             "name": dependency,
                         })
-            elif key.lower() in mapping[CWKey.PYPI]:
-                data[mapping[CWKey.PYPI][key.lower()]] = value
+            elif key.lower() in crosswalk[CWKey.PYPI]:
+                data[crosswalk[CWKey.PYPI][key.lower()]] = value
                 if key == "Name" and ('identifier' not in data or data['identifier'] in ("unknown","")):
                     data["identifier"] = value
             else:
@@ -253,8 +259,8 @@ def parsepython(data, packagename, mapping=None, with_entrypoints=False, orcid_p
             data['interfaceType'] = "LIB"
     return data
 
-def splitdeps(s):
-    """Split a string of multiple dependencies into a list"""
+def splitdependencies(s: str):
+    """Split a string of multiple (python) dependencies"""
     begin = 0
     depth = 0
     for i, c in enumerate(s):
@@ -269,7 +275,7 @@ def splitdeps(s):
         yield s[begin:].strip()
 
 
-def parsedependency(s):
+def parsedependency(s: str):
     """Parses a pip dependency specification, returning the identifier, version"""
     identifier = s.split(" ")[0]
     begin = s.find("(")
@@ -281,10 +287,10 @@ def parsedependency(s):
     return identifier, version
 
 
-def parseapt(data, lines, mapping=None, with_entrypoints=False, orcid_placeholder=False):
+def parseapt(data, lines, crosswalk=None, with_entrypoints=False, orcid_placeholder=False):
     """Parses apt show output and converts to codemeta"""
-    if mapping is None:
-        _, mapping = readcrosswalk((CWKey.DEBIAN,))
+    if crosswalk is None:
+        _, crosswalk = readcrosswalk((CWKey.DEBIAN,))
     provider = PROVIDER_DEBIAN
     description = ""
     parsedescription = False
@@ -327,8 +333,8 @@ def parseapt(data, lines, mapping=None, with_entrypoints=False, orcid_placeholde
                 data["url"] = value
             elif key == "Version":
                 data["version"] = value
-            elif key.lower() in mapping[CWKey.DEBIAN]:
-                data[mapping[CWKey.DEBIAN][key.lower()]] = value
+            elif key.lower() in crosswalk[CWKey.DEBIAN]:
+                data[crosswalk[CWKey.DEBIAN][key.lower()]] = value
                 if key == "Package":
                     data["identifier"] = value
                     data["name"] = value
@@ -339,11 +345,11 @@ def parseapt(data, lines, mapping=None, with_entrypoints=False, orcid_placeholde
     return data
 
 
-def clean(data):
+def clean(data: dict) -> dict:
     """Purge empty values, lowercase identifier"""
     purgekeys = []
     for k,v in data.items():
-        if v is "" or v is None or (isinstance(v,(tuple, list)) and len(v) == 0):
+        if v == "" or v is None or (isinstance(v,(tuple, list)) and len(v) == 0):
             purgekeys.append(k)
         elif isinstance(v, (dict, OrderedDict)):
             clean(v)
@@ -355,7 +361,7 @@ def clean(data):
         data['identifier'] = data['identifier'].lower()
     return data
 
-def resolve(data, idmap=None):
+def resolve(data: dict, idmap=None) -> dict:
     """Resolve nodes that refer to an ID mentioned earlier"""
     if idmap is None: idmap = {}
     for k,v in data.items():
@@ -381,30 +387,29 @@ def getregistry(identifier, registry):
             return tool
     raise KeyError(identifier)
 
-def update(data, newdata):
-    """recursive update, adds values whenever possible instead of replacing"""
-    if isinstance(data, dict):
-        for key, value in newdata.items():
-            if key in data:
-                if isinstance(value, dict):
-                    update(data[key], value)
-                elif isinstance(value, list):
-                    for x in value:
-                        if isinstance(data[key], dict ):
-                            data[key] = [ data[key], x ]
-                        elif x not in data[key]:
-                            if isinstance(data[key], list):
-                               data[key].append(x)
-                else:
-                    data[key] = value
+def update(data: dict, newdata: dict):
+    """Recursive update a dictionary, adds values whenever possible instead of replacing"""
+    for key, value in newdata.items():
+        if key in data:
+            if isinstance(value, dict):
+                update(data[key], value)
+            elif isinstance(value, list):
+                for x in value:
+                    if isinstance(data[key], dict ):
+                        data[key] = [ data[key], x ]
+                    elif x not in data[key]:
+                        if isinstance(data[key], list):
+                            data[key].append(x)
             else:
                 data[key] = value
+        else:
+            data[key] = value
 
-def getstream(source):
+def getstream(source: str):
+    """Opens an file (or use - for stdin) and returns the file descriptor"""
     if source == '-':
         return sys.stdin
-    else:
-        return open(source,'r',encoding='utf-8')
+    return open(source,'r',encoding='utf-8')
 
 
 
@@ -450,7 +455,7 @@ class CodeMetaCommand(distutils.cmd.Command):
             build(input="python",output="json",outputfile=outputfile, inputsources=[self.distribution.metadata.name], with_entrypoints=self.with_entrypoints)
 
 
-props, mapping = readcrosswalk()
+props, crosswalk = readcrosswalk()
 
 def main():
     parser = argparse.ArgumentParser(description="Converter for Python Distutils (PyPI) Metadata to CodeMeta (JSON-LD) converter. Also supports conversion from other metadata types such as those from Debian packages. The tool can combine metadata from multiple sources.")
@@ -472,6 +477,7 @@ def main():
 
 
 class AttribDict(dict):
+    """Simple dictionary that is addressable via attributes"""
     def __init__(self, d):
         self.__dict__ = d
 
@@ -494,18 +500,18 @@ def build(**kwargs):
             with open(args.registry, 'r', encoding='utf-8') as f:
                 registry = json.load(f)
         else:
-            print("Registry " + args.registry + " does not exist yet, creating anew...",file=sys.stderr)
+            print(f"Registry {args.registry} does not exist yet, creating anew...",file=sys.stderr)
             registry = {"@context": CONTEXT + extracontext, "@graph": []}
     else:
         registry = None
     if registry is not None and ('@context' not in registry or '@graph' not in registry):
-        print("Registry " + args.registry + " has invalid (outdated?) format, ignoring and creating a new one...",file=sys.stderr)
+        print(f"Registry {args.registry} has invalid (outdated?) format, ignoring and creating a new one...",file=sys.stderr)
         registry = {"@context": CONTEXT + extracontext, "@graph": []}
 
     inputsources = []
     if args.inputsources:
         if len(args.input.split(",")) != len(args.inputsources):
-            print("Passed " + str(len(args.inputsources)) + " files but specified " + str(len(args.input.split(','))) + " input types!",file=sys.stderr)
+            print(f"Passed {len(args.inputsources)} files but specified {len(args.input.split(','))} input types!",  file=sys.stderr)
         inputsources = list(zip(args.inputsources, args.input.split(',')))
     else:
         print("No input files specified (use - for stdin)",file=sys.stderr)
@@ -525,25 +531,25 @@ def build(**kwargs):
     })
     l = len(inputsources)
     for i, (source, inputtype) in enumerate(inputsources):
-        print("Processing source #%d of %d" % (i+1,l),file=sys.stderr)
+        print(f"Processing source #{i+1} of {l}",file=sys.stderr)
         if inputtype == "registry":
             try:
                 update(data, getregistry(getstream(source), registry))
             except KeyError as e:
-                print("ERROR: No such identifier in registry: ", source,file=sys.stderr)
+                print(f"ERROR: No such identifier in registry: {source}", file=sys.stderr)
                 sys.exit(3)
         elif inputtype in ("python","distutils"):
-            print("Obtaining python package metadata for: " + source,file=sys.stderr)
+            print("Obtaining python package metadata for: {source}",file=sys.stderr)
             #source is a name of a package
-            update(data, parsepython(data, source, mapping, args.with_entrypoints, args.with_orcid, args.exactplatformversion, not args.no_extras, not args.single_author))
+            update(data, parsepython(data, source, crosswalk, args.with_entrypoints, args.with_orcid, args.exactplatformversion, not args.no_extras, not args.single_author))
         elif inputtype == "pip":
             print("Pip output parsing is obsolete since codemetapy 0.3.0, please use input type 'python' instead",file=sys.stderr)
             sys.exit(2)
         elif inputtype in ("apt","debian","deb"):
             aptlines = getstream(source).read().split("\n")
-            update(data, parseapt(data, aptlines, mapping, args.with_entrypoints))
+            update(data, parseapt(data, aptlines, crosswalk, args.with_entrypoints))
         elif inputtype == "json":
-            print("Parsing json file: " + source,file=sys.stderr)
+            print(f"Parsing json file: {source}",file=sys.stderr)
             update(data, json.load(getstream(source)))
 
         for key, prop in props.items():
