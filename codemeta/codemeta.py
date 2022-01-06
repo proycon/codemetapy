@@ -6,6 +6,7 @@
 
 # Maarten van Gompel
 # CLST, Radboud University Nijmegen
+# & KNAW Humanities Cluster
 # GPL v3
 
 import sys
