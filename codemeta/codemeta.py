@@ -132,7 +132,8 @@ def parsepython(data, packagename: str, crosswalk=None, with_entrypoints=False, 
         try:
             pkg = next(importlib_metadata.MetadataPathFinder().find_distributions(context))
         except StopIteration:
-            print(f"No such package: {packagename}",file=sys.stderr)
+            print(f"No such python package: {packagename}",file=sys.stderr)
+            sys.exit(4)
     print(f"Found metadata in {pkg._path}",file=sys.stderr) #pylint: disable=W0212
     for key, value in pkg.metadata.items():
         if key == "Classifier":
