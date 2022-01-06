@@ -50,6 +50,12 @@ or use the ``-O`` parameter:
 
 ``$ codemetapy -O codemeta.json somepackage``
 
+If a package is not installed and you want to keep it that way but still extract the metadata. Then you can do so as
+follows in the directory of that package where a ``setup.py`` resides:
+
+``$ python setup.py egg_info``
+``$ codemetapy somepackage``
+
 The tool also supports adding properties through parameters:
 
 ``$ codemetapy --developmentStatus active somepackage > codemeta.json``
@@ -58,7 +64,7 @@ To read an existing codemeta.json and extend it:
 
 ``$ codemetapy -i json,python codemeta.json somepackage > codemeta.json``
 
-This tool can also deal with debian packages  by parsing the output of ``apt show`` (albeit limited):
+This tool can also deal with debian packages by parsing the output of ``apt show`` (albeit limited):
 
 ``$ apt show somepackage | codemetapy -i apt -``
 
