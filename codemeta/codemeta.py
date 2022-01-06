@@ -530,12 +530,12 @@ def build(**kwargs):
         if os.path.exists('setup.py'):
             print("No input files specified, but found python project in current dir, using that...",file=sys.stderr)
             print("Generating egg_info",file=sys.stderr)
-            os.system("python setup.py egg_info")
+            os.system("python3 setup.py egg_info")
             for d in glob.glob("*.egg-info"):
                 inputsources = [(".".join(d.split(".")[:-1]),"python")]
                 break
             if not inputsources:
-                print("Could not generate egg_info (is python pointing to the right interpreter?)",file=sys.stderr)
+                print("Could not generate egg_info (is python3 pointing to the right interpreter?)",file=sys.stderr)
                 sys.exit(2)
         else:
             print("No input files specified (use - for stdin)",file=sys.stderr)
