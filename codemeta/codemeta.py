@@ -14,6 +14,7 @@ import argparse
 import json
 import os.path
 import csv
+import glob
 import importlib
 import distutils #note: will be removed in python 3.12!
 import setuptools
@@ -497,6 +498,7 @@ class AttribDict(dict):
         else:
             return None
 
+
 def build(**kwargs):
     """Build a codemeta file"""
     args = AttribDict(kwargs)
@@ -524,8 +526,20 @@ def build(**kwargs):
             print(f"Passed {len(args.inputsources)} files but specified {len(args.input.split(','))} input types!",  file=sys.stderr)
         inputsources = list(zip(args.inputsources, args.input.split(',')))
     else:
-        print("No input files specified (use - for stdin)",file=sys.stderr)
-        sys.exit(2)
+        #no input was specified
+        if os.path.exists('setup.py'):
+            print("No input files specified, but found python project in current dir, using that...",file=sys.stderr)
+            print("Generating egg_info",file=sys.stderr)
+            os.system("python setup.py egg_info")
+            for d in glob.glob("*.egg-info"):
+                inputsources = [(".".join(d.split(".")[:-1]),"python")]
+                break
+            if not inputsources:
+                print("Could not generate egg_info (is python pointing to the right interpreter?)",file=sys.stderr)
+                sys.exit(2)
+        else:
+            print("No input files specified (use - for stdin)",file=sys.stderr)
+            sys.exit(2)
 
     data = OrderedDict({ #values are overriden/extended later
         '@context': CONTEXT + extracontext,

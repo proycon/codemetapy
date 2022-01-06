@@ -50,11 +50,11 @@ or use the ``-O`` parameter:
 
 ``$ codemetapy -O codemeta.json somepackage``
 
-If a package is not installed and you want to keep it that way but still extract the metadata. Then you can do so as
-follows in the directory of that package where a ``setup.py`` resides:
+If you are in the current working directory of any python project, i.e. there is a ``setup.py``, then you can simply
+call ``codemetapy`` without arguments to output codemeta for the project. Codemetapy will automatically run ``python
+setup.py egg_info`` and parse it's output to facilitate this:
 
-``$ python setup.py egg_info``
-``$ codemetapy somepackage``
+``$ codemetapy``
 
 The tool also supports adding properties through parameters:
 
