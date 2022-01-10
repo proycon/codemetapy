@@ -76,6 +76,7 @@ ENTRYPOINT_CONTEXT = { #these are all custom extensions not in codemeta (yet), t
     "mediatorApplication": {"@id": "codemeta:mediatorApplication", "@type":"@id" } #auxiliary software that provided/enabled this entrypoint
 }
 
+
 REPOSTATUS= { #maps Python development status to repostatus.org vocabulary (the mapping is debatable)
     "1 - planning": "concept",
     "2 - pre-alpha": "concept",
@@ -85,6 +86,64 @@ REPOSTATUS= { #maps Python development status to repostatus.org vocabulary (the 
     "6 - mature": "active",
     "7 - inactive": "inactive",
 }
+
+LICENSE_MAP = [ #maps some common licenses to SPDX URIs, mapped with a substring match on first come first serve basis
+    ("GNU General Public License v3.0 or later", "http://spdx.org/licenses/GPL-3.0-or-later"),
+    ("GNU General Public License v3 or later", "http://spdx.org/licenses/GPL-3.0-or-later"),
+    ("GNU General Public License v3", "http://spdx.org/licenses/GPL-3.0-only"),
+    ("GNU General Public License v2.0 or later", "http://spdx.org/licenses/GPL-2.0-or-later"),
+    ("GNU General Public License v2 or later", "http://spdx.org/licenses/GPL-2.0-or-later"),
+    ("GNU General Public License v2", "http://spdx.org/licenses/GPL-2.0-only"),
+    ("GNU Affero General Public License v3.0 or later", "http://spdx.org/licenses/AGPL-3.0-or-later"),
+    ("GNU Affero General Public License v3 or later", "http://spdx.org/licenses/AGPL-3.0-or-later"),
+    ("GNU Affero General Public License", "http://spdx.org/licenses/AGPL-3.0-only"),
+    ("GNU Lesser General Public License v3.0 or later", "http://spdx.org/licenses/LGPL-3.0-or-later"),
+    ("GNU Lesser General Public License v3", "http://spdx.org/licenses/LGPL-3.0-only"),
+    ("GNU Lesser General Public License v2.1 or later", "http://spdx.org/licenses/LGPL-2.1-or-later"),
+    ("GNU Lesser General Public License v2.1", "http://spdx.org/licenses/LGPL-2.1-only"),
+    ("GNU Lesser General Public License v2 or later", "http://spdx.org/licenses/LGPL-2.0-or-later"),
+    ("GNU Lesser General Public License v2", "http://spdx.org/licenses/LGPL-2.0-only"),
+    ("Mozilla Public License 1.1", "http://spdx.org/licenses/MPL-1.1"),
+    ("Mozilla Public License 1", "http://spdx.org/licenses/MPL-1.0"),
+    ("Mozilla Public License", "http://spdx.org/licenses/MPL-2.0"),
+    ("European Union Public License 1.1", "http://spdx.org/licenses/EUPL-1.1"),
+    ("European Union Public License", "http://spdx.org/licenses/EUPL-1.2"),
+    ("Eclipse Public License 1", "http://spdx.org/licenses/EPL-1.0"),
+    ("Eclipse Public License", "http://spdx.org/licenses/EPL-2.0"),
+    ("Common Public Attribution License", "http://spdx.org/licenses/CPAL-1.0"),
+    ("Apache License 2", "http://spdx.org/licenses/Apache-2.0"),
+    ("Apache License", "http://spdx.org/licenses/Apache-1.1"),
+    ("Apache-2.0", "http://spdx.org/licenses/Apache-2.0"),
+    ("Apache-1.1", "http://spdx.org/licenses/Apache-1.1"),
+    ("Apache", "http://spdx.org/licenses/Apache-2.0"), #ambiguous, assume apache 2.0
+    ("AGPL-3.0-or-later", "http://spdx.org/licenses/AGPL-3.0-or-later"),
+    ("AGPL-3.0-only", "http://spdx.org/licenses/AGPL-3.0-only"),
+    ("GPL-3.0-or-later", "http://spdx.org/licenses/GPL-3.0-or-later"),
+    ("GPL-3.0-only", "http://spdx.org/licenses/GPL-3.0-only"),
+    ("GPLv3+", "http://spdx.org/licenses/GPL-3.0-or-later"),
+    ("GPLv3", "http://spdx.org/licenses/GPL-3.0-only"),
+    ("GPL3+", "http://spdx.org/licenses/GPL-3.0-or-later"),
+    ("GPL3", "http://spdx.org/licenses/GPL-3.0-only"),
+    ("GPL-2.0-or-later", "http://spdx.org/licenses/GPL-2.0-or-later"),
+    ("GPL-2.0-only", "http://spdx.org/licenses/GPL-2.0-only"),
+    ("GPLv2+", "http://spdx.org/licenses/GPL-2.0-or-later"),
+    ("GPLv2", "http://spdx.org/licenses/GPL-2.0-only"),
+    ("GPL3+", "http://spdx.org/licenses/GPL-3.0-or-later"),
+    ("GPL3", "http://spdx.org/licenses/GPL-3.0-only"),
+    ("GPL2+", "http://spdx.org/licenses/GPL-2.0-or-later"),
+    ("GPL2", "http://spdx.org/licenses/GPL-2.0-only"),
+    ("GPL", "http://spdx.org/licenses/GPL-2.0-or-later"), #rather ambiguous, assuming all that could apply
+    ("BSD-3-Clause", "http://spdx.org/licenses/BSD-3-Clause"),
+    ("BSD-2-Clause", "http://spdx.org/licenses/BSD-2-Clause"),
+    ("Simplified BSD", "http://spdx.org/licenses/BSD-2-Clause"),
+    ("FreeBSD", "http://spdx.org/licenses/BSD-2-Clause"),
+    ("BSD License", "http://spdx.org/licenses/BSD-3-Clause"), #may be ambiguous, better be as restrictive
+    ("BSD", "http://spdx.org/licenses/BSD-3-Clause"), #may be ambiguous, better be as restrictive
+    ("MIT No Attribution", "http://spdx.org/licenses/MIT-0"),
+    ("MIT", "http://spdx.org/licenses/MIT"),
+    ("Creative Commons Attribution Share Alike 4.0 International", "http://spdx.org/licenses/CC-BY-SA-4.0"), #not designed for software, not OSI-approved
+    ("CC-BY-SA-4.0", "http://spdx.org/licenses/CC-BY-SA-4.0"), #not designed for software, not OSI-approved
+]
 
 
 if yaml is not None:
@@ -122,6 +181,20 @@ def readcrosswalk(sourcekeys=(CWKey.PYPI,CWKey.DEBIAN)):
 
     return props, crosswalk
 
+
+def license_to_spdx(value):
+    """Attempts to converts a license name or acronym to a full SPDX URI (https://spdx.org/licenses/)"""
+    if value.startswith("http://spdx.org") or value.startswith("https://spdx.org"):
+        #we're already good, nothing to do
+        return value
+    print("DEBUG: IN=",value,file=sys.stderr)
+    for substr, license_uri in LICENSE_MAP:
+        if value.find(substr) != -1:
+            print("DEBUG: OUT=",license_uri,file=sys.stderr)
+            return license_uri
+    print("DEBUG: OUT0=",value,file=sys.stderr)
+    return value
+
 #pylint: disable=W0621
 def parsepython(data, packagename: str, crosswalk=None, with_entrypoints=False, orcid_placeholder=False, exactplatformversion=False,extras=True, multi_author=True):
     """Parses python package metadata and converts it to codemeta"""
@@ -156,23 +229,34 @@ def parsepython(data, packagename: str, crosswalk=None, with_entrypoints=False, 
                 key = crosswalk[CWKey.PYPI][pipkey]
                 det = " :: " if key != "programmingLanguage" else " "
                 value = det.join(fields[1:])
+                queue = []
                 if key == "developmentStatus":
                     if value.strip().lower() in REPOSTATUS:
                         #map to repostatus vocabulary
                         value = "https://www.repostatus.org/#" + REPOSTATUS[value.strip().lower()]
-                if key in data:
-                    if isinstance(data[key],str):
-                        if not any( x.strip() == value for x in data[key].split(",") ):
-                            data[key] += ", " + value
-                    elif isinstance(data[key],list):
-                        if value not in data[key]:
-                            data[key].append(value)
-                else:
-                    data[key] = value
+                elif key == "license":
+                    value = license_to_spdx(value)
+                elif key == "applicationCategory":
+                    value = fields[1]
+                    if len(fields) > 2:
+                        queue.append(("applicationSubCategory","/".join(fields[1:])))
+                queue.insert(0, (key, value))
+                for key, value in queue:
+                    if key in data:
+                        if isinstance(data[key],str):
+                            if not any( x.strip() == value for x in data[key].split(",") ):
+                                data[key] += ", " + value
+                        elif isinstance(data[key],list):
+                            if value not in data[key]:
+                                data[key].append(value)
+                    else:
+                        data[key] = value
             elif fields[0].lower() in crosswalk[CWKey.PYPI]:
                 key = crosswalk[CWKey.PYPI][fields[0].lower()]
                 det = " :: " if key != "programmingLanguage" else " "
                 value = det.join(fields[1:])
+                if key == "license":
+                    value = license_to_spdx(value)
                 if key in data:
                     if not any( x.strip() == value for x in data[key].split(",") ):
                         data[key] += ", " + value
@@ -247,6 +331,8 @@ def parsepython(data, packagename: str, crosswalk=None, with_entrypoints=False, 
                             "name": dependency,
                         })
             elif key.lower() in crosswalk[CWKey.PYPI]:
+                if key.lower() == "license":
+                    value = license_to_spdx(value)
                 data[crosswalk[CWKey.PYPI][key.lower()]] = value
                 if key == "Name" and ('identifier' not in data or data['identifier'] in ("unknown","")):
                     data["identifier"] = value
