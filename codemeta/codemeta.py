@@ -76,6 +76,16 @@ ENTRYPOINT_CONTEXT = { #these are all custom extensions not in codemeta (yet), t
     "mediatorApplication": {"@id": "codemeta:mediatorApplication", "@type":"@id" } #auxiliary software that provided/enabled this entrypoint
 }
 
+REPOSTATUS= { #maps Python development status to repostatus.org vocabulary (the mapping is debatable)
+    "1 - planning": "concept",
+    "2 - pre-alpha": "concept",
+    "3 - alpha": "wip",
+    "4 - beta": "wip",
+    "5 - production/stable": "active",
+    "6 - mature": "active",
+    "7 - inactive": "inactive",
+}
+
 
 if yaml is not None:
     def represent_ordereddict(dumper, data):
@@ -146,6 +156,10 @@ def parsepython(data, packagename: str, crosswalk=None, with_entrypoints=False, 
                 key = crosswalk[CWKey.PYPI][pipkey]
                 det = " :: " if key != "programmingLanguage" else " "
                 value = det.join(fields[1:])
+                if key == "developmentStatus":
+                    if value.strip().lower() in REPOSTATUS:
+                        #map to repostatus vocabulary
+                        value = REPOSTATUS[value.strip().lower()]
                 if key in data:
                     if isinstance(data[key],str):
                         if not any( x.strip() == value for x in data[key].split(",") ):
