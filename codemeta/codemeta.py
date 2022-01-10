@@ -187,12 +187,9 @@ def license_to_spdx(value):
     if value.startswith("http://spdx.org") or value.startswith("https://spdx.org"):
         #we're already good, nothing to do
         return value
-    print("DEBUG: IN=",value,file=sys.stderr)
     for substr, license_uri in LICENSE_MAP:
         if value.find(substr) != -1:
-            print("DEBUG: OUT=",license_uri,file=sys.stderr)
             return license_uri
-    print("DEBUG: OUT0=",value,file=sys.stderr)
     return value
 
 #pylint: disable=W0621
