@@ -159,7 +159,7 @@ def parsepython(data, packagename: str, crosswalk=None, with_entrypoints=False, 
                 if key == "developmentStatus":
                     if value.strip().lower() in REPOSTATUS:
                         #map to repostatus vocabulary
-                        value = REPOSTATUS[value.strip().lower()]
+                        value = "https://www.repostatus.org/#" + REPOSTATUS[value.strip().lower()]
                 if key in data:
                     if isinstance(data[key],str):
                         if not any( x.strip() == value for x in data[key].split(",") ):
