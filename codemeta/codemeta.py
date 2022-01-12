@@ -218,6 +218,7 @@ def parsepython(data, packagename: str, crosswalk=None, with_entrypoints=False, 
             sys.exit(4)
     print(f"Found metadata in {pkg._path}",file=sys.stderr) #pylint: disable=W0212
     for key, value in pkg.metadata.items():
+        queue = [] #queue of key, valuepairs to add
         if key == "Classifier":
             fields = [ x.strip() for x in value.strip().split('::') ]
             pipkey = "classifiers['" + fields[0] + "']"
@@ -226,7 +227,6 @@ def parsepython(data, packagename: str, crosswalk=None, with_entrypoints=False, 
                 key = crosswalk[CWKey.PYPI][pipkey]
                 det = " :: " if key != "programmingLanguage" else " "
                 value = det.join(fields[1:])
-                queue = []
                 if key == "developmentStatus":
                     if value.strip().lower() in REPOSTATUS:
                         #map to repostatus vocabulary
@@ -238,33 +238,19 @@ def parsepython(data, packagename: str, crosswalk=None, with_entrypoints=False, 
                     if len(fields) > 2:
                         queue.append(("applicationSubCategory","/".join(fields[1:])))
                 queue.insert(0, (key, value))
-                for key, value in queue:
-                    if key in data:
-                        if isinstance(data[key],str):
-                            if not any( x.strip() == value for x in data[key].split(",") ):
-                                data[key] += ", " + value
-                        elif isinstance(data[key],list):
-                            if value not in data[key]:
-                                data[key].append(value)
-                    else:
-                        data[key] = value
             elif fields[0].lower() in crosswalk[CWKey.PYPI]:
                 key = crosswalk[CWKey.PYPI][fields[0].lower()]
                 det = " :: " if key != "programmingLanguage" else " "
                 value = det.join(fields[1:])
                 if key == "license":
                     value = license_to_spdx(value)
-                if key in data:
-                    if not any( x.strip() == value for x in data[key].split(",") ):
-                        data[key] += ", " + value
-                else:
-                    data[key] = value
+                queue.append((key,value))
             elif fields[0] == "Intended Audience":
-                if not any(( 'audienceType' in a and a['audienceType'] == " :: ".join(fields[1:]) for a in data["audience"] )):
-                    data["audience"].append({
+                if not any(( isinstance(a, dict) and 'audienceType' in a and a['audienceType'] == " :: ".join(fields[1:]) for a in data.get("audience",[]) )): #prevent duplicates
+                    queue.append(("audience", {
                         "@type": "Audience",
                         "audienceType": " :: ".join(fields[1:])
-                    })
+                    }))
             else:
                 print("NOTICE: Classifier "  + fields[0] + " has no translation",file=sys.stderr)
         else:
@@ -277,25 +263,29 @@ def parsepython(data, packagename: str, crosswalk=None, with_entrypoints=False, 
                     humanname = HumanName(name.strip())
                     lastname = " ".join((humanname.middle, humanname.last)).strip()
                     found = False
-                    for i, a in enumerate(data["author"]):
+                    for i, a in enumerate(data.get("author",[])):
                         if a['givenName'] == humanname.first and a['familyName'] == lastname:
                             authorindex.append(i)
                             found = True
                             break
                     if not found:
-                        authorindex.append(len(data["author"]))
-                        data["author"].append(
+                        authorindex.append(len(data.get("author",[])))
+                        queue.append(("author",
                             {"@type":"Person", "givenName": humanname.first, "familyName": lastname }
-                        )
+                        ))
                         if orcid_placeholder:
-                            data["author"][-1]["@id"] = "https://orcid.org/EDIT_ME!"
+                            queue[-1][1]["@id"] = "https://orcid.org/EDIT_ME!"
             elif key == "Author-email":
-                if data["author"]:
+                if "author" in data:
                     if multi_author:
                         mails = value.split(",")
                         if len(mails) == len(authorindex):
                             for i, mail in zip(authorindex, mails):
-                                data["author"][i]["email"] = mail.strip()
+                                if isinstance(data['author'], dict) and i == 0:
+                                    data["author"]["email"] = mail.strip()
+                                    data["author"] = [data["author"]]
+                                else:
+                                    data["author"][i]["email"] = mail.strip()
                         else:
                             print("WARNING: Unable to unambiguously assign e-mail addresses to multiple authors",file=sys.stderr)
                     else:
@@ -308,33 +298,45 @@ def parsepython(data, packagename: str, crosswalk=None, with_entrypoints=False, 
                         print("Skipping extra dependency: ",dependency,file=sys.stderr)
                         continue
                     dependency, depversion = parsedependency(dependency.strip())
-                    if dependency and not any(( 'identifier' in d and d['identifier'] == dependency for d in data['softwareRequirements'])):
-                        data['softwareRequirements'].append({
+                    if dependency and not any(( 'identifier' in d and d['identifier'] == dependency for d in data.get('softwareRequirements',[]))):
+                        queue.append(('softwareRequirements',{
                             "@type": "SoftwareApplication",
                             "identifier": dependency,
                             "name": dependency,
                             "provider": PROVIDER_PYPI,
                             "runtimePlatform": data["runtimePlatform"]
-                        })
+                        }))
                         if depversion:
-                            data['softwareRequirements'][-1]['version'] = depversion
+                            queue[-1][1]['version'] = depversion
             elif key == "Requires-External":
                 for dependency in value.split(','):
                     dependency = dependency.strip()
-                    if dependency and not any(( 'identifier' in d and d['identifier'] == dependency for d in data['softwareRequirements'])):
-                        data['softwareRequirements'].append({
+                    if dependency and not any(( 'identifier' in d and d['identifier'] == dependency for d in data.get('softwareRequirements',[]))):
+                        queue.append(('softwareRequirements', {
                             "@type": "SoftwareApplication",
                             "identifier": dependency,
                             "name": dependency,
-                        })
+                        }))
             elif key.lower() in crosswalk[CWKey.PYPI]:
                 if key.lower() == "license":
                     value = license_to_spdx(value)
-                data[crosswalk[CWKey.PYPI][key.lower()]] = value
-                if key == "Name" and ('identifier' not in data or data['identifier'] in ("unknown","")):
-                    data["identifier"] = value
+                queue.append((crosswalk[CWKey.PYPI][key.lower()], value))
+                if key == "Name" and 'identifier' not in data or data['identifier'] in ("unknown",""):
+                    queue.append(("identifier",value))
             else:
                 print("WARNING: No translation for distutils key " + key,file=sys.stderr)
+
+        if queue:
+            for key, value in queue:
+                if key in data:
+                    if isinstance(data[key],str) and data[key] != value:
+                        data[key] = [ data[key], value ]
+                    elif isinstance(data[key],list):
+                        if value not in data[key]:
+                            data[key].append(value)
+                else:
+                    data[key] = value
+
     if with_entrypoints:
         for rawentrypoint in pkg.entry_points:
             if rawentrypoint.group == "console_scripts":
@@ -465,7 +467,7 @@ def clean(data: dict) -> dict:
             data[k] = [ clean(x) if isinstance(x, (dict,OrderedDict)) else x for x in v ]
     for k in purgekeys:
         del data[k]
-    if 'identifier' in data:
+    if 'identifier' in data and isinstance(data['identifier'], str):
         data['identifier'] = data['identifier'].lower()
     return data
 
@@ -638,17 +640,9 @@ def build(**kwargs):
             print("No input files specified (use - for stdin)",file=sys.stderr)
             sys.exit(2)
 
-    data = OrderedDict({ #values are overriden/extended later
+    data = OrderedDict({
         '@context': CONTEXT + extracontext,
         "@type": "SoftwareSourceCode",
-        "identifier":"unknown",
-        "name":"unknown",
-        "version":"unknown",
-        "description":"",
-        "license":"unknown",
-        "author": [],
-        "softwareRequirements": [],
-        "audience": []
     })
     l = len(inputsources)
     for i, (source, inputtype) in enumerate(inputsources):
