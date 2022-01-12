@@ -192,6 +192,14 @@ def license_to_spdx(value):
             return license_uri
     return value
 
+def detect_list(value):
+    """Tries to see if the value is a list (string of comma separated items) and then returns a list"""
+    if isinstance(value, (list,tuple)):
+        return value
+    if isinstance(value, str) and value.count(',') >= 1:
+        return [ x.strip() for x in value.split(",") ]
+    return value
+
 #pylint: disable=W0621
 def parsepython(data, packagename: str, crosswalk=None, with_entrypoints=False, orcid_placeholder=False, exactplatformversion=False,extras=True, multi_author=True):
     """Parses python package metadata and converts it to codemeta"""
@@ -320,6 +328,8 @@ def parsepython(data, packagename: str, crosswalk=None, with_entrypoints=False, 
             elif key.lower() in crosswalk[CWKey.PYPI]:
                 if key.lower() == "license":
                     value = license_to_spdx(value)
+                elif key.lower() == "keywords":
+                    value = detect_list(value)
                 queue.append((crosswalk[CWKey.PYPI][key.lower()], value))
                 if key == "Name" and 'identifier' not in data or data['identifier'] in ("unknown",""):
                     queue.append(("identifier",value))
