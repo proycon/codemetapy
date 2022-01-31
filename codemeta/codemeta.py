@@ -18,6 +18,7 @@ import glob
 import importlib
 import distutils #note: will be removed in python 3.12!
 import setuptools
+import re
 from collections import OrderedDict, defaultdict
 from nameparser import HumanName
 try:
@@ -75,6 +76,11 @@ ENTRYPOINT_CONTEXT = { #these are all custom extensions not in codemeta (yet), t
     "specification": { "@id": "codemeta:specification" , "@type":"@id"}, #A technical specification of the interface
     "mediatorApplication": {"@id": "codemeta:mediatorApplication", "@type":"@id" } #auxiliary software that provided/enabled this entrypoint
 }
+
+#these are all custom extensions not in codemeta/schema.org (yet), they are proposed in https://github.com/codemeta/codemeta/issues/271 and supersede the above one
+SOFTWARETYPE_CONTEXT = "https://clariah.nl/schema/software-type#"
+
+
 
 
 REPOSTATUS= { #maps Python development status to repostatus.org vocabulary (the mapping is debatable)
@@ -201,7 +207,7 @@ def detect_list(value):
     return value
 
 #pylint: disable=W0621
-def parsepython(data, packagename: str, crosswalk=None, with_entrypoints=False, orcid_placeholder=False, exactplatformversion=False,extras=True, multi_author=True):
+def parsepython(data, packagename: str, crosswalk=None, with_stype=False, with_entrypoints=False, orcid_placeholder=False, exactplatformversion=False,extras=True, multi_author=True):
     """Parses python package metadata and converts it to codemeta"""
     if crosswalk is None:
         _, crosswalk = readcrosswalk((CWKey.PYPI,))
@@ -214,6 +220,9 @@ def parsepython(data, packagename: str, crosswalk=None, with_entrypoints=False, 
     if with_entrypoints and not 'entryPoints' in data:
         #not in official specification!!!
         data['entryPoints'] = []
+    if with_stype and not 'targetProduct' in data:
+        #not in official specification!!!
+        data['targetProduct'] = []
     try:
         pkg = importlib_metadata.distribution(packagename)
     except importlib_metadata.PackageNotFoundError:
@@ -347,7 +356,43 @@ def parsepython(data, packagename: str, crosswalk=None, with_entrypoints=False, 
                 else:
                     data[key] = value
 
+    if with_stype:
+        for rawentrypoint in pkg.entry_points:
+            if rawentrypoint.group == "console_scripts":
+                interfacetype = "CommandLineApplication"
+            elif rawentrypoint.group == "gui_scripts":
+                interfacetype = "DesktopApplication"
+            else:
+                continue
+            if rawentrypoint.value:
+                module_name = rawentrypoint.value.strip().split(':')[0]
+                try:
+                    module = importlib.import_module(module_name)
+                    description = module.__doc__
+                except:
+                    description = ""
+            else:
+                description = ""
+            targetproduct = {
+                "@type": interfacetype,
+                "name": rawentrypoint.name,
+                "executableName": rawentrypoint.name,
+                "runtimePlatform": data['runtimePlatform']
+            }
+            if description:
+                targetproduct['description'] = description
+            if targetproduct not in data['targetProduct']:
+                data['targetProduct'].append(targetproduct)
+        if not data['targetProduct'] or ('applicationCategory' in data and 'libraries' in data['applicationCategory'].lower()):
+            #no entry points defined (or explicitly marked as library), assume this is a library
+            data['targetProduct'].append({
+                "@type": "SoftwareLibrary",
+                "name": pkg.name,
+                "executableName": re.sub(r"[-_.]+", "-", pkg.name).lower(), #see https://python.github.io/peps/pep-0503/
+                "runtimePlatform": data['runtimePlatform']
+            })
     if with_entrypoints:
+        #legacy!
         for rawentrypoint in pkg.entry_points:
             if rawentrypoint.group == "console_scripts":
                 interfacetype = "CLI"
@@ -579,7 +624,8 @@ props, crosswalk = readcrosswalk()
 
 def main():
     parser = argparse.ArgumentParser(description="Converter for Python Distutils (PyPI) Metadata to CodeMeta (JSON-LD) converter. Also supports conversion from other metadata types such as those from Debian packages. The tool can combine metadata from multiple sources.")
-    parser.add_argument('-e','--with-entrypoints', dest="with_entrypoints", help="Add entry points (this is not in the official codemeta specification but proposed in https://github.com/codemeta/codemeta/issues/183)", action='store_true',required=False)
+    parser.add_argument('-e', '--with-entrypoints', dest="with_entrypoints", help="Add entry points (this is not in the official codemeta specification but proposed in https://github.com/codemeta/codemeta/issues/183)", action='store_true',required=False)
+    parser.add_argument('-t', '--with-stype', dest="with_stype", help="Convert entrypoints to targetProduct and classes reflecting software type (https://github.com/codemeta/codemeta/issues/#271), linking softwareSourceCode to softwareApplication or WebAPI", action='store_true',required=False)
     parser.add_argument('--exact-python-version', dest="exactplatformversion", help="Register the exact python interpreter used to generate the metadata as the runtime platform. Will only register the major version otherwise.", action='store_true',required=False)
     parser.add_argument('--single-author', dest="single_author", help="CodemetaPy will attempt to check if there are multiple authors specified in the author field, if you want to disable this behaviour, set this flag", action='store_true',required=False)
     parser.add_argument('--with-orcid', dest="with_orcid", help="Add placeholders for ORCID, requires manual editing of the output to insert the actual ORCIDs", action='store_true',required=False)
@@ -611,7 +657,9 @@ class AttribDict(dict):
 def build(**kwargs):
     """Build a codemeta file"""
     args = AttribDict(kwargs)
-    if args.with_entrypoints:
+    if args.with_stype:
+        extracontext = [SOFTWARETYPE_CONTEXT]
+    elif args.with_entrypoints:
         extracontext = [ENTRYPOINT_CONTEXT]
     else:
         extracontext = []
@@ -666,13 +714,13 @@ def build(**kwargs):
         elif inputtype in ("python","distutils"):
             print(f"Obtaining python package metadata for: {source}",file=sys.stderr)
             #source is a name of a package
-            update(data, parsepython(data, source, crosswalk, args.with_entrypoints, args.with_orcid, args.exactplatformversion, not args.no_extras, not args.single_author))
+            update(data, parsepython(data, source, crosswalk, args.with_stype, args.with_entrypoints, args.with_orcid, args.exactplatformversion, not args.no_extras, not args.single_author))
         elif inputtype == "pip":
             print("Pip output parsing is obsolete since codemetapy 0.3.0, please use input type 'python' instead",file=sys.stderr)
             sys.exit(2)
         elif inputtype in ("apt","debian","deb"):
             aptlines = getstream(source).read().split("\n")
-            update(data, parseapt(data, aptlines, crosswalk, args.with_entrypoints))
+            update(data, parseapt(data, aptlines, crosswalk, args.with_stype, args.with_entrypoints))
         elif inputtype == "json":
             print(f"Parsing json file: {source}",file=sys.stderr)
             update(data, json.load(getstream(source)))
