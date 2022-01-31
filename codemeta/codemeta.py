@@ -452,7 +452,7 @@ def parsedependency(s: str):
     return identifier, version
 
 
-def parseapt(data, lines, crosswalk=None, with_entrypoints=False, orcid_placeholder=False):
+def parseapt(data, lines, crosswalk=None, with_stype=False, with_entrypoints=False, orcid_placeholder=False):
     """Parses apt show output and converts to codemeta"""
     if crosswalk is None:
         _, crosswalk = readcrosswalk((CWKey.DEBIAN,))
