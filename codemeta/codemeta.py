@@ -594,7 +594,8 @@ def getstream(source: str):
 class CodeMetaCommand(distutils.cmd.Command):
     description = "Generate a codemeta.json file or update an existing one, note that the package must be installed first for this to work!"
     user_options = [
-        ('with-entrypoints','e','Generate entrypoints as well (custom codemeta extension not part of the official specification'),
+        ('with-entrypoints','e','Generate entrypoints as well (custom codemeta extension not part of the official specification)'),
+        ('with-stype','t','Generate software types using targetProduct (custom extension not part of the official codemeta/schema.org specification yet)'),
         ('dry-run','n','Write to stdout instead of codemeta.json')
     ]
 
