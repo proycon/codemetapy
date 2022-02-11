@@ -340,7 +340,7 @@ def parsepython(data, packagename: str, crosswalk=None, with_stype=False, with_e
                 elif key.lower() == "keywords":
                     value = detect_list(value)
                 queue.append((crosswalk[CWKey.PYPI][key.lower()], value))
-                if key == "Name" and 'identifier' not in data or data['identifier'] in ("unknown",""):
+                if key == "Name" and ('identifier' not in data or data['identifier'] in ("unknown","")):
                     queue.append(("identifier",value))
             else:
                 print("WARNING: No translation for distutils key " + key,file=sys.stderr)
@@ -757,7 +757,7 @@ def build(**kwargs):
     else:
         raise Exception("No such output type: ", args.output)
 
-    if args.registry:
+    if args.registry and data['identifier']:
         if '@context' in data:
             del data['@context'] #already in registry at top level
         data["@id"] = "#" + data['identifier'].lower()
