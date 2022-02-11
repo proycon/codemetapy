@@ -383,7 +383,7 @@ def parsepython(data, packagename: str, crosswalk=None, with_stype=False, with_e
                 targetproduct['description'] = description
             if targetproduct not in data['targetProduct']:
                 data['targetProduct'].append(targetproduct)
-        if not data['targetProduct'] or ('applicationCategory' in data and 'libraries' in data['applicationCategory'].lower()):
+        if not data['targetProduct'] or ('applicationCategory' in data and isinstance(data['applicationCategory'], (list,tuple)) and 'libraries' in ( x.lower() for x in data['applicationCategory'].lower() if isinstance(x,str)) ):
             #no entry points defined (or explicitly marked as library), assume this is a library
             data['targetProduct'].append({
                 "@type": "SoftwareLibrary",
@@ -419,7 +419,7 @@ def parsepython(data, packagename: str, crosswalk=None, with_stype=False, with_e
                 entrypoint['description'] = description
             if entrypoint not in data['entryPoints']:
                 data['entryPoints'].append(entrypoint) #the entryPoints relation is not in the specification, but our own invention, it is the reverse of the EntryPoint.actionApplication property
-        if not data['entryPoints'] or ('applicationCategory' in data and 'libraries' in data['applicationCategory'].lower()):
+        if not data['entryPoints'] or ('applicationCategory' in data and isinstance(data['applicationCategory'], (list,tuple)) and 'libraries' in ( x.lower() for x in data['applicationCategory'].lower() if isinstance(x,str)) ):
             #no entry points defined, assume this is a library
             data['interfaceType'] = "LIB"
     return data
