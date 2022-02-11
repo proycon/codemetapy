@@ -476,6 +476,8 @@ def parseapt(data, lines, crosswalk=None, with_stype=False, with_entrypoints=Fal
                 for dependency in value.split(","):
                     dependency = dependency.strip().split(" ")[0].strip()
                     if dependency:
+                        if not 'softwareRequirements' in data:
+                            data['softwareRequirements'] = []
                         data['softwareRequirements'].append({
                             "@type": "SoftwareApplication",
                             "identifier": dependency,
