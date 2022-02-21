@@ -78,7 +78,7 @@ ENTRYPOINT_CONTEXT = { #these are all custom extensions not in codemeta (yet), t
 }
 
 #these are all custom extensions not in codemeta/schema.org (yet), they are proposed in https://github.com/codemeta/codemeta/issues/271 and supersede the above one
-SOFTWARETYPE_CONTEXT = "https://clariah.nl/schema/software-type#"
+SOFTWARETYPE_CONTEXT = "https://w3id.org/software-types#"
 
 
 
