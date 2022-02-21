@@ -70,7 +70,7 @@ CONTEXT =  [
     "http://schema.org/",
 ]
 
-ENTRYPOINT_CONTEXT = { #these are all custom extensions not in codemeta (yet), they are proposed in https://github.com/codemeta/codemeta/issues/183
+ENTRYPOINT_CONTEXT = { #these are all custom extensions not in codemeta (yet), they are proposed in https://github.com/codemeta/codemeta/issues/183 but are obsolete in favour of the newer software types (see next declaration)
     "entryPoints": { "@reverse": "schema:actionApplication" },
     "interfaceType": { "@id": "codemeta:interfaceType" }, #Type of the entrypoint's interface (e.g CLI, GUI, WUI, TUI, REST, SOAP, XMLRPC, LIB)
     "specification": { "@id": "codemeta:specification" , "@type":"@id"}, #A technical specification of the interface
