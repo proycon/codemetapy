@@ -151,6 +151,18 @@ LICENSE_MAP = [ #maps some common licenses to SPDX URIs, mapped with a substring
     ("CC-BY-SA-4.0", "http://spdx.org/licenses/CC-BY-SA-4.0"), #not designed for software, not OSI-approved
 ]
 
+class AttribDict(dict):
+    """Simple dictionary that is addressable via attributes"""
+    def __init__(self, d):
+        self.__dict__ = d
+
+    def __getattr__(self, key):
+        if key in self:
+            return self[key]
+        else:
+            return None
+
+
 
 if yaml is not None:
     def represent_ordereddict(dumper, data):
@@ -188,8 +200,9 @@ def readcrosswalk(sourcekeys=(CWKey.PYPI,CWKey.DEBIAN)):
     return props, crosswalk
 
 
-def license_to_spdx(value):
+def license_to_spdx(value, args):
     """Attempts to converts a license name or acronym to a full SPDX URI (https://spdx.org/licenses/)"""
+    if not args.with_spdx: return value
     if value.startswith("http://spdx.org") or value.startswith("https://spdx.org"):
         #we're already good, nothing to do
         return value
@@ -207,20 +220,20 @@ def detect_list(value):
     return value
 
 #pylint: disable=W0621
-def parsepython(data, packagename: str, crosswalk=None, with_stype=False, with_entrypoints=False, orcid_placeholder=False, exactplatformversion=False,extras=True, multi_author=True):
+def parsepython(data, packagename: str, crosswalk, args: AttribDict):
     """Parses python package metadata and converts it to codemeta"""
     if crosswalk is None:
         _, crosswalk = readcrosswalk((CWKey.PYPI,))
     authorindex = []
     data["provider"] = PROVIDER_PYPI
-    if exactplatformversion:
+    if args.exactplatformversion:
         data["runtimePlatform"] =  "Python " + str(sys.version_info.major) + "." + str(sys.version_info.minor) + "." + str(sys.version_info.micro)
     else:
         data["runtimePlatform"] =  "Python 3"
-    if with_entrypoints and not 'entryPoints' in data:
+    if args.with_entrypoints and not 'entryPoints' in data:
         #not in official specification!!!
         data['entryPoints'] = []
-    if with_stype and not 'targetProduct' in data:
+    if args.with_stypes and not 'targetProduct' in data:
         #not in official specification!!!
         data['targetProduct'] = []
     try:
@@ -245,11 +258,12 @@ def parsepython(data, packagename: str, crosswalk=None, with_stype=False, with_e
                 det = " :: " if key != "programmingLanguage" else " "
                 value = det.join(fields[1:])
                 if key == "developmentStatus":
-                    if value.strip().lower() in REPOSTATUS:
+                    if args.with_repostatus and value.strip().lower() in REPOSTATUS:
                         #map to repostatus vocabulary
                         value = "https://www.repostatus.org/#" + REPOSTATUS[value.strip().lower()]
+
                 elif key == "license":
-                    value = license_to_spdx(value)
+                    value = license_to_spdx(value, args)
                 elif key == "applicationCategory":
                     value = fields[1]
                     if len(fields) > 2:
@@ -260,7 +274,7 @@ def parsepython(data, packagename: str, crosswalk=None, with_stype=False, with_e
                 det = " :: " if key != "programmingLanguage" else " "
                 value = det.join(fields[1:])
                 if key == "license":
-                    value = license_to_spdx(value)
+                    value = license_to_spdx(value, args)
                 queue.append((key,value))
             elif fields[0] == "Intended Audience":
                 if not any(( isinstance(a, dict) and 'audienceType' in a and a['audienceType'] == " :: ".join(fields[1:]) for a in data.get("audience",[]) )): #prevent duplicates
@@ -272,10 +286,10 @@ def parsepython(data, packagename: str, crosswalk=None, with_stype=False, with_e
                 print("NOTICE: Classifier "  + fields[0] + " has no translation",file=sys.stderr)
         else:
             if key == "Author":
-                if multi_author:
-                    names = value.strip().split(",")
-                else:
+                if args.single_author:
                     names = [value.strip()]
+                else:
+                    names = value.strip().split(",")
                 for name in names:
                     humanname = HumanName(name.strip())
                     lastname = " ".join((humanname.middle, humanname.last)).strip()
@@ -290,11 +304,13 @@ def parsepython(data, packagename: str, crosswalk=None, with_stype=False, with_e
                         queue.append(("author",
                             {"@type":"Person", "givenName": humanname.first, "familyName": lastname }
                         ))
-                        if orcid_placeholder:
+                        if args.with_orcid:
                             queue[-1][1]["@id"] = "https://orcid.org/EDIT_ME!"
             elif key == "Author-email":
                 if "author" in data:
-                    if multi_author:
+                    if args.single_author:
+                        data["author"][-1]["email"] = value
+                    else:
                         mails = value.split(",")
                         if len(mails) == len(authorindex):
                             for i, mail in zip(authorindex, mails):
@@ -305,13 +321,11 @@ def parsepython(data, packagename: str, crosswalk=None, with_stype=False, with_e
                                     data["author"][i]["email"] = mail.strip()
                         else:
                             print("WARNING: Unable to unambiguously assign e-mail addresses to multiple authors",file=sys.stderr)
-                    else:
-                        data["author"][-1]["email"] = value
                 else:
                     print("WARNING: No author provided, unable to attach author e-mail",file=sys.stderr)
             elif key == "Requires-Dist":
                 for dependency in splitdependencies(value):
-                    if dependency.find("extra =") != -1 and not extras:
+                    if dependency.find("extra =") != -1 and args.no_extras:
                         print("Skipping extra dependency: ",dependency,file=sys.stderr)
                         continue
                     dependency, depversion = parsedependency(dependency.strip())
@@ -336,7 +350,7 @@ def parsepython(data, packagename: str, crosswalk=None, with_stype=False, with_e
                         }))
             elif key.lower() in crosswalk[CWKey.PYPI]:
                 if key.lower() == "license":
-                    value = license_to_spdx(value)
+                    value = license_to_spdx(value, args)
                 elif key.lower() == "keywords":
                     value = detect_list(value)
                 queue.append((crosswalk[CWKey.PYPI][key.lower()], value))
@@ -356,7 +370,7 @@ def parsepython(data, packagename: str, crosswalk=None, with_stype=False, with_e
                 else:
                     data[key] = value
 
-    if with_stype:
+    if args.with_stypes:
         for rawentrypoint in pkg.entry_points:
             if rawentrypoint.group == "console_scripts":
                 interfacetype = "CommandLineApplication"
@@ -391,7 +405,7 @@ def parsepython(data, packagename: str, crosswalk=None, with_stype=False, with_e
                 "executableName": re.sub(r"[-_.]+", "-", pkg.name).lower(), #see https://python.github.io/peps/pep-0503/
                 "runtimePlatform": data['runtimePlatform']
             })
-    if with_entrypoints:
+    if args.with_entrypoints:
         #legacy!
         for rawentrypoint in pkg.entry_points:
             if rawentrypoint.group == "console_scripts":
@@ -452,14 +466,14 @@ def parsedependency(s: str):
     return identifier, version
 
 
-def parseapt(data, lines, crosswalk=None, with_stype=False, with_entrypoints=False, orcid_placeholder=False):
+def parseapt(data, lines, crosswalk, args: AttribDict):
     """Parses apt show output and converts to codemeta"""
     if crosswalk is None:
         _, crosswalk = readcrosswalk((CWKey.DEBIAN,))
     provider = PROVIDER_DEBIAN
     description = ""
     parsedescription = False
-    if with_entrypoints and not 'entryPoints' in data:
+    if args.with_entrypoints and not 'entryPoints' in data:
         #not in official specification!!!
         data['entryPoints'] = []
     for line in lines:
@@ -485,10 +499,10 @@ def parseapt(data, lines, crosswalk=None, with_stype=False, with_entrypoints=Fal
                         })
             elif key == "Section":
                 if "libs" in value or "libraries" in value:
-                    if with_entrypoints: data['interfaceType'] = "LIB"
+                    if args.with_entrypoints: data['interfaceType'] = "LIB"
                     data['audience'] = "Developers"
                 elif "utils" in value or "text" in value:
-                    if with_entrypoints: data['interfaceType'] = "CLI"
+                    if args.with_entrypoints: data['interfaceType'] = "CLI"
                 elif "devel" in value:
                     data['audience'] = "Developers"
                 elif "science" in value:
@@ -597,7 +611,7 @@ class CodeMetaCommand(distutils.cmd.Command):
     description = "Generate a codemeta.json file or update an existing one, note that the package must be installed first for this to work!"
     user_options = [
         ('with-entrypoints','e','Generate entrypoints as well (custom codemeta extension not part of the official specification)'),
-        ('with-stype','t','Generate software types using targetProduct (custom extension not part of the official codemeta/schema.org specification yet)'),
+        ('with-stypes','t','Generate software types using targetProduct (custom extension not part of the official codemeta/schema.org specification yet)'),
         ('dry-run','n','Write to stdout instead of codemeta.json')
     ]
 
@@ -628,7 +642,7 @@ props, crosswalk = readcrosswalk()
 def main():
     parser = argparse.ArgumentParser(description="Converter for Python Distutils (PyPI) Metadata to CodeMeta (JSON-LD) converter. Also supports conversion from other metadata types such as those from Debian packages. The tool can combine metadata from multiple sources.")
     parser.add_argument('-e', '--with-entrypoints', dest="with_entrypoints", help="Add entry points (this is not in the official codemeta specification but proposed in https://github.com/codemeta/codemeta/issues/183)", action='store_true',required=False)
-    parser.add_argument('-t', '--with-stype', dest="with_stype", help="Convert entrypoints to targetProduct and classes reflecting software type (https://github.com/codemeta/codemeta/issues/#271), linking softwareSourceCode to softwareApplication or WebAPI", action='store_true',required=False)
+    parser.add_argument('-t', '--with-stypes', dest="with_stypes", help="Convert entrypoints to targetProduct and classes reflecting software type (https://github.com/codemeta/codemeta/issues/#271), linking softwareSourceCode to softwareApplication or WebAPI", action='store_true',required=False)
     parser.add_argument('--exact-python-version', dest="exactplatformversion", help="Register the exact python interpreter used to generate the metadata as the runtime platform. Will only register the major version otherwise.", action='store_true',required=False)
     parser.add_argument('--single-author', dest="single_author", help="CodemetaPy will attempt to check if there are multiple authors specified in the author field, if you want to disable this behaviour, set this flag", action='store_true',required=False)
     parser.add_argument('--with-orcid', dest="with_orcid", help="Add placeholders for ORCID, requires manual editing of the output to insert the actual ORCIDs", action='store_true',required=False)
@@ -636,25 +650,23 @@ def main():
     parser.add_argument('-O','--outputfile',  dest='outputfile',type=str,help="Output file", action='store',required=False)
     parser.add_argument('-i','--inputtype', dest='input',type=str,help="Metadata input type: python, apt (debian packages), registry, json, yaml. May be a comma seperated list of multiple types if files are passed on the command line", action='store',required=False, default="python")
     parser.add_argument('-r','--registry', dest='registry',type=str,help="The given registry file groups multiple JSON-LD metadata together in one JSON file. If specified, the file will be read (or created), and updated. This is a custom extension not part of the CodeMeta specification", action='store',required=False)
+    parser.add_argument('--with-spdx', dest='with_spdx', help="Express license information using full SPDX URIs, attempt to convert automatically where possible", action='store_true')
+    parser.add_argument('--with-repostatus', dest='with_repostatus', help="Express project status using repostatus vocabulary, using full URIs, attempt to convert automatically where possible", action='store_true')
+    parser.add_argument('-a', '--all', dest='all', help="Enable all recommended extensions: --with-stypes --with-spdx --with-repostatus", action='store_true')
     parser.add_argument('inputsources', nargs='*', help='Input sources, the nature of the source depends on the type, often a file (or use - for standard input), set -i accordingly with the types (must contain as many items as passed!)')
     parser.add_argument('--no-extras',dest="no_extras",help="Do not parse any extras in the dependency specification", action='store_true', required=False)
     for key, prop in sorted(props.items()):
         if key:
             parser.add_argument('--' + key,dest=key, type=str, help=prop['DESCRIPTION'] + " (Type: "  + prop['TYPE'] + ", Parent: " + prop['PARENT'] + ") [you can format the value string in json if needed]", action='store',required=False)
     args = parser.parse_args()
+    if args.all:
+        args.with_spdx = True
+        args.with_repostatus = True
+        args.with_stypes = True
+    else:
+        print("NOTE: It is recommended to run with the --all option if you want to enable all recommended extensions upon codemeta (disabled by default)",file=sys.stderr)
+
     build(**args.__dict__)
-
-
-class AttribDict(dict):
-    """Simple dictionary that is addressable via attributes"""
-    def __init__(self, d):
-        self.__dict__ = d
-
-    def __getattr__(self, key):
-        if key in self:
-            return self[key]
-        else:
-            return None
 
 
 def build(**kwargs):
@@ -717,13 +729,13 @@ def build(**kwargs):
         elif inputtype in ("python","distutils"):
             print(f"Obtaining python package metadata for: {source}",file=sys.stderr)
             #source is a name of a package
-            update(data, parsepython(data, source, crosswalk, args.with_stype, args.with_entrypoints, args.with_orcid, args.exactplatformversion, not args.no_extras, not args.single_author))
+            update(data, parsepython(data, source, crosswalk, args))
         elif inputtype == "pip":
             print("Pip output parsing is obsolete since codemetapy 0.3.0, please use input type 'python' instead",file=sys.stderr)
             sys.exit(2)
         elif inputtype in ("apt","debian","deb"):
             aptlines = getstream(source).read().split("\n")
-            update(data, parseapt(data, aptlines, crosswalk, args.with_stype, args.with_entrypoints))
+            update(data, parseapt(data, aptlines, crosswalk, args))
         elif inputtype == "json":
             print(f"Parsing json file: {source}",file=sys.stderr)
             update(data, json.load(getstream(source)))
