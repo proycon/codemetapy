@@ -329,7 +329,7 @@ def parsepython(data, packagename: str, crosswalk, args: AttribDict):
                         print("Skipping extra dependency: ",dependency,file=sys.stderr)
                         continue
                     dependency, depversion = parsedependency(dependency.strip())
-                    if dependency and not any(( 'identifier' in d and d['identifier'] == dependency for d in data.get('softwareRequirements',[]))):
+                    if dependency and not any(( 'identifier' in d and d['identifier'] == dependency for d in data.get('softwareRequirements',[]) if isinstance(d,dict) )):
                         queue.append(('softwareRequirements',{
                             "@type": "SoftwareApplication",
                             "identifier": dependency,
@@ -342,7 +342,7 @@ def parsepython(data, packagename: str, crosswalk, args: AttribDict):
             elif key == "Requires-External":
                 for dependency in value.split(','):
                     dependency = dependency.strip()
-                    if dependency and not any(( 'identifier' in d and d['identifier'] == dependency for d in data.get('softwareRequirements',[]))):
+                    if dependency and not any(( 'identifier' in d and d['identifier'] == dependency for d in data.get('softwareRequirements',[]) if isinstance(d,dict) )):
                         queue.append(('softwareRequirements', {
                             "@type": "SoftwareApplication",
                             "identifier": dependency,
