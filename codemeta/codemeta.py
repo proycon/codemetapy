@@ -664,7 +664,7 @@ def main():
     parser.add_argument('--with-orcid', dest="with_orcid", help="Add placeholders for ORCID, requires manual editing of the output to insert the actual ORCIDs", action='store_true',required=False)
     parser.add_argument('-o', '--outputtype', dest='output',type=str,help="Metadata output type: json (default), yaml", action='store',required=False, default="json")
     parser.add_argument('-O','--outputfile',  dest='outputfile',type=str,help="Output file", action='store',required=False)
-    parser.add_argument('-i','--inputtype', dest='inputtypes',type=str,help="Metadata input type: python, apt (debian packages), registry, json, yaml. May be a comma seperated list of multiple types if files are passed on the command line", action='store',required=False, default="python")
+    parser.add_argument('-i','--inputtype', dest='inputtypes',type=str,help="Metadata input type: python, apt (debian packages), registry, json, yaml. May be a comma seperated list of multiple types if files are passed on the command line", action='store',required=False)
     parser.add_argument('-r','--registry', dest='registry',type=str,help="The given registry file groups multiple JSON-LD metadata together in one JSON file. If specified, the file will be read (or created), and updated. This is a custom extension not part of the CodeMeta specification", action='store',required=False)
     parser.add_argument('--with-spdx', dest='with_spdx', help="Express license information using full SPDX URIs, attempt to convert automatically where possible", action='store_true')
     parser.add_argument('--with-repostatus', dest='with_repostatus', help="Express project status using repostatus vocabulary, using full URIs, attempt to convert automatically where possible", action='store_true')
@@ -711,12 +711,16 @@ def build(**kwargs):
     inputsources = []
     if args.inputsources:
         inputfiles = args.inputsources
-        inputtypes = args.inputtypes.split(",")
+        inputtypes = args.inputtypes.split(",") if args.inputtypes else []
         if len(inputtypes) != len(inputfiles):
             if all( x.lower().endswith(".json") for x in inputfiles ):
                 inputtypes = ["json"] * len(inputfiles)
             else:
-                print(f"Passed {len(inputfiles)} files but specified {len(inputtypes)} input types!",  file=sys.stderr)
+                if len(inputtypes) == 0:
+                    print(f"No input types specified ({len(inputfiles)} input sources), assuming python",  file=sys.stderr)
+                    inputtypes = ["python"] * len(inputfiles)
+                else:
+                    print(f"Passed {len(inputfiles)} files but specified {len(inputtypes)} input types!",  file=sys.stderr)
         inputsources = list(zip(inputfiles, inputtypes))
     else:
         #no input was specified
