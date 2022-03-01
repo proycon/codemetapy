@@ -16,11 +16,10 @@ import os.path
 import csv
 import glob
 import importlib
-import distutils #note: will be removed in python 3.12!
-import setuptools
 import re
 from collections import OrderedDict, defaultdict
-from nameparser import HumanName
+from typing import Union, IO
+import distutils #note: will be removed in python 3.12!
 try:
     import yaml
 except ImportError:
@@ -29,7 +28,8 @@ if sys.version_info.minor < 8:
     import importlib_metadata #backported
 else:
     import importlib.metadata as importlib_metadata #python 3.8 and above: in standard library
-
+#pylint: disable=C0413
+from nameparser import HumanName
 
 class CWKey:
     """Crosswalk Keys, correspond with header label in crosswalk.csv"""
@@ -159,8 +159,7 @@ class AttribDict(dict):
     def __getattr__(self, key):
         if key in self:
             return self[key]
-        else:
-            return None
+        return None
 
 
 
@@ -200,8 +199,10 @@ def readcrosswalk(sourcekeys=(CWKey.PYPI,CWKey.DEBIAN)):
     return props, crosswalk
 
 
-def license_to_spdx(value, args):
+def license_to_spdx(value: Union[str,list], args: AttribDict) -> str:
     """Attempts to converts a license name or acronym to a full SPDX URI (https://spdx.org/licenses/)"""
+    if isinstance(value, list):
+        return [ license_to_spdx(x, args) for x in value ]
     if not args.with_spdx: return value
     if value.startswith("http://spdx.org") or value.startswith("https://spdx.org"):
         #we're already good, nothing to do
@@ -211,13 +212,25 @@ def license_to_spdx(value, args):
             return license_uri
     return value
 
-def detect_list(value):
+def detect_list(value: Union[list,tuple,set,str]) -> Union[list,str]:
     """Tries to see if the value is a list (string of comma separated items) and then returns a list"""
     if isinstance(value, (list,tuple)):
         return value
     if isinstance(value, str) and value.count(',') >= 1:
         return [ x.strip() for x in value.split(",") ]
     return value
+
+#pylint: disable=W0621
+def parsecodemeta(file_descriptor: IO, args: AttribDict) -> dict:
+    data = json.load(file_descriptor)
+    for key, value in data.items():
+        if key == "developmentStatus":
+            if args.with_repostatus and value.strip().lower() in REPOSTATUS:
+                #map to repostatus vocabulary
+                data[key] = "https://www.repostatus.org/#" + REPOSTATUS[value.strip().lower()]
+        elif key == "license":
+            data[key] = license_to_spdx(value, args)
+    return data
 
 #pylint: disable=W0621
 def parsepython(data, packagename: str, crosswalk, args: AttribDict):
@@ -574,13 +587,16 @@ def update(data: dict, newdata: dict):
         if key in data:
             if isinstance(value, dict):
                 update(data[key], value)
-            elif isinstance(value, list):
+            elif isinstance(value, (list,tuple)):
                 for x in value:
                     if isinstance(data[key], dict ):
                         data[key] = [ data[key], x ]
-                    elif x not in data[key]:
-                        if isinstance(data[key], list):
-                            data[key].append(x)
+                    elif isinstance(data[key], (list,tuple)):
+                        if x not in data[key]:
+                            if isinstance(data[key], list):
+                                data[key].append(x)
+                    elif isinstance(data[key], (str,float,int,bool) ):
+                        data[key] = [ data[key], x ]
             else:
                 data[key] = value
         else:
@@ -648,7 +664,7 @@ def main():
     parser.add_argument('--with-orcid', dest="with_orcid", help="Add placeholders for ORCID, requires manual editing of the output to insert the actual ORCIDs", action='store_true',required=False)
     parser.add_argument('-o', '--outputtype', dest='output',type=str,help="Metadata output type: json (default), yaml", action='store',required=False, default="json")
     parser.add_argument('-O','--outputfile',  dest='outputfile',type=str,help="Output file", action='store',required=False)
-    parser.add_argument('-i','--inputtype', dest='input',type=str,help="Metadata input type: python, apt (debian packages), registry, json, yaml. May be a comma seperated list of multiple types if files are passed on the command line", action='store',required=False, default="python")
+    parser.add_argument('-i','--inputtype', dest='inputtypes',type=str,help="Metadata input type: python, apt (debian packages), registry, json, yaml. May be a comma seperated list of multiple types if files are passed on the command line", action='store',required=False, default="python")
     parser.add_argument('-r','--registry', dest='registry',type=str,help="The given registry file groups multiple JSON-LD metadata together in one JSON file. If specified, the file will be read (or created), and updated. This is a custom extension not part of the CodeMeta specification", action='store',required=False)
     parser.add_argument('--with-spdx', dest='with_spdx', help="Express license information using full SPDX URIs, attempt to convert automatically where possible", action='store_true')
     parser.add_argument('--with-repostatus', dest='with_repostatus', help="Express project status using repostatus vocabulary, using full URIs, attempt to convert automatically where possible", action='store_true')
@@ -665,7 +681,7 @@ def main():
         args.with_stypes = True
     else:
         print("NOTE: It is recommended to run with the --all option if you want to enable all recommended extensions upon codemeta (disabled by default)",file=sys.stderr)
-
+    print(args,file=sys.stderr)
     build(**args.__dict__)
 
 
@@ -694,9 +710,14 @@ def build(**kwargs):
 
     inputsources = []
     if args.inputsources:
-        if len(args.input.split(",")) != len(args.inputsources):
-            print(f"Passed {len(args.inputsources)} files but specified {len(args.input.split(','))} input types!",  file=sys.stderr)
-        inputsources = list(zip(args.inputsources, args.input.split(',')))
+        inputfiles = args.inputsources
+        inputtypes = args.inputtypes.split(",")
+        if len(inputtypes) != len(inputfiles):
+            if all( x.lower().endswith(".json") for x in inputfiles ):
+                inputtypes = ["json"] * len(inputfiles)
+            else:
+                print(f"Passed {len(inputfiles)} files but specified {len(inputtypes)} input types!",  file=sys.stderr)
+        inputsources = list(zip(inputfiles, inputtypes))
     else:
         #no input was specified
         if os.path.exists('setup.py'):
@@ -723,7 +744,7 @@ def build(**kwargs):
         if inputtype == "registry":
             try:
                 update(data, getregistry(getstream(source), registry))
-            except KeyError as e:
+            except KeyError:
                 print(f"ERROR: No such identifier in registry: {source}", file=sys.stderr)
                 sys.exit(3)
         elif inputtype in ("python","distutils"):
@@ -738,7 +759,7 @@ def build(**kwargs):
             update(data, parseapt(data, aptlines, crosswalk, args))
         elif inputtype == "json":
             print(f"Parsing json file: {source}",file=sys.stderr)
-            update(data, json.load(getstream(source)))
+            update(data, parsecodemeta(getstream(source), args))
 
         for key, prop in props.items():
             if hasattr(args,key) and getattr(args,key) is not None:
