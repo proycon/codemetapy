@@ -1,7 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf8 -*-
-
-from __future__ import print_function
 
 import os
 from setuptools import setup
@@ -22,10 +19,10 @@ setup(
     author = "Maarten van Gompel",
     author_email = "proycon@anaproy.nl",
     description = ("Generate CodeMeta metadata for Python packages"),
-    license = "GPL",
+    license = "GPL-3.0-only",
     keywords = "software metadata codemeta doap pip pypi distutils admssw",
     url = "https://github.com/proycon/codemeta",
-    packages=['codemeta'],
+    packages=['codemeta', 'codemeta.parsers'],
     long_description=read('README.rst'),
     classifiers=[
         "Development Status :: 4 - Beta",
