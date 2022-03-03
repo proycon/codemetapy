@@ -116,7 +116,6 @@ def main():
         args.with_stypes = True
     else:
         print("NOTE: It is recommended to run with the --all option if you want to enable all recommended extensions upon codemeta (disabled by default)",file=sys.stderr)
-    print(args,file=sys.stderr)
     build(**args.__dict__)
 
 
