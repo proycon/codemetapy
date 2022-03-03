@@ -147,14 +147,15 @@ def build(**kwargs):
         inputfiles = args.inputsources
         inputtypes = args.inputtypes.split(",") if args.inputtypes else []
         if len(inputtypes) != len(inputfiles):
-            if all( x.lower().endswith(".json") for x in inputfiles ):
-                inputtypes = ["json"] * len(inputfiles)
-            else:
-                if len(inputtypes) == 0:
-                    print(f"No input types specified ({len(inputfiles)} input sources), assuming python",  file=sys.stderr)
-                    inputtypes = ["python"] * len(inputfiles)
+            print(f"Passed {len(inputfiles)} files but specified {len(inputtypes)} input types! Automatically guessing types...",  file=sys.stderr)
+            for inputsource in inputsources[len(inputtypes):]:
+                if inputsource.lower().startswith("http"):
+                    inputtypes.append("web")
+                elif inputsource.lower().endswith(".json"):
+                    inputtypes.append("json")
                 else:
-                    print(f"Passed {len(inputfiles)} files but specified {len(inputtypes)} input types!",  file=sys.stderr)
+                    #assume python
+                    inputtypes.append("python")
         inputsources = list(zip(inputfiles, inputtypes))
     else:
         #no input was specified
