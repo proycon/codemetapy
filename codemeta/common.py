@@ -288,39 +288,43 @@ def flatten_singletons(data):
     else:
         return data
 
-def serialize_to_json(g: Graph):
+def serialize_to_json(g: Graph) -> dict:
     """Serializes the RDF graph to JSON, taking care of 'framing' for embedded nodes"""
     data = json.loads(g.serialize(format='json-ld', auto_compact=True, context=CONTEXT))
 
     #rdflib doesn't do 'framing' so we have to do it in this post-processing step:
     #source: a Niklas Lindström, https://groups.google.com/g/rdflib-dev/c/U9Czox7kQL0?pli=1
-    items, refs = {}, {}
-    for item in data['@graph']:
-        itemid = item.get('@id')
-        if itemid:
-            items[itemid] = item
-        for vs in item.values():
-            for v in [vs] if not isinstance(vs, list) else vs:
-                if isinstance(v, dict):
-                    refid = v.get('@id')
-                    if refid and refid.startswith('_:'):
-                        refs.setdefault(refid, (v, []))[1].append(item)
-    for ref, subjects in refs.values():
-        if len(subjects) == 1:
-            ref.update(items.pop(ref['@id']))
-            del ref['@id']
-    data['@graph'] = list(items.values())
-    #<end snippet>
+    if '@graph' in data:
+        items, refs = {}, {}
+        for item in data['@graph']:
+            itemid = item.get('@id')
+            if itemid:
+                items[itemid] = item
+            for vs in item.values():
+                for v in [vs] if not isinstance(vs, list) else vs:
+                    if isinstance(v, dict):
+                        refid = v.get('@id')
+                        if refid and refid.startswith('_:'):
+                            refs.setdefault(refid, (v, []))[1].append(item)
+        for ref, subjects in refs.values():
+            if len(subjects) == 1:
+                ref.update(items.pop(ref['@id']))
+                del ref['@id']
+        data['@graph'] = list(items.values())
+        #<end snippet>
+
+
+        #No need for @graph if it contains only one item now:
+        if isinstance(data['@graph'], list) and len(data['@graph']) == 1:
+            graph = data['@graph'][0]
+            del data['@graph']
+            data.update(graph)
 
     #remove all known prefixes (context binds them)
-    data['@graph'] = remove_prefixes(data['@graph'])
-    data['@graph'] = flatten_singletons(data['@graph'])
+    data = remove_prefixes(data)
+    data = flatten_singletons(data)
 
-    if isinstance(data['@graph'], list) and len(data['@graph']) == 1:
-        graph = data['@graph'][0]
-        del data['@graph']
-        data.update(graph)
-
+    #remove redundant anonymous ID's at top level
     if '@id' in data and data['@id'].startswith('_:'):
         del data['@id']
 

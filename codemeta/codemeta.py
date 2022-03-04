@@ -132,9 +132,11 @@ def build(**kwargs):
     if args.inputsources:
         inputfiles = args.inputsources
         inputtypes = args.inputtypes.split(",") if args.inputtypes else []
+        guess = False
         if len(inputtypes) != len(inputfiles):
             print(f"Passed {len(inputfiles)} files but specified {len(inputtypes)} input types! Automatically guessing types...",  file=sys.stderr)
-            for inputsource in inputsources[len(inputtypes):]:
+            guess = True
+            for inputsource in inputfiles[len(inputtypes):]:
                 if inputsource.lower().startswith("http"):
                     inputtypes.append("web")
                 elif inputsource.lower().endswith(".json"):
@@ -143,12 +145,14 @@ def build(**kwargs):
                     #assume python
                     inputtypes.append("python")
         inputsources = list(zip(inputfiles, inputtypes))
+        if guess:
+            print(f"Detected input types: {inputsources}",file=sys.stderr)
     else:
         #no input was specified
         if os.path.exists('setup.py'):
             print("No input files specified, but found python project in current dir, using that...",file=sys.stderr)
             print("Generating egg_info",file=sys.stderr)
-            os.system("python3 setup.py egg_info")
+            os.system("python3 setup.py egg_info >&2")
             for d in glob.glob("*.egg-info"):
                 inputsources = [(".".join(d.split(".")[:-1]),"python")]
                 break
@@ -177,7 +181,7 @@ def build(**kwargs):
         #    update(data, codemeta.parsers.debian.parseapt(data, aptlines, crosswalk, args))
         elif inputtype == "json":
             print(f"Parsing json-ld file: {source}",file=sys.stderr)
-            g.parse(file=getstream(source), format="jsonld")
+            g.parse(file=getstream(source), format="json-ld")
 
     if args.output == "json":
         doc = serialize_to_json(g)
