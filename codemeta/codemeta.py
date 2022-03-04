@@ -16,34 +16,20 @@ import os.path
 import glob
 from collections import OrderedDict, defaultdict
 from typing import Union, IO
-import distutils #note: will be removed in python 3.12!
-try:
-    import yaml
-except ImportError:
-    yaml = None
+import copy
+import distutils.cmd #note: will be removed in python 3.12!
 #pylint: disable=C0413
-from codemeta.common import clean, update, getregistry, AttribDict, CONTEXT, SOFTWARETYPE_CONTEXT, ENTRYPOINT_CONTEXT, getstream
+
+from rdflib import Graph, BNode, URIRef
+from rdflib.namespace import SDO, RDF
+from rdflib.plugins.shared.jsonld.context import Context
+import rdflib.plugins.serializers.jsonld
+
+from codemeta.common import init_graph, CODEMETA, AttribDict, getstream, CONTEXT, serialize_to_json
 import codemeta.crosswalk
 import codemeta.parsers.python
 import codemeta.parsers.debian
 import codemeta.parsers.json
-
-
-if yaml is not None:
-    def represent_ordereddict(dumper, data):
-        """function to represent an ordered dictionary in yaml"""
-        value = []
-
-        for item_key, item_value in data.items():
-            node_key = dumper.represent_data(item_key)
-            node_value = dumper.represent_data(item_value)
-
-            value.append((node_key, node_value))
-
-        return yaml.nodes.MappingNode('tag:yaml.org,2002:map', value)
-
-    yaml.add_representer(OrderedDict, represent_ordereddict)
-
 
 
 #class PostDevelopCommand(setuptools.command.develop.develop):
@@ -173,76 +159,37 @@ def build(**kwargs):
             print("No input files specified (use - for stdin)",file=sys.stderr)
             sys.exit(2)
 
-    data = OrderedDict({
-        '@context': CONTEXT + extracontext,
-        "@type": "SoftwareSourceCode",
-    })
+
+    g = init_graph()
+
+    res = BNode()
+    g.add((res, RDF.type, SDO.SoftwareSourceCode))
+
     l = len(inputsources)
     for i, (source, inputtype) in enumerate(inputsources):
         print(f"Processing source #{i+1} of {l}",file=sys.stderr)
-        if inputtype == "registry":
-            try:
-                update(data, getregistry(getstream(source), registry))
-            except KeyError:
-                print(f"ERROR: No such identifier in registry: {source}", file=sys.stderr)
-                sys.exit(3)
-        elif inputtype in ("python","distutils"):
+        if inputtype == "python":
             print(f"Obtaining python package metadata for: {source}",file=sys.stderr)
             #source is a name of a package
-            update(data, codemeta.parsers.python.parsepython(data, source, crosswalk, args))
-        elif inputtype == "pip":
-            print("Pip output parsing is obsolete since codemetapy 0.3.0, please use input type 'python' instead",file=sys.stderr)
-            sys.exit(2)
-        elif inputtype in ("apt","debian","deb"):
-            aptlines = getstream(source).read().split("\n")
-            update(data, codemeta.parsers.debian.parseapt(data, aptlines, crosswalk, args))
+            codemeta.parsers.python.parsepython(g, res, source, crosswalk, args)
+        #elif inputtype == "debian":   #TODO: re-enable!
+        #    aptlines = getstream(source).read().split("\n")
+        #    update(data, codemeta.parsers.debian.parseapt(data, aptlines, crosswalk, args))
         elif inputtype == "json":
-            print(f"Parsing json file: {source}",file=sys.stderr)
-            update(data, codemeta.parsers.json.parsecodemeta(getstream(source), args))
-
-        for key, prop in props.items():
-            if hasattr(args,key) and getattr(args,key) is not None:
-                value = getattr(args, key)
-                try:
-                    value = json.loads(value)
-                except json.decoder.JSONDecodeError: #not JSON, take to be a literal string
-                    if '[' in value or '{' in value: #surely this was meant to be json
-                        raise
-                data[key] = value
-
-    data = clean(data)
+            print(f"Parsing json-ld file: {source}",file=sys.stderr)
+            g.parse(file=getstream(source), format="jsonld")
 
     if args.output == "json":
+        doc = serialize_to_json(g)
         if args.outputfile and args.outputfile != "-":
             with open(args.outputfile,'w',encoding='utf-8') as fp:
-                json.dump(data,fp, ensure_ascii=False, indent=4)
+                fp.write(json.dumps(doc, indent=4))
         else:
-            print(json.dumps(data, ensure_ascii=False, indent=4))
-    elif args.output == "yaml":
-        if not yaml:
-            raise Exception("Yaml support not available", args.output)
-        if args.outputfile and args.outputfile != "-":
-            with open(args.outputfile,'w',encoding='utf-8') as fp:
-                yaml.dump(data, fp, default_flow_style=False)
-        else:
-            yaml.dump(data, sys.stdout, default_flow_style=False)
+            print(json.dumps(doc, indent=4))
     else:
         raise Exception("No such output type: ", args.output)
 
-    if args.registry and data['identifier']:
-        if '@context' in data:
-            del data['@context'] #already in registry at top level
-        data["@id"] = "#" + data['identifier'].lower()
-        found = False
-        for i, d in enumerate(registry["@graph"]):
-            if d['identifier'].lower() == data['identifier'].lower():
-                registry['@graph'][i] = data #overwrite existing entry
-                found = True
-                break
-        if not found:
-            registry["@graph"].append(data) #add new entry
-        with open(args.registry,'w',encoding='utf-8') as f:
-            print(json.dumps(registry, ensure_ascii=False, indent=4), file=f)
+
 
 if __name__ == '__main__':
     main()

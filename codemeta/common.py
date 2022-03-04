@@ -1,6 +1,10 @@
 import sys
+import json
+from rdflib import Graph, Namespace, URIRef, BNode, Literal
+from rdflib.namespace import SDO, RDF
 from typing import Union, IO
 from collections import OrderedDict
+from nameparser import HumanName
 
 
 PROGLANG_PYTHON = {
@@ -10,10 +14,16 @@ PROGLANG_PYTHON = {
     "url": "https://www.python.org",
 }
 
-CONTEXT =  [
-    "https://doi.org/10.5063/schema/codemeta-2.0",
-    "http://schema.org/",
-]
+
+CODEMETA = Namespace("https://doi.org/10.5063/schema/codemeta-2.0/#")
+#Custom extensions not in codemeta/schema.org (yet), they are proposed in https://github.com/codemeta/codemeta/issues/271 and supersede the above one
+SOFTWARETYPES = Namespace("https://w3id.org/software-types#")
+
+CONTEXT = {
+    "schema": str(SDO),
+    "codemeta": str(CODEMETA),
+    "stypes": str(SOFTWARETYPES),
+}
 
 ENTRYPOINT_CONTEXT = { #these are all custom extensions not in codemeta (yet), they are proposed in https://github.com/codemeta/codemeta/issues/183 but are obsolete in favour of the newer software types (see next declaration)
     "entryPoints": { "@reverse": "schema:actionApplication" },
@@ -21,11 +31,6 @@ ENTRYPOINT_CONTEXT = { #these are all custom extensions not in codemeta (yet), t
     "specification": { "@id": "codemeta:specification" , "@type":"@id"}, #A technical specification of the interface
     "mediatorApplication": {"@id": "codemeta:mediatorApplication", "@type":"@id" } #auxiliary software that provided/enabled this entrypoint
 }
-
-#these are all custom extensions not in codemeta/schema.org (yet), they are proposed in https://github.com/codemeta/codemeta/issues/271 and supersede the above one
-SOFTWARETYPE_CONTEXT = "https://w3id.org/software-types#"
-
-
 
 
 REPOSTATUS= { #maps Python development status to repostatus.org vocabulary (the mapping is debatable)
@@ -96,6 +101,17 @@ LICENSE_MAP = [ #maps some common licenses to SPDX URIs, mapped with a substring
     ("CC-BY-SA-4.0", "http://spdx.org/licenses/CC-BY-SA-4.0"), #not designed for software, not OSI-approved
 ]
 
+
+def init_graph():
+    """Initializes the RDF graph, the context and the prefixes"""
+    #context = Context(CONTEXT)
+    g = Graph()
+    g.bind('schema', SDO)
+    g.bind('codemeta', CODEMETA)
+    g.bind('stypes', SOFTWARETYPES)
+
+    return g
+
 class AttribDict(dict):
     """Simple dictionary that is addressable via attributes"""
     def __init__(self, d):
@@ -127,21 +143,6 @@ def detect_list(value: Union[list,tuple,set,str]) -> Union[list,str]:
         return [ x.strip() for x in value.split(",") ]
     return value
 
-def clean(data: dict) -> dict:
-    """Purge empty values, lowercase identifier"""
-    purgekeys = []
-    for k,v in data.items():
-        if v == "" or v is None or (isinstance(v,(tuple, list)) and len(v) == 0):
-            purgekeys.append(k)
-        elif isinstance(v, (dict, OrderedDict)):
-            clean(v)
-        elif isinstance(v, (tuple, list)):
-            data[k] = [ clean(x) if isinstance(x, (dict,OrderedDict)) else x for x in v ]
-    for k in purgekeys:
-        del data[k]
-    if 'identifier' in data and isinstance(data['identifier'], str):
-        data['identifier'] = data['identifier'].lower()
-    return data
 
 def resolve(data: dict, idmap=None) -> dict:
     """Resolve nodes that refer to an ID mentioned earlier"""
@@ -190,9 +191,138 @@ def update(data: dict, newdata: dict):
         else:
             data[key] = value
 
+def add_triple(g: Graph, res: Union[URIRef, BNode],key, value, args: AttribDict) -> bool:
+    """Maps a key/value pair to an actual triple"""
+    if key == "developmentStatus":
+        if args.with_repostatus and value.strip().lower() in REPOSTATUS:
+            #map to repostatus vocabulary
+            value = "https://www.repostatus.org/#" + REPOSTATUS[value.strip().lower()]
+            g.add((res, CODEMETA.developmentStatus, URIRef(value)))
+        else:
+            g.add((res, CODEMETA.developmentStatus, Literal(value)))
+    elif key == "license":
+        value = license_to_spdx(value, args)
+        if value.find('spdx') != -1:
+            g.add((res, SDO.license, URIRef(value)))
+        else:
+            g.add((res, SDO.license, Literal(value)))
+    elif key == "applicationCategory":
+        g.add((res, SDO.applicationCategory, Literal(value)))
+    elif key == "audience":
+        audience = BNode()
+        g.add((audience, RDF.type, SDO.Audience))
+        g.add((audience, SDO.audienceType, Literal(value) ))
+        g.add((res, SDO.audience,audience ))
+    elif key == "keywords":
+        value = detect_list(value)
+        if isinstance(value, list):
+            for item in value:
+                g.add((res, SDO.keywords,Literal(item)))
+        else:
+            g.add((res, SDO.keywords,Literal(value)))
+    elif hasattr(SDO, key):
+        g.add((res, getattr(SDO, key), Literal(value)))
+    elif hasattr(CODEMETA, key):
+        g.add((res, getattr(CODEMETA, key), Literal(value)))
+    else:
+        print(f"NOTICE: Don't know how to handle key '{key}' with value '{value}'... ignoring...",file=sys.stderr)
+        return False
+    return True
+
+def add_authors(g: Graph, res: Union[URIRef, BNode], value, args: AttribDict, mailvalue = ""):
+    """Parse and add authors and their e-mail addresses"""
+    if args.single_author:
+        names = [value.strip()]
+        mails = [mailvalue]
+    else:
+        names = value.strip().split(",")
+        mails = mailvalue.strip().split(",")
+
+    for i, name in enumerate(names):
+        if len(mails) > i:
+            mail = mails[i]
+        else:
+            mail = None
+        humanname = HumanName(name.strip())
+        lastname = " ".join((humanname.middle, humanname.last)).strip()
+
+        author = BNode()
+        g.add((author, RDF.type, SDO.Person))
+        g.add((author, SDO.givenName, Literal(humanname.first)))
+        g.add((author, SDO.familyName, Literal(lastname)))
+        if mail:
+            g.add((author, SDO.email, Literal(mail)))
+        g.add((res, SDO.author, author))
+
+
 def getstream(source: str):
     """Opens an file (or use - for stdin) and returns the file descriptor"""
     if source == '-':
         return sys.stdin
     return open(source,'r',encoding='utf-8')
+
+
+def remove_prefixes(data):
+    """Recursively removes namespace prefixes from dictionary keys"""
+    if isinstance(data, dict):
+        return { key.replace('schema:','').replace('codemeta:','').replace('stypes:','') : remove_prefixes(value) for key, value in data.items() }
+    elif isinstance(data, (list,tuple)):
+        return [ remove_prefixes(x) for x in data ]
+    else:
+        return data
+
+def flatten_singletons(data):
+    """Recursively flattens singleton ``key: { "@id": url }`` instances to ``key: url``"""
+    if isinstance(data, dict):
+        for key, value in data.items():
+            if isinstance(value, dict):
+                if '@id' in value and len(value) == 1:
+                    data[key] = value['@id']
+                else:
+                    data[key] = flatten_singletons(data[key])
+            else:
+                data[key] = flatten_singletons(data[key])
+        return data
+    elif isinstance(data, (list,tuple)):
+        return [ x['@id'] if isinstance(x, dict) and '@id' in x and len(x) == 1 else flatten_singletons(x) for x in data ]
+    else:
+        return data
+
+def serialize_to_json(g: Graph):
+    """Serializes the RDF graph to JSON, taking care of 'framing' for embedded nodes"""
+    data = json.loads(g.serialize(format='json-ld', auto_compact=True, context=CONTEXT))
+
+    #rdflib doesn't do 'framing' so we have to do it in this post-processing step:
+    #source: a Niklas Lindström, https://groups.google.com/g/rdflib-dev/c/U9Czox7kQL0?pli=1
+    items, refs = {}, {}
+    for item in data['@graph']:
+        itemid = item.get('@id')
+        if itemid:
+            items[itemid] = item
+        for vs in item.values():
+            for v in [vs] if not isinstance(vs, list) else vs:
+                if isinstance(v, dict):
+                    refid = v.get('@id')
+                    if refid and refid.startswith('_:'):
+                        refs.setdefault(refid, (v, []))[1].append(item)
+    for ref, subjects in refs.values():
+        if len(subjects) == 1:
+            ref.update(items.pop(ref['@id']))
+            del ref['@id']
+    data['@graph'] = list(items.values())
+    #<end snippet>
+
+    #remove all known prefixes (context binds them)
+    data['@graph'] = remove_prefixes(data['@graph'])
+    data['@graph'] = flatten_singletons(data['@graph'])
+
+    if isinstance(data['@graph'], list) and len(data['@graph']) == 1:
+        graph = data['@graph'][0]
+        del data['@graph']
+        data.update(graph)
+
+    if '@id' in data and data['@id'].startswith('_:'):
+        del data['@id']
+
+    return data
 

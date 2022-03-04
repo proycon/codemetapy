@@ -1,10 +1,15 @@
 import json
 from typing import IO
+from rdflib import Graph, URIRef, BNode, Literal
+from typing import Union, IO
+from rdflib.namespace import RDF, SDO
 from codemeta.common import AttribDict, REPOSTATUS, license_to_spdx
 
 #pylint: disable=W0621
-def parsecodemeta(file_descriptor: IO, args: AttribDict) -> dict:
-    """Parses a codemeta.json file"""
+def parsecodemeta(g: Graph, res: Union[URIRef, BNode], file_descriptor: IO, args: AttribDict) -> dict:
+    g.parse(file=file_descriptor, format="jsonld")
+
+    """Parses a codemeta.json file (json-ld)"""
     data = json.load(file_descriptor)
     for key, value in data.items():
         if key == "developmentStatus":
