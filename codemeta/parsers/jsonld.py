@@ -28,9 +28,11 @@ def parse_jsonld(g: Graph, res: Union[BNode, URIRef,None], file_descriptor: IO, 
     #schema.org doesn't do proper content negotation, patch on the fly:
     if isinstance(data['@context'], list):
         for v in ("https://schema.org/","http://schema.org/","https://schema.org","http://schema.org"):
-            i = data['@context'].find(v)
-            if i != -1:
+            try:
+                i = data['@context'].index(v)
                 data['@context'][i] = SCHEMA_SOURCE
+            except ValueError:
+                pass
 
     prefuri = None
     if isinstance(res, URIRef):
@@ -48,7 +50,7 @@ def parse_jsonld(g: Graph, res: Union[BNode, URIRef,None], file_descriptor: IO, 
                     data[k] = str(res)
 
     #reserialize
-    data = json.dumps(data, indent=4, encoding='utf-8')
+    data = json.dumps(data, indent=4)
 
     #and parse with rdflib
     g.parse(data=data, format="json-ld")

@@ -49,7 +49,6 @@ def remove_prefixes(data):
 
 def serialize_to_jsonld(g: Graph, uri: str) -> dict:
     """Serializes the RDF graph to JSON, taking care of 'framing' for embedded nodes"""
-    print(CONTEXT,file=sys.stderr)
     data = json.loads(g.serialize(format='json-ld', auto_compact=True, context=CONTEXT))
 
     #rdflib doesn't do 'framing' so we have to do it in this post-processing step:
