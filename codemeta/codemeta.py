@@ -21,15 +21,16 @@ import distutils.cmd #note: will be removed in python 3.12!
 #pylint: disable=C0413
 
 from rdflib import Graph, BNode, URIRef
-from rdflib.namespace import SDO, RDF
+from rdflib.namespace import RDF
 from rdflib.plugins.shared.jsonld.context import Context
 import rdflib.plugins.serializers.jsonld
 
-from codemeta.common import init_graph, CODEMETA, AttribDict, getstream, CONTEXT, serialize_to_json
+from codemeta.common import init_graph, CODEMETA, AttribDict, getstream, CONTEXT, SDO, reconcile
 import codemeta.crosswalk
 import codemeta.parsers.python
 import codemeta.parsers.debian
-import codemeta.parsers.json
+import codemeta.parsers.jsonld
+from codemeta.serializers.jsonld import serialize_to_jsonld
 
 
 #class PostDevelopCommand(setuptools.command.develop.develop):
@@ -83,6 +84,7 @@ def main():
     parser.add_argument('--exact-python-version', dest="exactplatformversion", help="Register the exact python interpreter used to generate the metadata as the runtime platform. Will only register the major version otherwise.", action='store_true',required=False)
     parser.add_argument('--single-author', dest="single_author", help="CodemetaPy will attempt to check if there are multiple authors specified in the author field, if you want to disable this behaviour, set this flag", action='store_true',required=False)
     parser.add_argument('--with-orcid', dest="with_orcid", help="Add placeholders for ORCID, requires manual editing of the output to insert the actual ORCIDs", action='store_true',required=False)
+    parser.add_argument('-b', '--baseuri',type=str,help="Base URI for resulting SoftwareSourceCode instances (make sure to add a trailing slash)", action='store',required=False, default="https://example.org/")
     parser.add_argument('-o', '--outputtype', dest='output',type=str,help="Metadata output type: json (default), yaml", action='store',required=False, default="json")
     parser.add_argument('-O','--outputfile',  dest='outputfile',type=str,help="Output file", action='store',required=False)
     parser.add_argument('-i','--inputtype', dest='inputtypes',type=str,help="Metadata input type: python, apt (debian packages), registry, json, yaml. May be a comma seperated list of multiple types if files are passed on the command line", action='store',required=False)
@@ -108,25 +110,6 @@ def main():
 def build(**kwargs):
     """Build a codemeta file"""
     args = AttribDict(kwargs)
-    if args.with_stype:
-        extracontext = [SOFTWARETYPE_CONTEXT]
-    elif args.with_entrypoints:
-        extracontext = [ENTRYPOINT_CONTEXT]
-    else:
-        extracontext = []
-
-    if args.registry:
-        if os.path.exists(args.registry):
-            with open(args.registry, 'r', encoding='utf-8') as f:
-                registry = json.load(f)
-        else:
-            print(f"Registry {args.registry} does not exist yet, creating anew...",file=sys.stderr)
-            registry = {"@context": CONTEXT + extracontext, "@graph": []}
-    else:
-        registry = None
-    if registry is not None and ('@context' not in registry or '@graph' not in registry):
-        print(f"Registry {args.registry} has invalid (outdated?) format, ignoring and creating a new one...",file=sys.stderr)
-        registry = {"@context": CONTEXT + extracontext, "@graph": []}
 
     inputsources = []
     if args.inputsources:
@@ -163,28 +146,52 @@ def build(**kwargs):
             print("No input files specified (use - for stdin)",file=sys.stderr)
             sys.exit(2)
 
-
     g = init_graph()
 
-    res = BNode()
+    #Generate a temporary ID to use for the SoftwareSourceCode resource
+    #The ID will be overwritten with a more fitting one upon serialisation
+    identifier = os.path.basename(inputsources[0][0]).lower()
+    if not identifier or not isinstance(identifier, str) or identifier == '-':
+        if args.outputfile and args.outputfile != '-':
+            identifier = os.path.basename(args.outputfile).lower()
+        else:
+            identifier = "unknown"
+    if args.baseuri:
+        uri = args.baseuri +  identifier
+    else:
+        uri = "undefined:" + identifier
+
+    #add the root resource
+    res = URIRef(uri)
     g.add((res, RDF.type, SDO.SoftwareSourceCode))
+
+    founduri = False #indicates whether we found a preferred URI or not
 
     l = len(inputsources)
     for i, (source, inputtype) in enumerate(inputsources):
         print(f"Processing source #{i+1} of {l}",file=sys.stderr)
+
+        prefuri = None #preferred URI returned by the parsing method
         if inputtype == "python":
             print(f"Obtaining python package metadata for: {source}",file=sys.stderr)
             #source is a name of a package
-            codemeta.parsers.python.parsepython(g, res, source, crosswalk, args)
+            prefuri = codemeta.parsers.python.parse_python(g, res, source, crosswalk, args)
         #elif inputtype == "debian":   #TODO: re-enable!
         #    aptlines = getstream(source).read().split("\n")
         #    update(data, codemeta.parsers.debian.parseapt(data, aptlines, crosswalk, args))
         elif inputtype == "json":
             print(f"Parsing json-ld file: {source}",file=sys.stderr)
-            g.parse(file=getstream(source), format="json-ld")
+            prefuri = codemeta.parsers.jsonld.parse_jsonld(g, res, getstream(source), args)
+
+        #Set preferred URL
+        if prefuri and not founduri:
+            uri = prefuri
+            founduri = True
+
+    reconcile(g, res)
 
     if args.output == "json":
-        doc = serialize_to_json(g)
+        doc = serialize_to_jsonld(g, uri)
         if args.outputfile and args.outputfile != "-":
             with open(args.outputfile,'w',encoding='utf-8') as fp:
                 fp.write(json.dumps(doc, indent=4))

@@ -22,7 +22,7 @@ setup(
     license = "GPL-3.0-only",
     keywords = "software metadata codemeta doap pip pypi distutils admssw",
     url = "https://github.com/proycon/codemeta",
-    packages=['codemeta', 'codemeta.parsers'],
+    packages=['codemeta', 'codemeta.parsers','codemeta.serializers'],
     long_description=read('README.rst'),
     classifiers=[
         "Development Status :: 4 - Beta",

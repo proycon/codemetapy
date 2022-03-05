@@ -8,8 +8,8 @@ else:
     import importlib.metadata as importlib_metadata #python 3.8 and above: in standard library
 
 from rdflib import Graph, URIRef, BNode, Literal
-from rdflib.namespace import RDF, SDO
-from codemeta.common import AttribDict, add_triple, CODEMETA, SOFTWARETYPES, add_authors
+from rdflib.namespace import RDF
+from codemeta.common import AttribDict, add_triple, CODEMETA, SOFTWARETYPES, add_authors, SDO, COMMON_SOURCEREPOS
 from codemeta.crosswalk import readcrosswalk, CWKey
 
 def splitdependencies(s: str):
@@ -39,8 +39,9 @@ def parsedependency(s: str):
     return identifier, version
 
 #pylint: disable=W0621
-def parsepython(g: Graph, res: Union[URIRef, BNode], packagename: str, crosswalk, args: AttribDict):
+def parse_python(g: Graph, res: Union[URIRef, BNode], packagename: str, crosswalk, args: AttribDict) -> Union[str,None]:
     """Parses python package metadata and converts it to codemeta"""
+    prefuri = None
     if crosswalk is None:
         _, crosswalk = readcrosswalk((CWKey.PYPI,))
     authorindex = []
@@ -110,6 +111,13 @@ def parsepython(g: Graph, res: Union[URIRef, BNode], packagename: str, crosswalk
                     g.add((res, CODEMETA.softwareRequirements, depres))
             elif key.lower() in crosswalk[CWKey.PYPI]:
                 add_triple(g, res, crosswalk[CWKey.PYPI][key.lower()], value, args)
+                if crosswalk[CWKey.PYPI][key.lower()] == "url":
+                    for v in COMMON_SOURCEREPOS:
+                        if value.startswith(v):
+                            add_triple(g, res, "codeRepository", value, args)
+                            if not args.baseuri:
+                                prefuri = value
+                            break
             else:
                 print("WARNING: No translation for distutils key " + key,file=sys.stderr)
 
@@ -117,7 +125,8 @@ def parsepython(g: Graph, res: Union[URIRef, BNode], packagename: str, crosswalk
     name = g.value(res, SDO.name)
     if name and (res, SDO.identifier, None) not in g:
         g.set((res, SDO.identifier, name))
-
+    if args.baseuri:
+        prefuri = args.baseuri + name
 
     if args.with_stypes:
         found = False
@@ -158,3 +167,5 @@ def parsepython(g: Graph, res: Union[URIRef, BNode], packagename: str, crosswalk
                 g.add((targetproduct, SDO.runtimePlatform, Literal("Python " + str(sys.version_info.major) + "." + str(sys.version_info.minor) + "." + str(sys.version_info.micro))))
             else:
                 g.add((targetproduct, SDO.runtimePlatform, Literal("Python 3")))
+
+    return prefuri
