@@ -1,7 +1,7 @@
 import json
 from rdflib import Graph, URIRef, BNode, Literal
 from typing import Union, IO
-from codemeta.common import AttribDict, REPOSTATUS, license_to_spdx, SDO, SCHEMA_SOURCE
+from codemeta.common import AttribDict, REPOSTATUS, license_to_spdx, SDO, SCHEMA_SOURCE, CODEMETA_SOURCE, CONTEXT
 
 #pylint: disable=W0621
 #def parsecodemeta(g: Graph, res: Union[URIRef, BNode], file_descriptor: IO, args: AttribDict) -> dict:
@@ -25,14 +25,14 @@ def parse_jsonld(g: Graph, res: Union[BNode, URIRef,None], file_descriptor: IO, 
     if '@context' not in data:
         raise Exception("Not a valid JSON-LD document, @context missing!")
 
-    #schema.org doesn't do proper content negotation, patch on the fly:
+    #rewrite context using the sources we know that work (schema.org doesn't do proper content negotation):
     if isinstance(data['@context'], list):
-        for v in ("https://schema.org/","http://schema.org/","https://schema.org","http://schema.org"):
-            try:
-                i = data['@context'].index(v)
-                data['@context'][i] = SCHEMA_SOURCE
-            except ValueError:
-                pass
+        for i, v in enumerate(data['@context']):
+            if isinstance(v, str):
+                if v.startswith("https://schema.org") or v.startswith("http://schema.org"):
+                    data['@context'][i] = SCHEMA_SOURCE
+                elif v.startswith("https://doi.org/10.5063/schema"):
+                    data['@context'][i] = CODEMETA_SOURCE
 
     prefuri = None
     if isinstance(res, URIRef):
@@ -53,6 +53,6 @@ def parse_jsonld(g: Graph, res: Union[BNode, URIRef,None], file_descriptor: IO, 
     data = json.dumps(data, indent=4)
 
     #and parse with rdflib
-    g.parse(data=data, format="json-ld")
+    g.parse(data=data, format="json-ld", context=CONTEXT)
 
     return prefuri
