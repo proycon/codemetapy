@@ -89,9 +89,7 @@ def main():
     parser.add_argument('-O','--outputfile',  dest='outputfile',type=str,help="Output file", action='store',required=False)
     parser.add_argument('-i','--inputtype', dest='inputtypes',type=str,help="Metadata input type: python, apt (debian packages), registry, json, yaml. May be a comma seperated list of multiple types if files are passed on the command line", action='store',required=False)
     parser.add_argument('-r','--registry', dest='registry',type=str,help="The given registry file groups multiple JSON-LD metadata together in one JSON file. If specified, the file will be read (or created), and updated. This is a custom extension not part of the CodeMeta specification", action='store',required=False)
-    parser.add_argument('--with-spdx', dest='with_spdx', help="Express license information using full SPDX URIs, attempt to convert automatically where possible", action='store_true')
-    parser.add_argument('--with-repostatus', dest='with_repostatus', help="Express project status using repostatus vocabulary, using full URIs, attempt to convert automatically where possible", action='store_true')
-    parser.add_argument('-a', '--all', dest='all', help="Enable all recommended extensions: --with-stypes --with-spdx --with-repostatus", action='store_true')
+    parser.add_argument('-a', '--all', dest='all', help="Enable all recommended extensions: --with-stypes", action='store_true')
     parser.add_argument('inputsources', nargs='*', help='Input sources, the nature of the source depends on the type, often a file (or use - for standard input), set -i accordingly with the types (must contain as many items as passed!)')
     parser.add_argument('--no-extras',dest="no_extras",help="Do not parse any extras in the dependency specification", action='store_true', required=False)
     for key, prop in sorted(props.items()):
@@ -99,8 +97,6 @@ def main():
             parser.add_argument('--' + key,dest=key, type=str, help=prop['DESCRIPTION'] + " (Type: "  + prop['TYPE'] + ", Parent: " + prop['PARENT'] + ") [you can format the value string in json if needed]", action='store',required=False)
     args = parser.parse_args()
     if args.all:
-        args.with_spdx = True
-        args.with_repostatus = True
         args.with_stypes = True
     else:
         print("NOTE: It is recommended to run with the --all option if you want to enable all recommended extensions upon codemeta (disabled by default)",file=sys.stderr)
@@ -188,7 +184,7 @@ def build(**kwargs):
             uri = prefuri
             founduri = True
 
-    reconcile(g, res)
+    reconcile(g, res, args)
 
     if args.output == "json":
         doc = serialize_to_jsonld(g, uri)

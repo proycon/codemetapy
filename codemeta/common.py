@@ -14,6 +14,9 @@ PROGLANG_PYTHON = {
     "url": "https://www.python.org",
 }
 
+#A dummy namespace that will be used if the RDF parser expects a namespace but can't find any
+DUMMY_NS = "http://unknown/"
+
 SDO = Namespace("http://schema.org/")
 
 CODEMETA = Namespace("https://codemeta.github.io/terms/")
@@ -242,20 +245,43 @@ def add_authors(g: Graph, res: Union[URIRef, BNode], value, args: AttribDict, ma
             g.add((author, SDO.email, Literal(mail)))
         g.add((res, SDO.author, author))
 
-def reconcile(g: Graph, res: URIRef):
+def reconcile(g: Graph, res: URIRef, args: AttribDict):
     """Reconcile possible conflicts in the graph and issue warnings"""
     IDENTIFIER = g.value(res, SDO.identifier)
     if not IDENTIFIER: IDENTIFIER = str(res)
     HEAD = f"[CODEMETA VALIDATION ({IDENTIFIER})]"
 
-    if (res, CODEMETA.codeRepository, None) not in g:
+    if (res, SDO.codeRepository, None) not in g:
         print(f"{HEAD} codeRepository not set",file=sys.stderr)
     if (res, SDO.author, None) not in g:
         print(f"{HEAD} author not set",file=sys.stderr)
     if (res, SDO.license, None) not in g:
         print(f"{HEAD} license not set",file=sys.stderr)
 
+    status = g.value(res, CODEMETA.developmentStatus)
+    if status and status.startswith(DUMMY_NS):
+        status = status[len(DUMMY_NS):]
+        if status.lower() in REPOSTATUS.values():
+            print(f"{HEAD} automatically converting status to repostatus URI",file=sys.stderr)
+            g.set((res, CODEMETA.developmentStatus, URIRef("https://www.repostatus.org/#" + status.lower())))
+        else:
+            g.set((res, CODEMETA.developmentStatus, Literal(status)))
 
+    license = g.value(res, SDO.license)
+    if license and license.startswith(DUMMY_NS):
+        license = license_to_spdx(license[len(DUMMY_NS):],args)
+        if license.startswith("http"):
+            print(f"{HEAD} automatically converting license to spdx URI",file=sys.stderr)
+            g.set((res, SDO.license, URIRef(license)))
+        else:
+            g.set((res, SDO.license, Literal(license)))
+
+#        if key == "developmentStatus":
+#            if args.with_repostatus and value.strip().lower() in REPOSTATUS:
+#                #map to repostatus vocabulary
+#                data[key] = "https://www.repostatus.org/#" + REPOSTATUS[value.strip().lower()]
+#        elif key == "license":
+#            data[key] = license_to_spdx(value, args)
 
 def getstream(source: str):
     """Opens an file (or use - for stdin) and returns the file descriptor"""

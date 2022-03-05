@@ -2,22 +2,23 @@ import sys
 import json
 from rdflib import Graph, URIRef, BNode, Literal
 from typing import Union, IO
-from codemeta.common import AttribDict, REPOSTATUS, license_to_spdx, SDO, SCHEMA_SOURCE, CODEMETA_SOURCE, CONTEXT
+from codemeta.common import AttribDict, REPOSTATUS, license_to_spdx, SDO, SCHEMA_SOURCE, CODEMETA_SOURCE, CONTEXT, DUMMY_NS
 
 #pylint: disable=W0621
-#def parsecodemeta(g: Graph, res: Union[URIRef, BNode], file_descriptor: IO, args: AttribDict) -> dict:
-#    g.parse(file=file_descriptor, format="jsonld")
+#ef fixcodemeta() -> dict:
+#   """There may be certain errors in codemeta data we want to fix before using rdflib on it"""
+#   g.parse(file=file_descriptor, format="jsonld")
 #
-#    """Parses a codemeta.json file (json-ld)"""
-#    data = json.load(file_descriptor)
-#    for key, value in data.items():
-#        if key == "developmentStatus":
-#            if args.with_repostatus and value.strip().lower() in REPOSTATUS:
-#                #map to repostatus vocabulary
-#                data[key] = "https://www.repostatus.org/#" + REPOSTATUS[value.strip().lower()]
-#        elif key == "license":
-#            data[key] = license_to_spdx(value, args)
-#    return data
+#   """Parses a codemeta.json file (json-ld)"""
+#   data = json.load(file_descriptor)
+#   for key, value in data.items():
+#       if key == "developmentStatus":
+#           if args.with_repostatus and value.strip().lower() in REPOSTATUS:
+#               #map to repostatus vocabulary
+#               data[key] = "https://www.repostatus.org/#" + REPOSTATUS[value.strip().lower()]
+#       elif key == "license":
+#           data[key] = license_to_spdx(value, args)
+#   return data
 
 def parse_jsonld(g: Graph, res: Union[BNode, URIRef,None], file_descriptor: IO, args: AttribDict) -> Union[str,None]:
     data = json.load(file_descriptor)
@@ -34,6 +35,8 @@ def parse_jsonld(g: Graph, res: Union[BNode, URIRef,None], file_descriptor: IO, 
                     data['@context'][i] = SCHEMA_SOURCE
                 elif v.startswith("https://doi.org/10.5063/schema"):
                     data['@context'][i] = CODEMETA_SOURCE
+
+
 
     prefuri = None
     if isinstance(res, URIRef):
@@ -58,6 +61,8 @@ def parse_jsonld(g: Graph, res: Union[BNode, URIRef,None], file_descriptor: IO, 
     data = json.dumps(data, indent=4)
 
     #and parse with rdflib
-    g.parse(data=data, format="json-ld", context=CONTEXT)
+    g.parse(data=data, format="json-ld", context=CONTEXT, publicID=DUMMY_NS)
+
+    # ^--  We assign an u
 
     return prefuri
