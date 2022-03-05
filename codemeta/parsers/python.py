@@ -124,9 +124,9 @@ def parse_python(g: Graph, res: Union[URIRef, BNode], packagename: str, crosswal
     #ensure 'identifier' is always set
     name = g.value(res, SDO.name)
     if name and (res, SDO.identifier, None) not in g:
-        g.set((res, SDO.identifier, name))
+        g.set((res, SDO.identifier, Literal(name.lower())))
     if args.baseuri:
-        prefuri = args.baseuri + name
+        prefuri = args.baseuri + name.lower()
 
     if args.with_stypes:
         found = False
