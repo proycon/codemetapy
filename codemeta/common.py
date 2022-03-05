@@ -15,14 +15,14 @@ PROGLANG_PYTHON = {
 }
 
 
-CODEMETA = Namespace("https://doi.org/10.5063/schema/codemeta-2.0/#")
+CODEMETA = Namespace("https://doi.org/10.5063/schema/codemeta-2.0#")
 #Custom extensions not in codemeta/schema.org (yet), they are proposed in https://github.com/codemeta/codemeta/issues/271 and supersede the above one
 SOFTWARETYPES = Namespace("https://w3id.org/software-types#")
 
 CONTEXT = {
     "schema": str(SDO),
     "codemeta": str(CODEMETA),
-    "stypes": str(SOFTWARETYPES),
+    "stype": str(SOFTWARETYPES),
 }
 
 ENTRYPOINT_CONTEXT = { #these are all custom extensions not in codemeta (yet), they are proposed in https://github.com/codemeta/codemeta/issues/183 but are obsolete in favour of the newer software types (see next declaration)
@@ -321,7 +321,7 @@ def serialize_to_json(g: Graph) -> dict:
             data.update(graph)
 
     #remove all known prefixes (context binds them)
-    data = remove_prefixes(data)
+    #data = remove_prefixes(data)
     data = flatten_singletons(data)
 
     #remove redundant anonymous ID's at top level
