@@ -39,22 +39,18 @@ def parse_jsonld(g: Graph, res: Union[BNode, URIRef,None], file_descriptor: IO, 
     if isinstance(res, URIRef):
         if '@graph' in data and len(data['@graph']) == 1:
             #force same ID as the resource (to facilitate merging), but return the preferred URI to be used on serialisation again
-            found = False
             for k in ('id','@id'):
                 if k in data['@graph'][0]:
                     prefuri = data['@graph'][0][k]
-                    data[k] = str(res)
-            if not found:
-                data['@graph'][0]["@id"] = str(res)
+            data['@graph'][0]["@id"] = str(res)
+            if 'id' in data['@graph'][0]: del data['@graph'][0]['id'] #prefer @id over id
         elif '@id' in data or 'id' in data:
             #force same ID as the resource (to facilitate merging), but return the preferred URI to be used on serialisation again
-            found = False
             for k in ('id','@id'):
                 if k in data:
                     prefuri = data[k]
-                    data[k] = str(res)
-            if not found:
-                data["@id"] = str(res)
+            data["@id"] = str(res)
+            if 'id' in data: del data['id'] #prefer @id over id
         elif '@graph' not in data:
             data["@id"] = str(res)
 
