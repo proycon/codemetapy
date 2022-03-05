@@ -38,12 +38,18 @@ def normalize_schema_org(g: Graph):
             g.remove((s, p, o))
             g.add((s, p, URIRef(str(o).replace("https", "http"))))
 
-def remove_prefixes(data):
-    """Recursively removes namespace prefixes from dictionary keys"""
+def cleanup(data):
+    """Recursively removes namespace prefixes from dictionary keys and use @id and @type rather than the id/type aliases"""
     if isinstance(data, dict):
-        return { key.replace('schema:','').replace('http://schema.org/','').replace('codemeta:','').replace('stypes:','') : remove_prefixes(value) for key, value in data.items() }
+        if 'id' in data:
+            data['@id'] = data['id']
+            del data['id']
+        if 'type' in data:
+            data['@type'] = data['type']
+            del data['type']
+        return { key.replace('schema:','').replace('http://schema.org/','').replace('codemeta:','').replace('stypes:','') : cleanup(value) for key, value in data.items() }
     elif isinstance(data, (list,tuple)):
-        return [ remove_prefixes(x) for x in data ]
+        return [ cleanup(x) for x in data ]
     else:
         return data
 
@@ -91,7 +97,7 @@ def serialize_to_jsonld(g: Graph, uri: str) -> dict:
     data = flatten_singletons(data)
 
     #we have some lingering prefixes which we don't need, cleanup:
-    data = remove_prefixes(data)
+    data = cleanup(data)
 
     if '@graph' not in data and uri:
         if 'id' in data:
