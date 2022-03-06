@@ -133,11 +133,10 @@ class AttribDict(dict):
             return self[key]
         return None
 
-def license_to_spdx(value: Union[str,list], args: AttribDict) -> str:
+def license_to_spdx(value: Union[str,list,tuple]) -> Union[str,list]:
     """Attempts to converts a license name or acronym to a full SPDX URI (https://spdx.org/licenses/)"""
-    if isinstance(value, list):
-        return [ license_to_spdx(x, args) for x in value ]
-    if not args.with_spdx: return value
+    if isinstance(value, (list,tuple)):
+        return [ license_to_spdx(x) for x in value ]
     if value.startswith("http://spdx.org") or value.startswith("https://spdx.org"):
         #we're already good, nothing to do
         return value
@@ -185,14 +184,14 @@ def getregistry(identifier, registry):
 def add_triple(g: Graph, res: Union[URIRef, BNode],key, value, args: AttribDict) -> bool:
     """Maps a key/value pair to an actual triple"""
     if key == "developmentStatus":
-        if args.with_repostatus and value.strip().lower() in REPOSTATUS:
+        if value.strip().lower() in REPOSTATUS:
             #map to repostatus vocabulary
             value = "https://www.repostatus.org/#" + REPOSTATUS[value.strip().lower()]
             g.add((res, CODEMETA.developmentStatus, URIRef(value)))
         else:
             g.add((res, CODEMETA.developmentStatus, Literal(value)))
     elif key == "license":
-        value = license_to_spdx(value, args)
+        value = license_to_spdx(value)
         if value.find('spdx') != -1:
             g.add((res, SDO.license, URIRef(value)))
         else:
@@ -269,7 +268,7 @@ def reconcile(g: Graph, res: URIRef, args: AttribDict):
 
     license = g.value(res, SDO.license)
     if license and license.startswith(DUMMY_NS):
-        license = license_to_spdx(license[len(DUMMY_NS):],args)
+        license = license_to_spdx(license[len(DUMMY_NS):])
         if license.startswith("http"):
             print(f"{HEAD} automatically converting license to spdx URI",file=sys.stderr)
             g.set((res, SDO.license, URIRef(license)))
