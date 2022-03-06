@@ -2,7 +2,7 @@ import sys
 import json
 from typing import Union, IO
 from rdflib import Graph, URIRef, BNode, Literal
-from codemeta.common import AttribDict, REPOSTATUS, license_to_spdx, SDO, CONTEXT
+from codemeta.common import AttribDict, REPOSTATUS, license_to_spdx, SDO, CONTEXT, CODEMETA_SOURCE, CODEMETA_LOCAL_SOURCE, SCHEMA_SOURCE, SCHEMA_LOCAL_SOURCE, STYPE_SOURCE, STYPE_LOCAL_SOURCE, init_context
 
 def flatten_singletons(data):
     """Recursively flattens singleton ``key: { "@id": url }`` instances to ``key: url``"""
@@ -162,10 +162,22 @@ def find_main(data):
         return data, None
 
 
+def rewrite_context(context):
+    """Rewrite local contexts to their remote counterparts"""
+    if isinstance(context, list):
+        for i, value in enumerate(context):
+            if value == CODEMETA_LOCAL_SOURCE:
+                context[i] = CODEMETA_SOURCE
+            elif value == SCHEMA_LOCAL_SOURCE:
+                context[i] = SCHEMA_SOURCE
+            elif value == STYPE_LOCAL_SOURCE:
+                context[i] = STYPE_SOURCE
+
 def serialize_to_jsonld(g: Graph, res: Union[URIRef,None], newuri: str) -> dict:
     """Serializes the RDF graph to JSON, taking care of 'framing' for embedded nodes"""
-    data = json.loads(g.serialize(format='json-ld', auto_compact=True, context=CONTEXT))
+    init_context()
 
+    data = json.loads(g.serialize(format='json-ld', auto_compact=True, context=CONTEXT))
 
     #rdflib doesn't do 'framing' so we have to do it in this post-processing step:
     data = AutoFrame(data).run(str(res)) or data
@@ -186,8 +198,10 @@ def serialize_to_jsonld(g: Graph, res: Union[URIRef,None], newuri: str) -> dict:
     #flatten singletons (contains only @id)
     data = flatten_singletons(data)
     data = remove_blank_ids(data)
+    if '@context' in data:
+        rewrite_context(data['@context'])
 
-    #we have some lingering prefixes which we don't need, cleanup:
+    #we may have some lingering prefixes which we don't need, cleanup:
     data = cleanup(data)
 
 

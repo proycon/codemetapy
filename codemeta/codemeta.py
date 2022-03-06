@@ -25,7 +25,7 @@ from rdflib.namespace import RDF
 from rdflib.plugins.shared.jsonld.context import Context
 import rdflib.plugins.serializers.jsonld
 
-from codemeta.common import init_graph, CODEMETA, AttribDict, getstream, CONTEXT, SDO, reconcile
+from codemeta.common import init_graph, init_context, CODEMETA, AttribDict, getstream, CONTEXT, SDO, reconcile
 import codemeta.crosswalk
 import codemeta.parsers.python
 import codemeta.parsers.debian
@@ -142,6 +142,7 @@ def build(**kwargs):
             print("No input files specified (use - for stdin)",file=sys.stderr)
             sys.exit(2)
 
+    init_context()
     g = init_graph()
 
     #Generate a temporary ID to use for the SoftwareSourceCode resource

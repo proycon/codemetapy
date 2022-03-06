@@ -1,5 +1,7 @@
 import sys
+import os
 import json
+import requests
 from rdflib import Graph, Namespace, URIRef, BNode, Literal
 from rdflib.namespace import RDF
 from typing import Union, IO
@@ -26,13 +28,22 @@ SOFTWARETYPES = Namespace("https://w3id.org/software-types#")
 SCHEMA_SOURCE = "https://raw.githubusercontent.com/schemaorg/schemaorg/main/data/releases/13.0/schemaorgcontext.jsonld" #schema.org itself doesn't seem to do proper content negotation (or rdflib chokes on it), so we grab the 'latest' release from github instead
 CODEMETA_SOURCE = "https://raw.githubusercontent.com/codemeta/codemeta/2.0/codemeta.jsonld"
 #^-- target of https://doi.org/10.5063/schema/codemeta-2.0, prefer github because that at least serves things reliably for both rdflib and the JsonLD playground
+STYPE_SOURCE = "https://w3id.org/software-types"
+
+
+TMPDIR  = os.environ.get("TMPDIR","/tmp")
+
+SCHEMA_LOCAL_SOURCE = "file://" + os.path.join(TMPDIR, "schemaorgcontext.jsonld")
+CODEMETA_LOCAL_SOURCE = "file://" + os.path.join(TMPDIR, "codemeta.jsonld")
+STYPE_LOCAL_SOURCE = "file://" + os.path.join(TMPDIR, "stype.jsonld")
 
 COMMON_SOURCEREPOS = ["https://github.com/","http://github.com","https://gitlab.com/","http://gitlab.com/","https://codeberg.org/","http://codeberg.org", "https://git.sr.ht/", "https://bitbucket.com/"]
 
+#The default context refers to local files, will be replaced to remote counterparts on serialisation
 CONTEXT = [
-    CODEMETA_SOURCE, #redirects to https://raw.githubusercontent.com/codemeta/codemeta/2.0/codemeta.jsonld
-    SCHEMA_SOURCE, #schema.org doesn't have proper content negotiation so we add this explicitly
-    str(SOFTWARETYPES),
+    CODEMETA_LOCAL_SOURCE,
+    SCHEMA_LOCAL_SOURCE,
+    STYPE_LOCAL_SOURCE,
 ]
 
 
@@ -113,9 +124,22 @@ LICENSE_MAP = [ #maps some common licenses to SPDX URIs, mapped with a substring
 ]
 
 
+def init_context():
+    sources = ( (CODEMETA_LOCAL_SOURCE, CODEMETA_SOURCE), (SCHEMA_LOCAL_SOURCE, SCHEMA_SOURCE), (STYPE_LOCAL_SOURCE, STYPE_SOURCE) )
+
+    for local, remote in sources:
+        localfile = local.replace("file://","")
+        if not os.path.exists(localfile):
+            print(f"Downloading context from {remote}", file=sys.stderr)
+            r = requests.get(remote, headers={ "Accept": "application/json+ld;q=1.0,application/json;q=0.9,text/plain;q=0.5" })
+            r.raise_for_status()
+            with open(localfile, 'wb') as f:
+                f.write(r.content)
+
+
 def init_graph():
     """Initializes the RDF graph, the context and the prefixes"""
-    #context = Context(CONTEXT)
+
     g = Graph()
     g.bind('schema', SDO)
     g.bind('codemeta', CODEMETA)
