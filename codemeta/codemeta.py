@@ -187,7 +187,7 @@ def build(**kwargs):
     reconcile(g, res, args)
 
     if args.output == "json":
-        doc = serialize_to_jsonld(g, uri)
+        doc = serialize_to_jsonld(g, res, uri)
         if args.outputfile and args.outputfile != "-":
             with open(args.outputfile,'w',encoding='utf-8') as fp:
                 fp.write(json.dumps(doc, indent=4))
