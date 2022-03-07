@@ -81,7 +81,7 @@ def parse_python(g: Graph, res: Union[URIRef, BNode], packagename: str, crosswal
                 print("NOTICE: Classifier "  + fields[0] + " has no translation",file=sys.stderr)
         else:
             if key == "Author":
-                add_authors(g, res, value, args, mailvalue=pkg.metadata.get("Author-email",""))
+                add_authors(g, res, value, args.single_author, mailvalue=pkg.metadata.get("Author-email",""))
             elif key == "Author-email":
                 continue #already handled by the above
             elif key == "Requires-Dist":

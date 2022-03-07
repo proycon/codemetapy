@@ -71,10 +71,7 @@ def parse_debian(g: Graph, res: Union[URIRef, BNode], lines, crosswalk, args: At
                     name = value
                 else:
                     key = crosswalk[CWKey.DEBIAN][key.lower()]
-                    if hasattr(SDO, key):
-                        g.add((res, getattr(SDO, key), Literal(value)))
-                    elif hasattr(CODEMETA, key):
-                        g.add((res, getattr(CODEMETA, key), Literal(value)))
+                    add_triple(g, res, key, value, args)
             else:
                 print("WARNING: No translation for APT key " + key,file=sys.stderr)
     if name:
