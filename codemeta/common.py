@@ -2,6 +2,7 @@ import sys
 import os
 import json
 import requests
+import re
 from rdflib import Graph, Namespace, URIRef, BNode, Literal
 from rdflib.namespace import RDF
 from typing import Union, IO
@@ -243,20 +244,31 @@ def add_triple(g: Graph, res: Union[URIRef, BNode],key, value, args: AttribDict)
         return False
     return True
 
-def add_authors(g: Graph, res: Union[URIRef, BNode], value, args: AttribDict, mailvalue = ""):
+def add_authors(g: Graph, res: Union[URIRef, BNode], value, single_author = False, mailvalue = ""):
     """Parse and add authors and their e-mail addresses"""
-    if args.single_author:
+    if single_author:
         names = [value.strip()]
         mails = [mailvalue]
     else:
         names = value.strip().split(",")
         mails = mailvalue.strip().split(",")
 
+    authors = []
     for i, name in enumerate(names):
+        url = None
         if len(mails) > i:
             mail = mails[i]
         else:
             mail = None
+
+        if not mail:
+            #mails and urls may be tucked away with the name
+            # npm allows strings like "Barney Rubble <b@rubble.com> (http://barnyrubble.tumblr.com/)"
+            # we do the same
+            m = re.search(r'([^<]+)(?:<([^@]+@[^>]+)>)?\s*(?:(\(http[^\)]+\)))?',name)
+            if m:
+                name, mail, url = m.groups()
+
         humanname = HumanName(name.strip())
         lastname = " ".join((humanname.middle, humanname.last)).strip()
 
@@ -266,7 +278,14 @@ def add_authors(g: Graph, res: Union[URIRef, BNode], value, args: AttribDict, ma
         g.add((author, SDO.familyName, Literal(lastname)))
         if mail:
             g.add((author, SDO.email, Literal(mail)))
+        if url:
+            g.add((author, SDO.url, Literal(url.strip("() "))))
+            #                              -------------^
+            #  needed to cleanup after the regexp and to prevent other accidents
         g.add((res, SDO.author, author))
+        authors.append(author) #return the nodes
+
+    return authors
 
 def reconcile(g: Graph, res: URIRef, args: AttribDict):
     """Reconcile possible conflicts in the graph and issue warnings"""
