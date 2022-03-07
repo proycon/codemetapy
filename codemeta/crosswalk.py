@@ -16,7 +16,7 @@ class CWKey:
     MAVEN = "Java (Maven)"
     DOAP = "DOAP"
 
-def readcrosswalk(sourcekeys=(CWKey.PYPI,CWKey.DEBIAN)):
+def readcrosswalk(sourcekeys=(CWKey.PYPI,CWKey.DEBIAN,CWKey.NODEJS)):
     """Read the crosswalk.csv as provided by codemeta into memory"""
     #pylint: disable=W0621
     crosswalk = defaultdict(dict)
@@ -31,6 +31,7 @@ def readcrosswalk(sourcekeys=(CWKey.PYPI,CWKey.DEBIAN)):
             props[row[CWKey.PROP]] = {"PARENT": row[CWKey.PARENT], "TYPE": row[CWKey.TYPE], "DESCRIPTION": row[CWKey.DESCRIPTION] }
             for sourcekey in sourcekeys:
                 if row[sourcekey]:
-                    crosswalk[sourcekey][row[sourcekey].lower()] = row[CWKey.PROP]
+                    for key in [ x.strip().lower() for x in row[sourcekey].split("/") ]:
+                        crosswalk[sourcekey][key] = row[CWKey.PROP]
 
     return props, crosswalk
