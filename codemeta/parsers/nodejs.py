@@ -1,10 +1,23 @@
 import sys
 import json
+import os.path
 from typing import Union, IO
 from rdflib import Graph, URIRef, BNode, Literal
 from rdflib.namespace import RDF
 from codemeta.common import AttribDict, add_triple, CODEMETA, SOFTWARETYPES, add_authors, SDO, COMMON_SOURCEREPOS, SOFTWARETYPES
 from codemeta.crosswalk import readcrosswalk, CWKey
+
+
+def parse_sourcerepo(value):
+    """npm allows some shortcuts, resolve them"""
+    if value.startswith("github:"):
+        value = "https://github.com/" + value[len("github:"):]
+    elif value.startswith("gitlab:"):
+        value = "https://gitlab.com/" + value[len("gitlab:"):]
+    elif value.startswith("bitbucket:"):
+        value = "https://bitbucket.com/" + value[len("bitbucket:"):]
+    value = value.replace("git://","https://").replace("git+ssh://","https://") #always prefer https in URLs
+    return value
 
 def parse_nodejs(g: Graph, res: Union[URIRef, BNode], file: IO , crosswalk, args: AttribDict) -> Union[str,None]:
     data = json.load(file)
@@ -37,13 +50,11 @@ def parse_nodejs(g: Graph, res: Union[URIRef, BNode], file: IO , crosswalk, args
                     print("WARNING: keywords in package.json should be a list",file=sys.stderr)
             elif key == 'repository':
                 if isinstance(value, str):
-                    #npm allows some shortcuts, resolve them:
-                    if value.startswith("github:"):
-                        value = "https://github.com/" + value[len("github:"):]
-                    elif key.startswith("gitlab:"):
-                        value = "https://gitlab.com/" + value[len("gitlab:"):]
-                    elif key.startswith("bitbucket:"):
-                        value = "https://bitbucket.com/" + value[len("bitbucket:"):]
+                    value = parse_sourcerepo(value)
+                    add_triple(g, res, "codeRepository", value, args)
+                    prefuri = value
+                elif isinstance(value, dict) and 'url' in value:
+                    value = parse_sourcerepo(value['url'])
                     add_triple(g, res, "codeRepository", value, args)
                     prefuri = value
             elif key == 'homepage':
@@ -64,6 +75,35 @@ def parse_nodejs(g: Graph, res: Union[URIRef, BNode], file: IO , crosswalk, args
                     #npm allows strings like "Barney Rubble <b@rubble.com> (http://barnyrubble.tumblr.com/)"
                     #our add_authors function can handle that directly
                     add_authors(g, res, value, True)
+            elif key == 'dependencies':
+                if isinstance(value, dict):
+                    for key, versioninfo in value.items():
+                        dependency = BNode()
+                        g.add((dependency, RDF.type, SDO.SoftwareApplication))
+                        g.add((dependency, SDO.name, Literal(key)))
+                        g.add((dependency, SDO.identifier, Literal(key)))
+                        g.add((dependency, SDO.version, Literal(versioninfo)))
+                        g.add((res,  CODEMETA.softwareRequirements, dependency))
+            elif key in ('devDependencies','bundledDependencies','peerDependencies'):
+                pass #ignore
+            elif key == 'bin':
+                #note: assuming CommandLineApplication may be a bit presumptuous here
+                if isinstance(value, dict) and 'name' in value:
+                    for progname, execname in value.items():
+                        sapp = BNode()
+                        g.add((sapp, RDF.type, SOFTWARETYPES.CommandLineApplication))
+                        g.add((sapp, SDO.name, progname)) #from parent
+                        g.add((sapp, SOFTWARETYPES.executableName, os.path.basename(execname)))
+                        g.add((res, SDO.targetProduct, sapp))
+                elif isinstance(value, str):
+                    sapp = BNode()
+                    g.add((sapp, RDF.type, SOFTWARETYPES.CommandLineApplication))
+                    g.add((sapp, SDO.name, data['name'])) #from parent
+                    g.add((sapp, SOFTWARETYPES.executableName, os.path.basename(value)))
+                    g.add((res, SDO.targetProduct, sapp))
+            elif key == 'engines':
+                #TODO: map to runtimePlatform
+                pass
             else:
                 key = crosswalk[CWKey.NODEJS][key.lower()]
                 add_triple(g, res, key, value, args)

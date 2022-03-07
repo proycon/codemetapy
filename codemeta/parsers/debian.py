@@ -82,7 +82,7 @@ def parse_debian(g: Graph, res: Union[URIRef, BNode], lines, crosswalk, args: At
         return False
     if description:
         g.add((res, SDO.description, Literal(description)))
-    if interfacetype:
+    if interfacetype and args.with_stypes:
         sapp = BNode()
         g.add((sapp, RDF.type, interfacetype))
         g.add((sapp, SDO.name, name))
