@@ -79,11 +79,9 @@ props, crosswalk = codemeta.crosswalk.readcrosswalk()
 
 def main():
     parser = argparse.ArgumentParser(description="Converter for Python Distutils (PyPI) Metadata to CodeMeta (JSON-LD) converter. Also supports conversion from other metadata types such as those from Debian packages. The tool can combine metadata from multiple sources.")
-    parser.add_argument('-e', '--with-entrypoints', dest="with_entrypoints", help="Add entry points (this is not in the official codemeta specification but proposed in https://github.com/codemeta/codemeta/issues/183)", action='store_true',required=False)
     parser.add_argument('-t', '--with-stypes', dest="with_stypes", help="Convert entrypoints to targetProduct and classes reflecting software type (https://github.com/codemeta/codemeta/issues/#271), linking softwareSourceCode to softwareApplication or WebAPI", action='store_true',required=False)
     parser.add_argument('--exact-python-version', dest="exactplatformversion", help="Register the exact python interpreter used to generate the metadata as the runtime platform. Will only register the major version otherwise.", action='store_true',required=False)
     parser.add_argument('--single-author', dest="single_author", help="CodemetaPy will attempt to check if there are multiple authors specified in the author field, if you want to disable this behaviour, set this flag", action='store_true',required=False)
-    parser.add_argument('--with-orcid', dest="with_orcid", help="Add placeholders for ORCID, requires manual editing of the output to insert the actual ORCIDs", action='store_true',required=False)
     parser.add_argument('-b', '--baseuri',type=str,help="Base URI for resulting SoftwareSourceCode instances (make sure to add a trailing slash)", action='store',required=False)
     parser.add_argument('-o', '--outputtype', dest='output',type=str,help="Metadata output type: json (default), yaml", action='store',required=False, default="json")
     parser.add_argument('-O','--outputfile',  dest='outputfile',type=str,help="Output file", action='store',required=False)
@@ -117,8 +115,8 @@ def build(**kwargs):
             guess = True
             for inputsource in inputfiles[len(inputtypes):]:
                 if inputsource.lower().startswith("http"):
-                    inputtypes.append("web")
-                elif inputsource.lower().endswith(".json"):
+                    inputtypes.append("web") #will be disambiguated further after remote retrieval
+                elif inputsource.lower().endswith(".json") or inputsource.lower().endswith(".jsonld"):
                     inputtypes.append("json")
                 else:
                     #assume python
@@ -148,7 +146,7 @@ def build(**kwargs):
     #Generate a temporary ID to use for the SoftwareSourceCode resource
     #The ID will be overwritten with a more fitting one upon serialisation
     identifier = os.path.basename(inputsources[0][0]).lower()
-    if not identifier or not isinstance(identifier, str) or identifier == '-':
+    if not identifier or not isinstance(identifier, str) or identifier in ('-','codemeta.json'):
         if args.outputfile and args.outputfile != '-':
             identifier = os.path.basename(args.outputfile).lower()
         else:
@@ -172,13 +170,13 @@ def build(**kwargs):
         if inputtype == "python":
             print(f"Obtaining python package metadata for: {source}",file=sys.stderr)
             #source is a name of a package
-            prefuri = codemeta.parsers.python.parse_python(g, res, source, crosswalk, args)
-        #elif inputtype == "debian":   #TODO: re-enable!
-        #    aptlines = getstream(source).read().split("\n")
-        #    update(data, codemeta.parsers.debian.parseapt(data, aptlines, crosswalk, args))
+            prefuri = codemeta.parsers.python.parse_python(g, res, source, crosswalk, args) or prefuri
+        elif inputtype == "debian":
+            aptlines = getstream(source).read().split("\n")
+            prefuri = codemeta.parsers.debian.parseapt(g, res, aptlines, crosswalk, args) or prefuri
         elif inputtype == "json":
             print(f"Parsing json-ld file: {source}",file=sys.stderr)
-            prefuri = codemeta.parsers.jsonld.parse_jsonld(g, res, getstream(source), args)
+            prefuri = codemeta.parsers.jsonld.parse_jsonld(g, res, getstream(source), args) or prefuri
 
         #Set preferred URL
         if prefuri and not founduri:

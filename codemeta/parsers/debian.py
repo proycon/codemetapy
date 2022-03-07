@@ -1,24 +1,19 @@
 import sys
-from codemeta.common import AttribDict, REPOSTATUS, license_to_spdx
+from typing import Union
+from rdflib import Graph, URIRef, BNode, Literal
+from rdflib.namespace import RDF
+from codemeta.common import AttribDict, add_triple, CODEMETA, SOFTWARETYPES, add_authors, SDO, COMMON_SOURCEREPOS, SOFTWARETYPES
 from codemeta.crosswalk import readcrosswalk, CWKey
 
-PROVIDER_DEBIAN = {
-    "@id": "https://www.debian.org",
-    "@type": "Organization",
-    "name": "The Debian Project",
-    "url": "https://www.debian.org",
-}
-
-def parseapt(data, lines, crosswalk, args: AttribDict):
+def parse_debian(g: Graph, res: Union[URIRef, BNode], lines, crosswalk, args: AttribDict) -> Union[str,None]:
     """Parses apt show output and converts to codemeta"""
     if crosswalk is None:
         _, crosswalk = readcrosswalk((CWKey.DEBIAN,))
-    provider = PROVIDER_DEBIAN
+
+    name = None
+    interfacetype = None
     description = ""
     parsedescription = False
-    if args.with_entrypoints and not 'entryPoints' in data:
-        #not in official specification!!!
-        data['entryPoints'] = []
     for line in lines:
         if parsedescription and line and line[0] == ' ':
             description += line[1:] + " "
@@ -28,42 +23,71 @@ def parseapt(data, lines, crosswalk, args: AttribDict):
             except:
                 continue
             if key == "Origin":
-                data["provider"] = value
+                if value == "Debian":
+                    provider = URIRef("https://www.debian.org")
+                    g.add((provider, RDF.type, SDO.Organization))
+                    g.add((provider, SDO.name, Literal("The Debian Project")))
+                    g.add((provider, SDO.url, Literal("https://www.debian.org")))
+                    g.add((res,SDO.provider,provider))
+                elif value == "Ubuntu":
+                    provider = URIRef("https://ubuntu.com")
+                    g.add((provider, RDF.type, SDO.Organization))
+                    g.add((provider, SDO.name, Literal("Ubuntu")))
+                    g.add((provider, SDO.url, Literal("https://ubuntu.com")))
+                    g.add((res,SDO.provider,provider))
+                else:
+                    print(f"WARNING: Don't know how to convert Origin: {value}",file=sys.stderr)
             elif key == "Depends":
                 for dependency in value.split(","):
                     dependency = dependency.strip().split(" ")[0].strip()
                     if dependency:
-                        if not 'softwareRequirements' in data:
-                            data['softwareRequirements'] = []
-                        data['softwareRequirements'].append({
-                            "@type": "SoftwareApplication",
-                            "identifier": dependency,
-                            "name": dependency,
-                        })
+                        depnode = BNode()
+                        g.add((depnode, RDF.type, SDO.SoftwareApplication))
+                        g.add((depnode, SDO.identifier, Literal(dependency)))
+                        g.add((depnode, SDO.name, Literal(dependency)))
+                        g.add((res, SDO.softwareRequirements, depnode))
             elif key == "Section":
+                #attempt to make an educated guess for the audience and interface type
                 if "libs" in value or "libraries" in value:
-                    if args.with_entrypoints: data['interfaceType'] = "LIB"
-                    data['audience'] = "Developers"
+                    if args.with_stypes:
+                        interfacetype = SOFTWARETYPES.SoftwareLibrary
+                        add_triple(g, res, "audience", "Developers", args)
                 elif "utils" in value or "text" in value:
-                    if args.with_entrypoints: data['interfaceType'] = "CLI"
+                    if args.with_stypes:
+                        interfacetype = SOFTWARETYPES.CommandLineApplication
                 elif "devel" in value:
-                    data['audience'] = "Developers"
+                    add_triple(g, res, "audience", "Developers", args)
                 elif "science" in value:
-                    data['audience'] = "Researchers"
+                    add_triple(g, res, "audience", "Researchers", args)
             elif key == "Description":
                 parsedescription = True
                 description = value + "\n\n"
             elif key == "Homepage":
-                data["url"] = value
+                g.add((res, SDO.url, Literal(value)))
             elif key == "Version":
-                data["version"] = value
+                g.add((res, SDO.version, Literal(value)))
             elif key.lower() in crosswalk[CWKey.DEBIAN]:
-                data[crosswalk[CWKey.DEBIAN][key.lower()]] = value
                 if key == "Package":
-                    data["identifier"] = value
-                    data["name"] = value
+                    name = value
+                else:
+                    key = crosswalk[CWKey.DEBIAN][key.lower()]
+                    if hasattr(SDO, key):
+                        g.add((res, getattr(SDO, key), Literal(value)))
+                    elif hasattr(CODEMETA, key):
+                        g.add((res, getattr(CODEMETA, key), Literal(value)))
             else:
                 print("WARNING: No translation for APT key " + key,file=sys.stderr)
+    if name:
+        g.add((res, SDO.name, Literal(name)))
+        g.add((res, SDO.identifier, Literal(name)))
+    else:
+        print("No name found for package, should not happen",file=sys.stderr)
+        return False
     if description:
-        data["description"] = description
-    return data
+        g.add((res, SDO.description, Literal(description)))
+    if interfacetype:
+        sapp = BNode()
+        g.add((sapp, RDF.type, interfacetype))
+        g.add((sapp, SDO.name, name))
+        g.add((res, SDO.targetProduct, sapp))
+

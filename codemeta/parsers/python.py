@@ -160,7 +160,7 @@ def parse_python(g: Graph, res: Union[URIRef, BNode], packagename: str, crosswal
 
         cat = g.value(res, SDO.applicationCategory)
         if not found or (cat and cat.lower().find("libraries") != -1):
-            g.add((targetproduct, RDF.type, SOFTWARETYPES.SoftareLibrary))
+            g.add((targetproduct, RDF.type, SOFTWARETYPES.SoftwareLibrary))
             g.add((targetproduct, SDO.name, Literal(pkg.name)))
             g.add((targetproduct, SOFTWARETYPES.executableName, Literal(re.sub(r"[-_.]+", "-", pkg.name).lower()))) #see https://python.github.io/peps/pep-0503/
             if args.exactplatformversion:
