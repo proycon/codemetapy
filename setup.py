@@ -18,7 +18,7 @@ setup(
     version = "0.4.0",
     author = "Maarten van Gompel",
     author_email = "proycon@anaproy.nl",
-    description = ("Generate CodeMeta metadata for Python packages"),
+    description = ("Generate and manage CodeMeta software metadata"),
     license = "GPL-3.0-only",
     keywords = "software metadata codemeta doap pip pypi distutils admssw",
     url = "https://github.com/proycon/codemeta",
