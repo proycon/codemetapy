@@ -31,6 +31,7 @@ import codemeta.parsers.python
 import codemeta.parsers.debian
 import codemeta.parsers.jsonld
 import codemeta.parsers.nodejs
+import codemeta.parsers.java
 from codemeta.serializers.jsonld import serialize_to_jsonld
 
 
@@ -119,6 +120,8 @@ def build(**kwargs):
                     inputtypes.append("web") #will be disambiguated further after remote retrieval
                 elif inputsource.endswith("package.json"):
                     inputtypes.append("nodejs")
+                elif inputsource.endswith("pom.xml"):
+                    inputtypes.append("java")
                 elif inputsource.lower().endswith(".json") or inputsource.lower().endswith(".jsonld"):
                     inputtypes.append("json")
                 else:
@@ -180,6 +183,9 @@ def build(**kwargs):
         elif inputtype == "nodejs":
             f = getstream(source)
             prefuri = codemeta.parsers.nodejs.parse_nodejs(g, res, f, crosswalk, args) or prefuri
+        elif inputtype == "java":
+            f = getstream(source)
+            prefuri = codemeta.parsers.java.parse_java(g, res, f, crosswalk, args) or prefuri
         elif inputtype == "json":
             print(f"Parsing json-ld file: {source}",file=sys.stderr)
             prefuri = codemeta.parsers.jsonld.parse_jsonld(g, res, getstream(source), args) or prefuri

@@ -244,7 +244,7 @@ def add_triple(g: Graph, res: Union[URIRef, BNode],key, value, args: AttribDict)
         return False
     return True
 
-def add_authors(g: Graph, res: Union[URIRef, BNode], value, single_author = False, **kwargs):
+def add_authors(g: Graph, res: Union[URIRef, BNode], value, property=SDO.author, single_author = False, **kwargs):
     """Parse and add authors and their e-mail addresses"""
     if single_author:
         names = [value.strip()]
@@ -299,7 +299,7 @@ def add_authors(g: Graph, res: Union[URIRef, BNode], value, single_author = Fals
             g.add((orgres, RDF.name, org))
             g.add((author, SDO.affiliation, orgres))
 
-        g.add((res, SDO.author, author))
+        g.add((res, property, author))
         authors.append(author) #return the nodes
 
     return authors

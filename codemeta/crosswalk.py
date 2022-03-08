@@ -16,7 +16,7 @@ class CWKey:
     MAVEN = "Java (Maven)"
     DOAP = "DOAP"
 
-def readcrosswalk(sourcekeys=(CWKey.PYPI,CWKey.DEBIAN,CWKey.NODEJS)):
+def readcrosswalk(sourcekeys=(CWKey.PYPI,CWKey.DEBIAN,CWKey.NODEJS, CWKey.MAVEN)):
     """Read the crosswalk.csv as provided by codemeta into memory"""
     #pylint: disable=W0621
     crosswalk = defaultdict(dict)

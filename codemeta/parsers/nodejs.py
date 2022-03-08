@@ -75,7 +75,7 @@ def parse_nodejs(g: Graph, res: Union[URIRef, BNode], file: IO , crosswalk, args
                 elif isinstance(value, str):
                     #npm allows strings like "Barney Rubble <b@rubble.com> (http://barnyrubble.tumblr.com/)"
                     #our add_authors function can handle that directly
-                    add_authors(g, res, value, True)
+                    add_authors(g, res, value, single_author=True)
             elif key in ('dependencies','devDependencies'):
                 if isinstance(value, dict):
                     for key, versioninfo in value.items():
