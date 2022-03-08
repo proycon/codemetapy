@@ -22,6 +22,7 @@ def parse_sourcerepo(value):
 def parse_nodejs(g: Graph, res: Union[URIRef, BNode], file: IO , crosswalk, args: AttribDict) -> Union[str,None]:
     data = json.load(file)
     prefuri = None
+    iswebapp = False
     for key, value in data.items():
         if key.lower() in crosswalk[CWKey.NODEJS]:
             if key == 'bugs':
@@ -45,7 +46,7 @@ def parse_nodejs(g: Graph, res: Union[URIRef, BNode], file: IO , crosswalk, args
             elif key == 'keywords':
                 if isinstance(value, (list,tuple)):
                     for keyword in value:
-                        add_triple(g, res, "keywords", value, args)
+                        add_triple(g, res, "keywords", keyword, args)
                 else:
                     print("WARNING: keywords in package.json should be a list",file=sys.stderr)
             elif key == 'repository':
@@ -84,18 +85,21 @@ def parse_nodejs(g: Graph, res: Union[URIRef, BNode], file: IO , crosswalk, args
                         g.add((dependency, SDO.identifier, Literal(key)))
                         g.add((dependency, SDO.version, Literal(versioninfo)))
                         g.add((res,  CODEMETA.softwareRequirements, dependency))
+                    #detect some common web application frameworks or other
+                    #dependencies that indicate this is a web-app
+                    iswebapp = iswebapp or 'react' in value or 'vue' in value or 'sitemap' in value or  'gatsby' in value
             elif key in ('bundledDependencies','peerDependencies'):
                 pass #ignore
             elif key == 'bin':
                 #note: assuming CommandLineApplication may be a bit presumptuous here
-                if isinstance(value, dict) and 'name' in value:
+                if isinstance(value, dict) and 'name' in value and args.with_stypes:
                     for progname, execname in value.items():
                         sapp = BNode()
                         g.add((sapp, RDF.type, SOFTWARETYPES.CommandLineApplication))
-                        g.add((sapp, SDO.name, progname)) #from parent
+                        g.add((sapp, SDO.name, progname))
                         g.add((sapp, SOFTWARETYPES.executableName, os.path.basename(execname)))
                         g.add((res, SDO.targetProduct, sapp))
-                elif isinstance(value, str):
+                elif isinstance(value, str) and args.with_stypes:
                     sapp = BNode()
                     g.add((sapp, RDF.type, SOFTWARETYPES.CommandLineApplication))
                     g.add((sapp, SDO.name, data['name'])) #from parent
@@ -113,5 +117,14 @@ def parse_nodejs(g: Graph, res: Union[URIRef, BNode], file: IO , crosswalk, args
         g.add((res, SDO.programmingLanguage, Literal("Typescript")))
     else:
         g.add((res, SDO.programmingLanguage, Literal("Javascript")))
+
+    if args.with_stypes and 'browser' in data or 'browserslist' in data or iswebapp:
+        #assume this is a web-application
+        sapp = BNode()
+        g.add((sapp, RDF.type, SDO.WebApplication))
+        g.add((sapp, SDO.name, data['name'])) #from parent
+        g.add((sapp, SDO.version, data['version'])) #from parent
+        g.add((sapp, SOFTWARETYPES.executableName, os.path.basename(execname)))
+        g.add((res, SDO.targetProduct, sapp))
 
     return prefuri
