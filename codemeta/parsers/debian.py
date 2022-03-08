@@ -45,7 +45,7 @@ def parse_debian(g: Graph, res: Union[URIRef, BNode], lines, crosswalk, args: At
                         g.add((depnode, RDF.type, SDO.SoftwareApplication))
                         g.add((depnode, SDO.identifier, Literal(dependency)))
                         g.add((depnode, SDO.name, Literal(dependency)))
-                        g.add((res, SDO.softwareRequirements, depnode))
+                        g.add((res, CODEMETA.softwareRequirements, depnode))
             elif key == "Section":
                 #attempt to make an educated guess for the audience and interface type
                 if "libs" in value or "libraries" in value:
