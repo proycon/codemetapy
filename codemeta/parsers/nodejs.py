@@ -75,7 +75,7 @@ def parse_nodejs(g: Graph, res: Union[URIRef, BNode], file: IO , crosswalk, args
                     #npm allows strings like "Barney Rubble <b@rubble.com> (http://barnyrubble.tumblr.com/)"
                     #our add_authors function can handle that directly
                     add_authors(g, res, value, True)
-            elif key == 'dependencies':
+            elif key in ('dependencies','devDependencies'):
                 if isinstance(value, dict):
                     for key, versioninfo in value.items():
                         dependency = BNode()
@@ -84,7 +84,7 @@ def parse_nodejs(g: Graph, res: Union[URIRef, BNode], file: IO , crosswalk, args
                         g.add((dependency, SDO.identifier, Literal(key)))
                         g.add((dependency, SDO.version, Literal(versioninfo)))
                         g.add((res,  CODEMETA.softwareRequirements, dependency))
-            elif key in ('devDependencies','bundledDependencies','peerDependencies'):
+            elif key in ('bundledDependencies','peerDependencies'):
                 pass #ignore
             elif key == 'bin':
                 #note: assuming CommandLineApplication may be a bit presumptuous here
@@ -102,11 +102,16 @@ def parse_nodejs(g: Graph, res: Union[URIRef, BNode], file: IO , crosswalk, args
                     g.add((sapp, SOFTWARETYPES.executableName, os.path.basename(value)))
                     g.add((res, SDO.targetProduct, sapp))
             elif key == 'engines':
-                #TODO: map to runtimePlatform
-                pass
+                if isinstance(value, dict):
+                    for key, versioninfo in value.items():
+                        g.add((res, SDO.runtimePlatform, Literal(key + " " + versioninfo)))
             else:
                 key = crosswalk[CWKey.NODEJS][key.lower()]
                 add_triple(g, res, key, value, args)
 
+    if 'devDependencies' in data and "typescript" in data['devDependencies']:
+        g.add((res, SDO.programmingLanguage, Literal("Typescript")))
+    else:
+        g.add((res, SDO.programmingLanguage, Literal("Javascript")))
 
     return prefuri
