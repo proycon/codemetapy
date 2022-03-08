@@ -117,7 +117,7 @@ def build(**kwargs):
             for inputsource in inputfiles[len(inputtypes):]:
                 if inputsource.lower().startswith("http"):
                     inputtypes.append("web") #will be disambiguated further after remote retrieval
-                elif inputsource == "package.json":
+                elif inputsource.endswith("package.json"):
                     inputtypes.append("nodejs")
                 elif inputsource.lower().endswith(".json") or inputsource.lower().endswith(".jsonld"):
                     inputtypes.append("json")
@@ -178,8 +178,8 @@ def build(**kwargs):
             aptlines = getstream(source).read().split("\n")
             prefuri = codemeta.parsers.debian.parse_debian(g, res, aptlines, crosswalk, args) or prefuri
         elif inputtype == "nodejs":
-           f = getstream(source)
-           prefuri = codemeta.parsers.debian.parse_nodejs(g, res, f, crosswalk, args) or prefuri
+            f = getstream(source)
+            prefuri = codemeta.parsers.nodejs.parse_nodejs(g, res, f, crosswalk, args) or prefuri
         elif inputtype == "json":
             print(f"Parsing json-ld file: {source}",file=sys.stderr)
             prefuri = codemeta.parsers.jsonld.parse_jsonld(g, res, getstream(source), args) or prefuri

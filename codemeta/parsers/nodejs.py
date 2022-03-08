@@ -122,9 +122,8 @@ def parse_nodejs(g: Graph, res: Union[URIRef, BNode], file: IO , crosswalk, args
         #assume this is a web-application
         sapp = BNode()
         g.add((sapp, RDF.type, SDO.WebApplication))
-        g.add((sapp, SDO.name, data['name'])) #from parent
-        g.add((sapp, SDO.version, data['version'])) #from parent
-        g.add((sapp, SOFTWARETYPES.executableName, os.path.basename(execname)))
+        g.add((sapp, SDO.name, Literal(data['name']))) #from parent
+        g.add((sapp, SDO.version, Literal(data['version']))) #from parent
         g.add((res, SDO.targetProduct, sapp))
 
     return prefuri
