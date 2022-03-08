@@ -244,22 +244,33 @@ def add_triple(g: Graph, res: Union[URIRef, BNode],key, value, args: AttribDict)
         return False
     return True
 
-def add_authors(g: Graph, res: Union[URIRef, BNode], value, single_author = False, mailvalue = ""):
+def add_authors(g: Graph, res: Union[URIRef, BNode], value, single_author = False, **kwargs):
     """Parse and add authors and their e-mail addresses"""
     if single_author:
         names = [value.strip()]
-        mails = [mailvalue]
+        mails = [ kwargs.get('mail',"") ]
+        urls = [ kwargs.get('url',"") ]
+        orgs = [ kwargs.get('organization',"") ]
     else:
         names = value.strip().split(",")
-        mails = mailvalue.strip().split(",")
+        mails = kwargs.get("mail","").strip().split(",")
+        urls = [ kwargs.get('url',"").strip().split(",") ]
+        orgs = [ kwargs.get('organization',"").strip().split(",") ]
 
     authors = []
     for i, name in enumerate(names):
-        url = None
         if len(mails) > i:
             mail = mails[i]
         else:
             mail = None
+        if len(urls) > i:
+            url = urls[i]
+        else:
+            url = None
+        if len(orgs) > i:
+            org = orgs[i]
+        else:
+            org = None
 
         if not mail:
             #mails and urls may be tucked away with the name
@@ -282,6 +293,12 @@ def add_authors(g: Graph, res: Union[URIRef, BNode], value, single_author = Fals
             g.add((author, SDO.url, Literal(url.strip("() "))))
             #                              -------------^
             #  needed to cleanup after the regexp and to prevent other accidents
+        if org:
+            orgres = BNode()
+            g.add((orgres, RDF.type, SDO.Organization))
+            g.add((orgres, RDF.name, org))
+            g.add((author, SDO.affiliation, orgres))
+
         g.add((res, SDO.author, author))
         authors.append(author) #return the nodes
 
