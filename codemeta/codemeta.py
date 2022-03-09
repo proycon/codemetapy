@@ -189,16 +189,19 @@ def build(**kwargs):
             #source is a name of a package
             prefuri = codemeta.parsers.python.parse_python(g, res, source, crosswalk, args) or prefuri
         elif inputtype == "debian":
+            print(f"Parsing debian package from {source}",file=sys.stderr)
             aptlines = getstream(source).read().split("\n")
             prefuri = codemeta.parsers.debian.parse_debian(g, res, aptlines, crosswalk, args) or prefuri
         elif inputtype == "nodejs":
+            print(f"Parsing npm package.json from {source}",file=sys.stderr)
             f = getstream(source)
             prefuri = codemeta.parsers.nodejs.parse_nodejs(g, res, f, crosswalk, args) or prefuri
         elif inputtype == "java":
+            print(f"Parsing java/maven pom.xml from {source}",file=sys.stderr)
             f = getstream(source)
             prefuri = codemeta.parsers.java.parse_java(g, res, f, crosswalk, args) or prefuri
         elif inputtype == "json":
-            print(f"Parsing json-ld file: {source}",file=sys.stderr)
+            print(f"Parsing json-ld file from {source}",file=sys.stderr)
             prefuri = codemeta.parsers.jsonld.parse_jsonld(g, res, getstream(source), args) or prefuri
 
         #Set preferred URL
