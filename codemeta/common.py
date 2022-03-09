@@ -206,39 +206,43 @@ def getregistry(identifier, registry):
     raise KeyError(identifier)
 
 
-def add_triple(g: Graph, res: Union[URIRef, BNode],key, value, args: AttribDict) -> bool:
+def add_triple(g: Graph, res: Union[URIRef, BNode],key, value, args: AttribDict, replace=False) -> bool:
     """Maps a key/value pair to an actual triple"""
+    if replace:
+        f_add = g.set
+    else:
+        f_add = g.add
     if key == "developmentStatus":
         if value.strip().lower() in REPOSTATUS:
             #map to repostatus vocabulary
             value = "https://www.repostatus.org/#" + REPOSTATUS[value.strip().lower()]
-            g.add((res, CODEMETA.developmentStatus, URIRef(value)))
+            f_add((res, CODEMETA.developmentStatus, URIRef(value)))
         else:
-            g.add((res, CODEMETA.developmentStatus, Literal(value)))
+            f_add((res, CODEMETA.developmentStatus, Literal(value)))
     elif key == "license":
         value = license_to_spdx(value)
         if value.find('spdx') != -1:
-            g.add((res, SDO.license, URIRef(value)))
+            f_add((res, SDO.license, URIRef(value)))
         else:
-            g.add((res, SDO.license, Literal(value)))
+            f_add((res, SDO.license, Literal(value)))
     elif key == "applicationCategory":
-        g.add((res, SDO.applicationCategory, Literal(value)))
+        f_add((res, SDO.applicationCategory, Literal(value)))
     elif key == "audience":
         audience = BNode()
         g.add((audience, RDF.type, SDO.Audience))
         g.add((audience, SDO.audienceType, Literal(value) ))
-        g.add((res, SDO.audience,audience ))
+        f_add((res, SDO.audience,audience ))
     elif key == "keywords":
         value = detect_list(value)
         if isinstance(value, list):
             for item in value:
                 g.add((res, SDO.keywords,Literal(item)))
         else:
-            g.add((res, SDO.keywords,Literal(value)))
+            f_add((res, SDO.keywords,Literal(value)))
     elif hasattr(SDO, key):
-        g.add((res, getattr(SDO, key), Literal(value)))
+        f_add((res, getattr(SDO, key), Literal(value)))
     elif hasattr(CODEMETA, key):
-        g.add((res, getattr(CODEMETA, key), Literal(value)))
+        f_add((res, getattr(CODEMETA, key), Literal(value)))
     else:
         print(f"NOTICE: Don't know how to handle key '{key}' with value '{value}'... ignoring...",file=sys.stderr)
         return False

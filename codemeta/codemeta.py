@@ -14,6 +14,7 @@ import argparse
 import json
 import os.path
 import glob
+import random
 from collections import OrderedDict, defaultdict
 from typing import Union, IO
 import copy
@@ -25,7 +26,7 @@ from rdflib.namespace import RDF
 from rdflib.plugins.shared.jsonld.context import Context
 import rdflib.plugins.serializers.jsonld
 
-from codemeta.common import init_graph, init_context, CODEMETA, AttribDict, getstream, CONTEXT, SDO, reconcile
+from codemeta.common import init_graph, init_context, CODEMETA, AttribDict, getstream, CONTEXT, SDO, reconcile, add_triple
 import codemeta.crosswalk
 import codemeta.parsers.python
 import codemeta.parsers.debian
@@ -149,24 +150,34 @@ def build(**kwargs):
     init_context()
     g = init_graph()
 
-    #Generate a temporary ID to use for the SoftwareSourceCode resource
-    #The ID will be overwritten with a more fitting one upon serialisation
-    identifier = os.path.basename(inputsources[0][0]).lower()
-    if not identifier or not isinstance(identifier, str) or identifier in ('-','codemeta.json'):
-        if args.outputfile and args.outputfile != '-':
-            identifier = os.path.basename(args.outputfile).lower()
-        else:
-            identifier = "unknown"
-    if args.baseuri:
-        uri = args.baseuri +  identifier
+    founduri = False #indicates whether we found a preferred URI or not
+
+    if hasattr(args, 'codeRepository') and args.codeRepository:
+        #Use the URI passed
+        uri = args.codeRepository.strip('"')
+        founduri = True
     else:
-        uri = "undefined:" + identifier
+        #Generate a temporary ID to use for the SoftwareSourceCode resource
+        #The ID will be overwritten with a more fitting one upon serialisation
+        if hasattr(args, 'identifier') and args.identifier:
+            identifier = args.identifier.strip('"')
+        else:
+            identifier = os.path.basename(inputsources[0][0]).lower()
+        if identifier:
+            identifier = identifier.replace(".codemeta.json","").replace("codemeta.json","")
+            identifier = identifier.replace(".pom.xml","").replace("pom.xml","")
+            identifier = identifier.replace(".package.json","").replace("package.json","")
+        if not identifier:
+            identifier = "N"  + "%032x" % random.getrandbits(128)
+        if args.baseuri:
+            uri = args.baseuri + identifier
+        else:
+            uri = "undefined:" + identifier
 
     #add the root resource
     res = URIRef(uri)
     g.add((res, RDF.type, SDO.SoftwareSourceCode))
 
-    founduri = False #indicates whether we found a preferred URI or not
 
     l = len(inputsources)
     for i, (source, inputtype) in enumerate(inputsources):
@@ -193,9 +204,24 @@ def build(**kwargs):
         #Set preferred URL
         if prefuri and not founduri:
             uri = prefuri
+            print(f"Setting preferred URI to {uri} based on source {source}",file=sys.stderr)
             founduri = True
 
+    for key in props:
+        if hasattr(args, key):
+            value = getattr(args, key)
+            if value: value = value.strip('"')
+            if value:
+                add_triple(g, res, key, value, args, replace=True)
+                if key == 'identifier' and not founduri:
+                    if args.baseuri:
+                        uri = args.baseuri +  identifier
+                    else:
+                        uri = "undefined:" + identifier
+                    founduri = True
+
     reconcile(g, res, args)
+
 
     if args.output == "json":
         doc = serialize_to_jsonld(g, res, uri)

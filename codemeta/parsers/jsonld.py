@@ -64,4 +64,5 @@ def parse_jsonld(g: Graph, res: Union[BNode, URIRef,None], file_descriptor: IO, 
     g.parse(data=data, format="json-ld", context=CONTEXT, publicID=DUMMY_NS)
     # ^--  We assign an a dummy namespace to items that are supposed to be an ID but aren't
 
-    return prefuri #return preferred uri
+    if not (isinstance(prefuri,str) and prefuri.startswith("undefined:")):
+        return prefuri #return preferred uri
