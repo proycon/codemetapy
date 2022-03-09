@@ -135,7 +135,10 @@ def init_context():
             r = requests.get(remote, headers={ "Accept": "application/json+ld;q=1.0,application/json;q=0.9,text/plain;q=0.5" })
             r.raise_for_status()
             with open(localfile, 'wb') as f:
-                f.write(r.content)
+                f.write(r.content.replace(b'"softwareRequirements": { "@id": "schema:softwareRequirements", "@type": "@id"},',b'"softwareRequirements": { "@id": "schema:softwareRequirements" },'))
+                                           # ^-- rdflib gets confused by this definition in codemeta which we already
+                                           #     have in schema .org(without an extra @type: @id), ensure the two are
+                                           #     equal (without the @type)
 
 
 def init_graph():
