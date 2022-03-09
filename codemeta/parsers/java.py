@@ -1,0 +1,137 @@
+import sys
+import json
+import os.path
+from typing import Union, IO
+from rdflib import Graph, URIRef, BNode, Literal
+from rdflib.namespace import RDF
+import lxml
+from codemeta.common import AttribDict, add_triple, CODEMETA, SOFTWARETYPES, add_authors, SDO, COMMON_SOURCEREPOS, SOFTWARETYPES, license_to_spdx
+from codemeta.crosswalk import readcrosswalk, CWKey
+
+POM_NAMESPACE = "http://maven.apache.org/POM/4.0.0"
+
+def parse_node(node):
+    for subnode in node:
+        if isinstance(subnode.tag, str) and subnode.tag.startswith("{" + POM_NAMESPACE + "}"):
+            key = subnode.tag[len(POM_NAMESPACE) + 2:]
+            yield key, subnode
+
+def parse_author(g, res, node, property=SDO.author):
+    author_name = ""
+    author_mail = ""
+    author_url = ""
+    org = ""
+    for key3, node3 in parse_node(node):
+        if key3 == "name":
+            author_name = node3.text
+        elif key3 == "email":
+            author_mail = node3.text
+        elif key3 == "url":
+            author_url = node3.text
+        elif key3 == "organisation":
+            org = node3.text
+    return add_authors(g, res, author_name, property=property, single_author=True, mail=author_mail, url=author_url,org=org)
+
+
+def parse_java(g: Graph, res: Union[URIRef, BNode], file: IO , crosswalk, args: AttribDict) -> Union[str,None]:
+    data = lxml.etree.parse(file)
+
+    prefuri = None
+    root = data.getroot()
+    if root.tag != "{" + POM_NAMESPACE + "}project":
+        raise Exception(f"Expected root tag 'project' in {POM_NAMESPACE} namespace, got {root.tag} instead")
+
+    group_id = None
+    artifact_id = None
+
+    g.add((res, SDO.runtimePlatform, Literal("Java")))
+    g.add((res, SDO.programmingLanguage, Literal("Java")))
+
+    for key, node in parse_node(root):
+        if key == "licenses":
+            for key2, node2 in parse_node(node):
+                if key2 == "license":
+                    license = ""
+                    for key3, node3 in parse_node(node2):
+                        if key3 == "name":
+                            license = license_to_spdx(node3.text)
+                        if license.find("spdx") == -1 and key3 == "url":
+                            license = node3.text
+                    if license:
+                        add_triple(g,res, "license", license, args)
+        elif key == "issueManagement":
+            for key2, node2 in parse_node(node):
+                if key2 == "url":
+                    add_triple(g,res, "issueTracker", node2.text, args)
+        elif key == "ciManagement":
+            for key2, node2 in parse_node(node):
+                if key2 == "url":
+                    add_triple(g,res, "contIntegration", node2.text, args)
+        elif key == "scm":
+            for key2, node2 in parse_node(node):
+                if key2 == "url":
+                    add_triple(g,res, "codeRepository", node2.text, args)
+                    prefuri = node2.text
+        elif key == "repositories":
+            for key2, node2 in parse_node(node):
+                if key2 == "repository":
+                    for key3, node3 in parse_node(node2):
+                        if key3 == "url":
+                            add_triple(g,res, "repository", node3.text, args)
+                            prefuri = node3.text
+        elif key == "properties":
+            for key2, node2 in parse_node(node):
+                if key2 == "java.version":
+                    g.add((res, SDO.runtimePlatform, Literal("Java " + node2.text)))
+        elif key == 'groupId':
+            group_id = node.text
+        elif key == 'artifactId':
+            artifact_id = node.text
+        elif key == 'dependencies':
+            for key2, node2 in parse_node(node):
+                if key2 == "dependency":
+                    depres = BNode()
+                    dep_group_id = dep_art_id = None
+                    for key3, node3 in parse_node(node2):
+                        if key3 == "groupId":
+                            dep_group_id = node3.text
+                        elif key3 == "artifactId":
+                            dep_art_id = node3.text
+                            g.add((depres, SDO.name, Literal(node3.text)))
+                        elif key3 == "version" and node3.text and not node3.text.startswith('$'):
+                            g.add((depres, SDO.version, Literal(node3.text)))
+                    if dep_group_id and dep_art_id:
+                        g.add((depres, SDO.identifier, Literal(dep_group_id + "." + dep_art_id)))
+                        g.add((depres, RDF.type, SDO.SoftwareApplication))
+                        g.add((res, CODEMETA.softwareRequirements, depres))
+        elif key == 'developers':
+            for key2, node2 in parse_node(node):
+                if key2 == "developer":
+                    parse_author(g, res, node2)
+        elif key == 'contributors':
+            for key2, node2 in parse_node(node):
+                if key2 == "contributor":
+                    parse_author(g, res, node2, property=SDO.contributor)
+        elif key == 'mailingLists':
+            for key2, node2 in parse_node(node):
+                if key2 == "mailingList":
+                    for key3, node3 in parse_node(node2):
+                        if key3 == "post":
+                            add_triple(g, res, "email", node3.text, args)
+        elif key == 'organization':
+            orgres = BNode()
+            for key2, node2 in parse_node(node):
+                if key2 == "name":
+                    g.add((orgres, SDO.name, Literal(node2.text)))
+                elif key2 == "url":
+                    g.add((orgres, SDO.url, Literal(node2.text)))
+            g.add((res, SDO.producer, orgres))
+        elif key.lower() in crosswalk[CWKey.MAVEN]:
+            key = crosswalk[CWKey.MAVEN][key.lower()]
+            if key != 'identifier':
+                add_triple(g, res, key, node.text, args)
+
+    if group_id and artifact_id:
+        add_triple(g, res, "identifier", group_id + "." + artifact_id, args)
+
+    return prefuri
