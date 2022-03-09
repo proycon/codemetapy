@@ -19,6 +19,12 @@ def rewrite_context(context):
                 elif v.startswith("file://") and v not in (SCHEMA_LOCAL_SOURCE, CODEMETA_LOCAL_SOURCE, STYPE_LOCAL_SOURCE):
                     raise Exception(f"Refusing to load non-authorized local context: {v}")
 
+        #remove some legacy contexts which we may encounter but would choke on if parsed
+        try:
+            context.remove("https://github.com/CLARIAH/tool-metadata")
+        except ValueError:
+            pass
+
 def parse_jsonld(g: Graph, res: Union[BNode, URIRef,None], file_descriptor: IO, args: AttribDict) -> Union[str,None]:
     #download schemas needed for context
     init_context()
