@@ -254,8 +254,8 @@ def add_authors(g: Graph, res: Union[URIRef, BNode], value, property=SDO.author,
     else:
         names = value.strip().split(",")
         mails = kwargs.get("mail","").strip().split(",")
-        urls = [ kwargs.get('url',"").strip().split(",") ]
-        orgs = [ kwargs.get('organization',"").strip().split(",") ]
+        urls = kwargs.get('url',"").strip().split(",")
+        orgs = kwargs.get('organization',"").strip().split(",")
 
     authors = []
     for i, name in enumerate(names):
