@@ -33,6 +33,7 @@ import codemeta.parsers.debian
 import codemeta.parsers.jsonld
 import codemeta.parsers.nodejs
 import codemeta.parsers.java
+import codemeta.parsers.web
 from codemeta.serializers.jsonld import serialize_to_jsonld
 
 
@@ -82,7 +83,7 @@ props, crosswalk = codemeta.crosswalk.readcrosswalk()
 
 def main():
     parser = argparse.ArgumentParser(description="Converter for Python Distutils (PyPI) Metadata to CodeMeta (JSON-LD) converter. Also supports conversion from other metadata types such as those from Debian packages. The tool can combine metadata from multiple sources.")
-    parser.add_argument('-t', '--with-stypes', dest="with_stypes", help="Convert entrypoints to targetProduct and classes reflecting software type (https://github.com/codemeta/codemeta/issues/#271), linking softwareSourceCode to softwareApplication or WebAPI", action='store_true',required=False)
+    parser.add_argument('-t', '--with-stypes', dest="with_stypes", help="Convert entrypoints to targetProduct and classes reflecting software type (https://github.com/codemeta/codemeta/issues/#271), linking softwareSourceCode to softwareApplication or WebAPI. If enabled, any remote URLs passed to codemetapy will automatically be encoded via targetProduct.", action='store_true',required=False)
     parser.add_argument('--exact-python-version', dest="exactplatformversion", help="Register the exact python interpreter used to generate the metadata as the runtime platform. Will only register the major version otherwise.", action='store_true',required=False)
     parser.add_argument('--single-author', dest="single_author", help="CodemetaPy will attempt to check if there are multiple authors specified in the author field, if you want to disable this behaviour, set this flag", action='store_true',required=False)
     parser.add_argument('-b', '--baseuri',type=str,help="Base URI for resulting SoftwareSourceCode instances (make sure to add a trailing slash)", action='store',required=False)
@@ -114,11 +115,11 @@ def build(**kwargs):
         inputtypes = args.inputtypes.split(",") if args.inputtypes else []
         guess = False
         if len(inputtypes) != len(inputfiles):
-            print(f"Passed {len(inputfiles)} files but specified {len(inputtypes)} input types! Automatically guessing types...",  file=sys.stderr)
+            print(f"Passed {len(inputfiles)} files/sources but specified {len(inputtypes)} input types! Automatically guessing types...",  file=sys.stderr)
             guess = True
             for inputsource in inputfiles[len(inputtypes):]:
                 if inputsource.lower().startswith("http"):
-                    inputtypes.append("web") #will be disambiguated further after remote retrieval
+                    inputtypes.append("web")
                 elif inputsource.endswith("package.json"):
                     inputtypes.append("nodejs")
                 elif inputsource.endswith("pom.xml"):
@@ -184,7 +185,15 @@ def build(**kwargs):
         print(f"Processing source #{i+1} of {l}",file=sys.stderr)
 
         prefuri = None #preferred URI returned by the parsing method
-        if inputtype == "python":
+        if inputtype == "web":
+            print(f"Obtaining metadata from remote URL {source}",file=sys.stderr)
+            targetres = codemeta.parsers.web.parse_web(g, res, source, args)
+            if targetres and args.with_stypes:
+                print(f"Adding service (targetProduct) {source}",file=sys.stderr)
+                g.add((res, SDO.targetProduct, targetres))
+            else:
+                print(f"(no metadata found at remote URL)",file=sys.stderr)
+        elif inputtype == "python":
             print(f"Obtaining python package metadata for: {source}",file=sys.stderr)
             #source is a name of a package
             prefuri = codemeta.parsers.python.parse_python(g, res, source, crosswalk, args) or prefuri
@@ -203,6 +212,9 @@ def build(**kwargs):
         elif inputtype == "json":
             print(f"Parsing json-ld file from {source}",file=sys.stderr)
             prefuri = codemeta.parsers.jsonld.parse_jsonld(g, res, getstream(source), args) or prefuri
+        elif inputtype is not None:
+            raise ValueError(f"Unknown input type: {inputtype}")
+
 
         #Set preferred URL
         if prefuri and not founduri:

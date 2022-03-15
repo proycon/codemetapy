@@ -37,7 +37,8 @@ def parse_jsonld_data(g: Graph, res: Union[BNode, URIRef,None], data: dict, args
 
     #preprocess json
     if '@context' not in data:
-        raise Exception("Not a valid JSON-LD document, @context missing!")
+        data['@context'] = CONTEXT
+        print("WARNING: Not a valid JSON-LD document, @context missing! Attempting to inject automatically...", file=sys.stderr)
 
     #rewrite context using the local schemas
     rewrite_context(data['@context'])
