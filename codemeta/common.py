@@ -5,6 +5,7 @@ import requests
 import re
 from rdflib import Graph, Namespace, URIRef, BNode, Literal
 from rdflib.namespace import RDF
+from rdflib.compare import graph_diff
 from typing import Union, IO
 from collections import OrderedDict
 from nameparser import HumanName
@@ -125,6 +126,9 @@ LICENSE_MAP = [ #maps some common licenses to SPDX URIs, mapped with a substring
 ]
 
 
+#properties that may only occur once, last one counts
+SINGULAR_PROPERTIES = ( SDO.name, SDO.version, SDO.description, CODEMETA.developmentStatus )
+
 def init_context():
     sources = ( (CODEMETA_LOCAL_SOURCE, CODEMETA_SOURCE), (SCHEMA_LOCAL_SOURCE, SCHEMA_SOURCE), (STYPE_LOCAL_SOURCE, STYPE_SOURCE) )
 
@@ -211,7 +215,8 @@ def getregistry(identifier, registry):
 
 def add_triple(g: Graph, res: Union[URIRef, BNode],key, value, args: AttribDict, replace=False) -> bool:
     """Maps a key/value pair to an actual triple"""
-    if replace:
+
+    if replace or key in ( x.split("/")[-1] for x in SINGULAR_PROPERTIES  ):
         f_add = g.set
     else:
         f_add = g.add
@@ -354,3 +359,13 @@ def getstream(source: str):
     if source == '-':
         return sys.stdin
     return open(source,'r',encoding='utf-8')
+
+def merge_graphs(g,g2):
+    """Merge two graphs, but taking care to replace certain properties that are known to take a single value"""
+    both, first, second = graph_diff(g, g2)
+    for (s,p,o) in second:
+        if p in SINGULAR_PROPERTIES:
+            #remove existing triples in the graph
+            for (s2,p2,o2) in g.triples((s,p,None)):
+                g.remove((s2,p2,o2))
+        g.add((s,p,o))

@@ -2,7 +2,7 @@ import sys
 import json
 from rdflib import Graph, URIRef, BNode, Literal
 from typing import Union, IO
-from codemeta.common import AttribDict, REPOSTATUS, license_to_spdx, SDO, SCHEMA_SOURCE, CODEMETA_SOURCE, CONTEXT, DUMMY_NS, SCHEMA_LOCAL_SOURCE, SCHEMA_SOURCE, CODEMETA_LOCAL_SOURCE, CODEMETA_SOURCE, STYPE_SOURCE, STYPE_LOCAL_SOURCE, init_context
+from codemeta.common import AttribDict, REPOSTATUS, license_to_spdx, SDO, SCHEMA_SOURCE, CODEMETA_SOURCE, CONTEXT, DUMMY_NS, SCHEMA_LOCAL_SOURCE, SCHEMA_SOURCE, CODEMETA_LOCAL_SOURCE, CODEMETA_SOURCE, STYPE_SOURCE, STYPE_LOCAL_SOURCE, init_context, SINGULAR_PROPERTIES, merge_graphs
 
 
 def rewrite_context(context):
@@ -65,9 +65,12 @@ def parse_jsonld_data(g: Graph, res: Union[BNode, URIRef,None], data: dict, args
     #reserialize
     data = json.dumps(data, indent=4)
 
+    g2 = Graph()
     #and parse with rdflib
-    g.parse(data=data, format="json-ld", context=CONTEXT, publicID=DUMMY_NS)
+    g2.parse(data=data, format="json-ld", context=CONTEXT, publicID=DUMMY_NS)
     # ^--  We assign an a dummy namespace to items that are supposed to be an ID but aren't
+
+    merge_graphs(g,g2)
 
     if not (isinstance(prefuri,str) and prefuri.startswith("undefined:")):
         return prefuri #return preferred uri
