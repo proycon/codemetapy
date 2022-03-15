@@ -27,9 +27,13 @@ def rewrite_context(context):
 
 def parse_jsonld(g: Graph, res: Union[BNode, URIRef,None], file_descriptor: IO, args: AttribDict) -> Union[str,None]:
     #download schemas needed for context
-    init_context()
-
     data = json.load(file_descriptor)
+    return parse_jsonld_data(g,res, data, args)
+
+
+def parse_jsonld_data(g: Graph, res: Union[BNode, URIRef,None], data: dict, args: AttribDict) -> Union[str,None]:
+    #download schemas needed for context
+    init_context()
 
     #preprocess json
     if '@context' not in data:
