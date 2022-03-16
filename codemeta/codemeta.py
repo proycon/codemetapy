@@ -217,6 +217,9 @@ def build(**kwargs):
             prefuri = codemeta.parsers.jsonld.parse_jsonld(g, res, getstream(source), args) or prefuri
         elif inputtype == "github":
             source = source.replace("https://api.github.com/repos/","")
+            source = source.replace("https://github.com/","")
+            source = source.replace("git@github.com:","")
+            if source.endswith(".git"): source = source[:-4]
             print(f"Querying GitHub API for {source}",file=sys.stderr)
             prefuri = codemeta.parsers.github.parse_github(g, res, source, args) or prefuri
         elif inputtype is not None:
