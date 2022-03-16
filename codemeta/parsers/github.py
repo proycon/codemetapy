@@ -83,7 +83,8 @@ def parse_github(g: Graph, res: Union[URIRef, BNode], source, args: AttribDict) 
         if owner_type == "user" and response.get('name'):
             firstname, lastname = parse_human_name(response['name'])
             g.add((owner_res, RDF.type, SDO.Person))
-            g.add((owner_res, SDO.name, Literal((firstname + " " + lastname).strip())))
+            g.add((owner_res, SDO.givenName, Literal(firstname)))
+            g.add((owner_res, SDO.familyName, Literal(lastname)))
             g.add((res, SDO.author, owner_res))
             g.add((res, SDO.maintainer, owner_res))
             if response.get('company'):
