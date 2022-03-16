@@ -34,6 +34,7 @@ import codemeta.parsers.jsonld
 import codemeta.parsers.nodejs
 import codemeta.parsers.java
 import codemeta.parsers.web
+import codemeta.parsers.github
 from codemeta.serializers.jsonld import serialize_to_jsonld
 
 
@@ -118,7 +119,9 @@ def build(**kwargs):
             print(f"Passed {len(inputfiles)} files/sources but specified {len(inputtypes)} input types! Automatically guessing types...",  file=sys.stderr)
             guess = True
             for inputsource in inputfiles[len(inputtypes):]:
-                if inputsource.lower().startswith("http"):
+                if inputsource.lower().startswith("https://api.github.com/repos/"):
+                    inputtypes.append("github")
+                elif inputsource.lower().startswith("http"):
                     inputtypes.append("web")
                 elif inputsource.endswith("package.json"):
                     inputtypes.append("nodejs")
@@ -212,6 +215,10 @@ def build(**kwargs):
         elif inputtype == "json":
             print(f"Parsing json-ld file from {source}",file=sys.stderr)
             prefuri = codemeta.parsers.jsonld.parse_jsonld(g, res, getstream(source), args) or prefuri
+        elif inputtype == "github":
+            source = source.replace("https://api.github.com/repos/","")
+            print(f"Querying GitHub API for {source}",file=sys.stderr)
+            prefuri = codemeta.parsers.github.parse_github(g, res, source, args) or prefuri
         elif inputtype is not None:
             raise ValueError(f"Unknown input type: {inputtype}")
 
