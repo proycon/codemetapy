@@ -292,12 +292,11 @@ def add_authors(g: Graph, res: Union[URIRef, BNode], value, property=SDO.author,
             if m:
                 name, mail, url = m.groups()
 
-        humanname = HumanName(name.strip())
-        lastname = " ".join((humanname.middle, humanname.last)).strip()
+        firstname, lastname = parse_human_name(name.strip())
 
         author = BNode()
         g.add((author, RDF.type, SDO.Person))
-        g.add((author, SDO.givenName, Literal(humanname.first)))
+        g.add((author, SDO.givenName, Literal(firstname)))
         g.add((author, SDO.familyName, Literal(lastname)))
         if mail:
             g.add((author, SDO.email, Literal(mail)))
@@ -316,8 +315,14 @@ def add_authors(g: Graph, res: Union[URIRef, BNode], value, property=SDO.author,
 
     return authors
 
+
+def parse_human_name(name):
+    humanname = HumanName(name.strip())
+    lastname = " ".join((humanname.middle, humanname.last)).strip()
+    return humanname.first, lastname
+
 def reconcile(g: Graph, res: URIRef, args: AttribDict):
-    """Reconcile possible conflicts in the graph and issue warnings"""
+    """Reconcile possible conflicts in the graph and issue warnings."""
     IDENTIFIER = g.value(res, SDO.identifier)
     if not IDENTIFIER: IDENTIFIER = str(res)
     HEAD = f"[CODEMETA VALIDATION ({IDENTIFIER})]"
