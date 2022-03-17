@@ -119,7 +119,7 @@ def build(**kwargs):
             print(f"Passed {len(inputfiles)} files/sources but specified {len(inputtypes)} input types! Automatically guessing types...",  file=sys.stderr)
             guess = True
             for inputsource in inputfiles[len(inputtypes):]:
-                if inputsource.lower().startswith("https://api.github.com/repos/") or inputsource.lower().startswith("https://github.com/"):
+                if inputsource.lower().startswith("https://api.github.com/repos/") or inputsource.lower().startswith("https://github.com/") or inputsource.lower().startswith("git@github.com"):
                     inputtypes.append("github")
                 elif inputsource.lower().startswith("http"):
                     inputtypes.append("web")
