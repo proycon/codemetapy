@@ -35,6 +35,7 @@ import codemeta.parsers.nodejs
 import codemeta.parsers.java
 import codemeta.parsers.web
 import codemeta.parsers.github
+import codemeta.parsers.authors
 from codemeta.serializers.jsonld import serialize_to_jsonld
 
 
@@ -127,6 +128,12 @@ def build(**kwargs):
                     inputtypes.append("java")
                 elif inputsource.lower().endswith(".json") or inputsource.lower().endswith(".jsonld"):
                     inputtypes.append("json")
+                elif inputsource.upper().endswith("CONTRIBUTORS"):
+                    inputtypes.append("contributors")
+                elif inputsource.upper().endswith("AUTHORS"):
+                    inputtypes.append("authors")
+                elif inputsource.upper().endswith("MAINTAINERS"):
+                    inputtypes.append("maintainers")
                 else:
                     #assume python
                     inputtypes.append("python")
@@ -215,6 +222,15 @@ def build(**kwargs):
             if source.endswith(".git"): source = source[:-4]
             print(f"Querying GitHub API for {source}",file=sys.stderr)
             prefuri = codemeta.parsers.github.parse_github(g, res, source, args) or prefuri
+        elif inputtype in ('authors', 'contributors','maintainers'):
+            print(f"Extracting {inputtype} from {source}",file=sys.stderr)
+            if inputtype == 'authors':
+                prop = SDO.author
+            elif inputtype == 'contributors':
+                prop = SDO.contributor
+            elif inputtype == 'maintainers':
+                prop = CODEMETA.maintainer
+            codemeta.parsers.authors.parse_authors(g, res, getstream(source), args, property=prop )
         elif inputtype is not None:
             raise ValueError(f"Unknown input type: {inputtype}")
 

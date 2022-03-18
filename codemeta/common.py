@@ -270,6 +270,9 @@ def add_authors(g: Graph, res: Union[URIRef, BNode], value, property=SDO.author,
         urls = kwargs.get('url',"").strip().split(",")
         orgs = kwargs.get('organization',"").strip().split(",")
 
+
+    skip_duplicates = kwargs.get('skip_duplicates')
+
     authors = []
     for i, name in enumerate(names):
         if len(mails) > i:
@@ -296,6 +299,14 @@ def add_authors(g: Graph, res: Union[URIRef, BNode], value, property=SDO.author,
         firstname, lastname = parse_human_name(name.strip())
 
         author = URIRef(generate_uri(firstname + "-" + lastname, kwargs.get('baseuri'), prefix="person"))
+        if skip_duplicates:
+            if g.query("SELECT ?a WHERE {{ ?a rdf:type schema:Person . ?a schema:givenName \"{firstname}\" . ?a schema:lastName \"{lastname}\" . }}"):
+                #person already exists, skipping
+                continue
+            if mail and g.query("SELECT ?a WHERE {{ ?a rdf:type schema:Person . ?a schema:email \"{mail}\" . }}"):
+                #mail already exists, skipping
+                continue
+
         g.add((author, RDF.type, SDO.Person))
         g.add((author, SDO.givenName, Literal(firstname)))
         g.add((author, SDO.familyName, Literal(lastname)))
