@@ -62,7 +62,7 @@ def parse_github(g: Graph, res: Union[URIRef, BNode], source, args: AttribDict) 
         if github_key in response:
             g.add((res, prop, Literal(response[github_key])))
 
-    if 'license' in response and response['license'].get('spdx_id'):
+    if response.get['license'] and response['license'].get('spdx_id'):
         g.add((res, SDO.license, Literal(license_to_spdx(response['license']['spdx_id']))))
 
     if response.get("topics"):
