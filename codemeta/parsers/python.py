@@ -9,7 +9,7 @@ else:
 
 from rdflib import Graph, URIRef, BNode, Literal
 from rdflib.namespace import RDF
-from codemeta.common import AttribDict, add_triple, CODEMETA, SOFTWARETYPES, add_authors, SDO, COMMON_SOURCEREPOS
+from codemeta.common import AttribDict, add_triple, CODEMETA, SOFTWARETYPES, add_authors, SDO, COMMON_SOURCEREPOS, generate_uri
 from codemeta.crosswalk import readcrosswalk, CWKey
 
 def splitdependencies(s: str):
@@ -81,7 +81,7 @@ def parse_python(g: Graph, res: Union[URIRef, BNode], packagename: str, crosswal
                 print("NOTICE: Classifier "  + fields[0] + " has no translation",file=sys.stderr)
         else:
             if key == "Author":
-                add_authors(g, res, value, single_author=args.single_author, mail=pkg.metadata.get("Author-email",""))
+                add_authors(g, res, value, single_author=args.single_author, mail=pkg.metadata.get("Author-email",""), baseuri=args.baseuri)
             elif key == "Author-email":
                 continue #already handled by the above
             elif key == "Requires-Dist":
@@ -90,7 +90,7 @@ def parse_python(g: Graph, res: Union[URIRef, BNode], packagename: str, crosswal
                         print("Skipping extra dependency: ",dependency,file=sys.stderr)
                         continue
                     dependency, depversion = parsedependency(dependency.strip())
-                    depres = BNode()
+                    depres = URIRef(generate_uri(dependency, baseuri=args.baseuri,prefix="dependency"))
                     g.add((depres, RDF.type, SDO.SoftwareApplication))
                     g.add((depres, SDO.identifier, Literal(dependency)))
                     g.add((depres, SDO.name, Literal(dependency)))
@@ -104,7 +104,7 @@ def parse_python(g: Graph, res: Union[URIRef, BNode], packagename: str, crosswal
             elif key == "Requires-External":
                 for dependency in value.split(','):
                     dependency = dependency.strip()
-                    depres = BNode()
+                    depres = URIRef(generate_uri(dependency, baseuri=args.baseuri,prefix="dependency"))
                     g.add((depres, RDF.type, SDO.SoftwareApplication))
                     g.add((depres, SDO.identifier, Literal(dependency)))
                     g.add((depres, SDO.name, Literal(dependency)))
@@ -147,7 +147,7 @@ def parse_python(g: Graph, res: Union[URIRef, BNode], packagename: str, crosswal
             else:
                 description = ""
 
-            targetproduct = BNode()
+            targetproduct = URIRef(generate_uri(rawentrypoint.name, baseuri=args.baseuri,prefix=str(interfacetype).lower()))
             g.add((targetproduct, RDF.type, interfacetype))
             g.add((targetproduct, SDO.name, Literal(rawentrypoint.name)))
             g.add((targetproduct, SOFTWARETYPES.executableName, Literal(rawentrypoint.name)))
@@ -160,7 +160,7 @@ def parse_python(g: Graph, res: Union[URIRef, BNode], packagename: str, crosswal
 
         cat = g.value(res, SDO.applicationCategory)
         if not found or (cat and cat.lower().find("libraries") != -1):
-            targetproduct = BNode()
+            targetproduct = URIRef(generate_uri(pkg.name, baseuri=args.baseuri,prefix="softwarelibrary"))
             g.add((targetproduct, RDF.type, SOFTWARETYPES.SoftwareLibrary))
             g.add((targetproduct, SDO.name, Literal(pkg.name)))
             g.add((targetproduct, SOFTWARETYPES.executableName, Literal(re.sub(r"[-_.]+", "-", pkg.name).lower()))) #see https://python.github.io/peps/pep-0503/

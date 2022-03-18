@@ -2,6 +2,7 @@ import sys
 import os
 import json
 import requests
+import random
 import re
 from rdflib import Graph, Namespace, URIRef, BNode, Literal
 from rdflib.namespace import RDF
@@ -236,7 +237,7 @@ def add_triple(g: Graph, res: Union[URIRef, BNode],key, value, args: AttribDict,
     elif key == "applicationCategory":
         f_add((res, SDO.applicationCategory, Literal(value)))
     elif key == "audience":
-        audience = BNode()
+        audience = URIRef(generate_uri(value, baseuri=args.baseuri, prefix="audience"))
         g.add((audience, RDF.type, SDO.Audience))
         g.add((audience, SDO.audienceType, Literal(value) ))
         f_add((res, SDO.audience,audience ))
@@ -256,7 +257,7 @@ def add_triple(g: Graph, res: Union[URIRef, BNode],key, value, args: AttribDict,
         return False
     return True
 
-def add_authors(g: Graph, res: Union[URIRef, BNode], value, property=SDO.author, single_author = False, **kwargs):
+def add_authors(g: Graph, res: Union[URIRef, BNode], value, property=SDO.author, single_author = False,  **kwargs):
     """Parse and add authors and their e-mail addresses"""
     if single_author:
         names = [value.strip()]
@@ -294,7 +295,7 @@ def add_authors(g: Graph, res: Union[URIRef, BNode], value, property=SDO.author,
 
         firstname, lastname = parse_human_name(name.strip())
 
-        author = BNode()
+        author = URIRef(generate_uri(firstname + "-" + lastname, kwargs.get('baseuri'), prefix="person"))
         g.add((author, RDF.type, SDO.Person))
         g.add((author, SDO.givenName, Literal(firstname)))
         g.add((author, SDO.familyName, Literal(lastname)))
@@ -305,7 +306,7 @@ def add_authors(g: Graph, res: Union[URIRef, BNode], value, property=SDO.author,
             #                              -------------^
             #  needed to cleanup after the regexp and to prevent other accidents
         if org:
-            orgres = BNode()
+            orgres = URIRef(generate_uri(org, kwargs.get('baseuri'), prefix="org"))
             g.add((orgres, RDF.type, SDO.Organization))
             g.add((orgres, RDF.name, org))
             g.add((author, SDO.affiliation, orgres))
@@ -365,7 +366,7 @@ def getstream(source: str):
         return sys.stdin
     return open(source,'r',encoding='utf-8')
 
-def merge_graphs(g,g2):
+def merge_graphs(g: Graph ,g2: Graph):
     """Merge two graphs, but taking care to replace certain properties that are known to take a single value"""
     both, first, second = graph_diff(g, g2)
     for (s,p,o) in second:
@@ -374,3 +375,21 @@ def merge_graphs(g,g2):
             for (s2,p2,o2) in g.triples((s,p,None)):
                 g.remove((s2,p2,o2))
         g.add((s,p,o))
+
+def generate_uri(identifier: Union[str,None] = None, baseuri: Union[str,None] = None, prefix: str= ""):
+    """Generate an URI"""
+    if not identifier:
+        identifier = "N" + "%032x" % random.getrandbits(128)
+    else:
+        identifier = identifier.lower()
+        for c in (' ','&','/','+',':',',',';'):
+            identifier = identifier.replace(c,'-')
+    if not prefix and baseuri:
+        prefix = baseuri
+    elif prefix and baseuri:
+        prefix = os.path.join(baseuri, prefix)
+        if prefix[-1] != '/': prefix += '/'
+    elif prefix:
+        prefix = "undefined:"
+    return prefix + identifier
+

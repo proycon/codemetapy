@@ -6,7 +6,7 @@ from io import StringIO
 from typing import Union, IO
 from rdflib import Graph, URIRef, BNode, Literal
 from rdflib.namespace import RDF
-from codemeta.common import AttribDict, SDO
+from codemeta.common import AttribDict, SDO, generate_uri
 from codemeta.parsers.jsonld import parse_jsonld_data
 from bs4 import BeautifulSoup
 
@@ -40,10 +40,6 @@ def parse_web(g: Graph, res: Union[URIRef, BNode], url, args: AttribDict) -> Uni
     datatype = None
     data = None
 
-    if args.with_stypes:
-        targetres = BNode()
-    else:
-        targetres = res
 
     if contenttype in ("application/json", "application/ld+json") or url.endswith(".json") or url.endswith(".jsonld"):
         print("Parsing json...",file=sys.stderr)
@@ -61,11 +57,16 @@ def parse_web(g: Graph, res: Union[URIRef, BNode], url, args: AttribDict) -> Uni
             #Does the site provide proper JSON-LD metadata itself?
             data = json.loads("".join(scriptblock.contents))
         else:
+            name = get_meta(soup, "og:site_name", "og:title", "twitter:title")
+            if args.with_stypes:
+                targetres = URIRef(generate_uri(name, baseuri=args.baseuri,prefix="webapplication"))
+            else:
+                targetres = res
+            if name:
+                g.add((targetres, SDO.name, Literal(name)))
             g.add((targetres, RDF.type, SDO.WebApplication))
             g.add((targetres, SDO.url, Literal(get_meta(soup, "og:url", "url", default=url))))
 
-            v = get_meta(soup, "og:site_name", "og:title", "twitter:title")
-            if v: g.add((targetres, SDO.name, Literal(v)))
 
             v = get_meta(soup, "og:description", "twitter:description", "description")
             if v: g.add((targetres, SDO.description, Literal(v)))
@@ -88,6 +89,10 @@ def parse_web(g: Graph, res: Union[URIRef, BNode], url, args: AttribDict) -> Uni
     if data:
         datatype = detect_type(data)
         if datatype == 'schema':
+            if args.with_stypes:
+                targetres = URIRef(generate_uri(baseuri=args.baseuri,prefix="webapplication"))
+            else:
+                targetres = res
             parse_jsonld_data(g, targetres, data, args)
             return targetres
         elif datatype == 'openapi':

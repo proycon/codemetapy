@@ -6,7 +6,7 @@ from io import StringIO
 from typing import Union, IO
 from rdflib import Graph, URIRef, BNode, Literal
 from rdflib.namespace import RDF
-from codemeta.common import AttribDict, SDO, CODEMETA, license_to_spdx, parse_human_name
+from codemeta.common import AttribDict, SDO, CODEMETA, license_to_spdx, parse_human_name, generate_uri
 from codemeta.parsers.jsonld import parse_jsonld_data
 
 github_crosswalk_table = {
@@ -79,25 +79,28 @@ def parse_github(g: Graph, res: Union[URIRef, BNode], source, args: AttribDict) 
         owner_api_url = f"https://api.github.com/users/{owner}"
         response = rate_limit_get(owner_api_url)
         owner_type = response.get("type","").lower()
-        owner_res = BNode()
+        owner_res = None
         if owner_type == "user" and response.get('name'):
             firstname, lastname = parse_human_name(response['name'])
+            owner_res = URIRef(generate_uri(firstname + "-" + lastname, args.baseuri, prefix="person"))
             g.add((owner_res, RDF.type, SDO.Person))
             g.add((owner_res, SDO.givenName, Literal(firstname)))
             g.add((owner_res, SDO.familyName, Literal(lastname)))
             g.add((res, SDO.author, owner_res))
             g.add((res, SDO.maintainer, owner_res))
             if response.get('company'):
-                affil_res = BNode()
+                affil_res = URIRef(generate_uri(response.get('company'), args.baseuri, prefix="org"))
                 g.add((affil_res, RDF.type, SDO.Organization))
                 g.add((affil_res, SDO.name, Literal(response['company'])))
                 g.add((owner_res, SDO.affiliation, affil_res))
         elif owner_type == "organization" and response.get('name'):
+            owner_res = URIRef(generate_uri(response.get('name'), args.baseuri, prefix="org"))
             g.add((owner_res, SDO.name, Literal(response.get('name'))))
             g.add((res, SDO.producer, owner_res))
-        if response.get('email'):
-            g.add((owner_res, SDO.email, Literal(response.get('email'))))
-        if response.get('blog'):
-            g.add((owner_res, SDO.url, Literal(response.get('blog'))))
+        if owner_res:
+            if response.get('email'):
+                g.add((owner_res, SDO.email, Literal(response.get('email'))))
+            if response.get('blog'):
+                g.add((owner_res, SDO.url, Literal(response.get('blog'))))
 
     return repo_url

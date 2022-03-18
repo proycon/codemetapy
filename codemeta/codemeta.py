@@ -26,7 +26,7 @@ from rdflib.namespace import RDF
 from rdflib.plugins.shared.jsonld.context import Context
 import rdflib.plugins.serializers.jsonld
 
-from codemeta.common import init_graph, init_context, CODEMETA, AttribDict, getstream, CONTEXT, SDO, reconcile, add_triple
+from codemeta.common import init_graph, init_context, CODEMETA, AttribDict, getstream, CONTEXT, SDO, reconcile, add_triple, generate_uri
 import codemeta.crosswalk
 import codemeta.parsers.python
 import codemeta.parsers.debian
@@ -169,12 +169,7 @@ def build(**kwargs):
             identifier = identifier.replace(".codemeta.json","").replace("codemeta.json","")
             identifier = identifier.replace(".pom.xml","").replace("pom.xml","")
             identifier = identifier.replace(".package.json","").replace("package.json","")
-        if not identifier:
-            identifier = "N"  + "%032x" % random.getrandbits(128)
-        if args.baseuri:
-            uri = args.baseuri + identifier
-        else:
-            uri = "undefined:" + identifier
+        uri = generate_uri(identifier, args.baseuri)
 
     #add the root resource
     res = URIRef(uri)

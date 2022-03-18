@@ -4,7 +4,7 @@ import os.path
 from typing import Union, IO
 from rdflib import Graph, URIRef, BNode, Literal
 from rdflib.namespace import RDF
-from codemeta.common import AttribDict, add_triple, CODEMETA, SOFTWARETYPES, add_authors, SDO, COMMON_SOURCEREPOS, SOFTWARETYPES
+from codemeta.common import AttribDict, add_triple, CODEMETA, SOFTWARETYPES, add_authors, SDO, COMMON_SOURCEREPOS, SOFTWARETYPES, generate_uri
 from codemeta.crosswalk import readcrosswalk, CWKey
 
 
@@ -69,22 +69,22 @@ def parse_nodejs(g: Graph, res: Union[URIRef, BNode], file: IO , crosswalk, args
             elif key == 'author':
                 #npm prescribes that author is only one person
                 if isinstance(value, dict) and 'name' in value:
-                    authors = add_authors(g, res, value['name'], True, value.get("email"))
+                    authors = add_authors(g, res, value['name'], True, value.get("email"), baseuri=args.baseuri)
                     if authors and 'url' in value:
                         g.add((authors[0], SDO.url, Literal(value['url'])))
                 elif isinstance(value, str):
                     #npm allows strings like "Barney Rubble <b@rubble.com> (http://barnyrubble.tumblr.com/)"
                     #our add_authors function can handle that directly
-                    add_authors(g, res, value, single_author=True)
+                    add_authors(g, res, value, single_author=True, baseuri=args.baseuri)
             elif key in ('dependencies','devDependencies'):
                 if isinstance(value, dict):
                     for key, versioninfo in value.items():
-                        dependency = BNode()
-                        g.add((dependency, RDF.type, SDO.SoftwareApplication))
-                        g.add((dependency, SDO.name, Literal(key)))
-                        g.add((dependency, SDO.identifier, Literal(key)))
-                        g.add((dependency, SDO.version, Literal(versioninfo)))
-                        g.add((res,  CODEMETA.softwareRequirements, dependency))
+                        depres = URIRef(generate_uri(key, baseuri=args.baseuri,prefix="dependency"))
+                        g.add((depres, RDF.type, SDO.SoftwareApplication))
+                        g.add((depres, SDO.name, Literal(key)))
+                        g.add((depres, SDO.identifier, Literal(key)))
+                        g.add((depres, SDO.version, Literal(versioninfo)))
+                        g.add((res,  CODEMETA.softwareRequirements, depres))
                     #detect some common web application frameworks or other
                     #dependencies that indicate this is a web-app
                     iswebapp = iswebapp or 'react' in value or 'vue' in value or 'sitemap' in value or  'gatsby' in value
@@ -94,13 +94,13 @@ def parse_nodejs(g: Graph, res: Union[URIRef, BNode], file: IO , crosswalk, args
                 #note: assuming CommandLineApplication may be a bit presumptuous here
                 if isinstance(value, dict) and 'name' in value and args.with_stypes:
                     for progname, execname in value.items():
-                        sapp = BNode()
+                        sapp = URIRef(generate_uri(key, baseuri=args.baseuri,prefix="commandlineapplication"))
                         g.add((sapp, RDF.type, SOFTWARETYPES.CommandLineApplication))
                         g.add((sapp, SDO.name, progname))
                         g.add((sapp, SOFTWARETYPES.executableName, os.path.basename(execname)))
                         g.add((res, SDO.targetProduct, sapp))
                 elif isinstance(value, str) and args.with_stypes:
-                    sapp = BNode()
+                    sapp = URIRef(generate_uri(data['name'], baseuri=args.baseuri,prefix="commandlineapplication"))
                     g.add((sapp, RDF.type, SOFTWARETYPES.CommandLineApplication))
                     g.add((sapp, SDO.name, data['name'])) #from parent
                     g.add((sapp, SOFTWARETYPES.executableName, os.path.basename(value)))
@@ -120,7 +120,7 @@ def parse_nodejs(g: Graph, res: Union[URIRef, BNode], file: IO , crosswalk, args
 
     if args.with_stypes and 'browser' in data or 'browserslist' in data or iswebapp:
         #assume this is a web-application
-        sapp = BNode()
+        sapp = URIRef(generate_uri(data['name'], baseuri=args.baseuri,prefix="webapplication"))
         g.add((sapp, RDF.type, SDO.WebApplication))
         g.add((sapp, SDO.name, Literal(data['name']))) #from parent
         g.add((sapp, SDO.version, Literal(data['version']))) #from parent

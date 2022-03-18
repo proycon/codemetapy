@@ -2,7 +2,7 @@ import sys
 from typing import Union
 from rdflib import Graph, URIRef, BNode, Literal
 from rdflib.namespace import RDF
-from codemeta.common import AttribDict, add_triple, CODEMETA, SOFTWARETYPES, add_authors, SDO, COMMON_SOURCEREPOS, SOFTWARETYPES
+from codemeta.common import AttribDict, add_triple, CODEMETA, SOFTWARETYPES, add_authors, SDO, COMMON_SOURCEREPOS, SOFTWARETYPES, generate_uri
 from codemeta.crosswalk import readcrosswalk, CWKey
 
 def parse_debian(g: Graph, res: Union[URIRef, BNode], lines, crosswalk, args: AttribDict) -> Union[str,None]:
@@ -41,7 +41,7 @@ def parse_debian(g: Graph, res: Union[URIRef, BNode], lines, crosswalk, args: At
                 for dependency in value.split(","):
                     dependency = dependency.strip().split(" ")[0].strip()
                     if dependency:
-                        depnode = BNode()
+                        depnode = URIRef(generate_uri(dependency, baseuri=args.baseuri,prefix="dependency"))
                         g.add((depnode, RDF.type, SDO.SoftwareApplication))
                         g.add((depnode, SDO.identifier, Literal(dependency)))
                         g.add((depnode, SDO.name, Literal(dependency)))
@@ -83,7 +83,7 @@ def parse_debian(g: Graph, res: Union[URIRef, BNode], lines, crosswalk, args: At
     if description:
         g.add((res, SDO.description, Literal(description)))
     if interfacetype and args.with_stypes:
-        sapp = BNode()
+        sapp = URIRef(generate_uri(name, baseuri=args.baseuri,prefix=str(interfacetype).lower()))
         g.add((sapp, RDF.type, interfacetype))
         g.add((sapp, SDO.name, name))
         g.add((res, SDO.targetProduct, sapp))

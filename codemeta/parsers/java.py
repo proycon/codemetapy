@@ -5,7 +5,7 @@ from typing import Union, IO
 from rdflib import Graph, URIRef, BNode, Literal
 from rdflib.namespace import RDF
 import lxml
-from codemeta.common import AttribDict, add_triple, CODEMETA, SOFTWARETYPES, add_authors, SDO, COMMON_SOURCEREPOS, SOFTWARETYPES, license_to_spdx
+from codemeta.common import AttribDict, add_triple, CODEMETA, SOFTWARETYPES, add_authors, SDO, COMMON_SOURCEREPOS, SOFTWARETYPES, license_to_spdx, generate_uri
 from codemeta.crosswalk import readcrosswalk, CWKey
 
 POM_NAMESPACE = "http://maven.apache.org/POM/4.0.0"
@@ -90,18 +90,21 @@ def parse_java(g: Graph, res: Union[URIRef, BNode], file: IO , crosswalk, args: 
         elif key == 'dependencies':
             for key2, node2 in parse_node(node):
                 if key2 == "dependency":
-                    depres = BNode()
-                    dep_group_id = dep_art_id = None
+                    dep_group_id = dep_art_id = dep_version = None
                     for key3, node3 in parse_node(node2):
                         if key3 == "groupId":
                             dep_group_id = node3.text
                         elif key3 == "artifactId":
                             dep_art_id = node3.text
-                            g.add((depres, SDO.name, Literal(node3.text)))
                         elif key3 == "version" and node3.text and not node3.text.startswith('$'):
-                            g.add((depres, SDO.version, Literal(node3.text)))
+                            dep_version = node3.text
+
                     if dep_group_id and dep_art_id:
+                        depres = URIRef(generate_uri(dep_group_id +"." + dep_art_id, baseuri=args.baseuri,prefix="dependency"))
                         g.add((depres, SDO.identifier, Literal(dep_group_id + "." + dep_art_id)))
+                        g.add((depres, SDO.name, Literal(dep_group_id + "."  + dep_art_id)))
+                        if dep_version:
+                            g.add((depres, SDO.version, Literal(dep_version)))
                         g.add((depres, RDF.type, SDO.SoftwareApplication))
                         g.add((res, CODEMETA.softwareRequirements, depres))
         elif key == 'developers':
@@ -119,13 +122,19 @@ def parse_java(g: Graph, res: Union[URIRef, BNode], file: IO , crosswalk, args: 
                         if key3 == "post":
                             add_triple(g, res, "email", node3.text, args)
         elif key == 'organization':
-            orgres = BNode()
+            org_name = None
+            org_url = None
             for key2, node2 in parse_node(node):
                 if key2 == "name":
-                    g.add((orgres, SDO.name, Literal(node2.text)))
+                    org_name = node2.text
                 elif key2 == "url":
-                    g.add((orgres, SDO.url, Literal(node2.text)))
-            g.add((res, SDO.producer, orgres))
+                    org_url = node2.text
+            if org_name:
+                orgres = URIRef(generate_uri(org_name, baseuri=args.baseuri, prefix="org"))
+                g.add((orgres, SDO.name, Literal(org_name)))
+                if org_url:
+                    g.add((orgres, SDO.url, Literal(org_url)))
+                g.add((res, SDO.producer, orgres))
         elif key.lower() in crosswalk[CWKey.MAVEN]:
             key = crosswalk[CWKey.MAVEN][key.lower()]
             if key != 'identifier':
