@@ -384,12 +384,9 @@ def generate_uri(identifier: Union[str,None] = None, baseuri: Union[str,None] = 
         identifier = identifier.lower()
         for c in (' ','&','/','+',':',',',';'):
             identifier = identifier.replace(c,'-')
-    if not prefix and baseuri:
-        prefix = baseuri
-    elif prefix and baseuri:
-        prefix = os.path.join(baseuri, prefix)
-        if prefix[-1] != '/': prefix += '/'
-    elif prefix:
-        prefix = "undefined:"
-    return prefix + identifier
+    if prefix and prefix[-1] not in ('/','#'):
+        prefix += '/'
+    if not baseuri:
+        baseuri = "undefined:"
+    return baseuri + prefix + identifier
 
