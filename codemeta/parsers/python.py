@@ -69,12 +69,12 @@ def parse_python(g: Graph, res: Union[URIRef, BNode], packagename: str, crosswal
                 key = crosswalk[CWKey.PYPI][pipkey]
                 det = " > " if key != "programmingLanguage" else " "
                 value = det.join(fields[1:])
-                add_triple(g, res, key, value, args)
+                add_triple(g, res, "runtimePlatform" if key == "programmingLanguage" else key, value, args)
             elif classifier.lower() in crosswalk[CWKey.PYPI]:
                 key = crosswalk[CWKey.PYPI][classifier.lower()]
                 det = " > " if key != "programmingLanguage" else " "
                 value = det.join(fields[1:])
-                add_triple(g, res, key, value, args)
+                add_triple(g, res, "runtimePlatform" if key == "programmingLanguage" else key, value, args)
             elif classifier == "Intended Audience":
                 add_triple(g, res, "audience", " > ".join(fields[1:]), args)
             else:
