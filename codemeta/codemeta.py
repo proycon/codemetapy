@@ -261,9 +261,9 @@ def build(**kwargs):
         doc = serialize_to_jsonld(g, res, uri)
         if args.outputfile and args.outputfile != "-":
             with open(args.outputfile,'w',encoding='utf-8') as fp:
-                fp.write(json.dumps(doc, indent=4))
+                fp.write(json.dumps(doc, indent=4, ensure_ascii=False))
         else:
-            print(json.dumps(doc, indent=4))
+            print(json.dumps(doc, indent=4, ensure_ascii=False))
     else:
         raise Exception("No such output type: ", args.output)
 

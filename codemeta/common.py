@@ -317,6 +317,11 @@ def add_authors(g: Graph, res: Union[URIRef, BNode], value, property=SDO.author,
             g.add((author, SDO.url, Literal(url.strip("() "))))
             #                              -------------^
             #  needed to cleanup after the regexp and to prevent other accidents
+        if single_author:
+            if kwargs.get('position'):
+                g.add((author, SDO.position, Literal(kwargs.get('position'))))
+        elif len(names) > 1:
+            g.add((author, SDO.position, Literal(i+1)))
         if org:
             orgres = URIRef(generate_uri(org, kwargs.get('baseuri'), prefix="org"))
             g.add((orgres, RDF.type, SDO.Organization))
