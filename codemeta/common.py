@@ -300,10 +300,11 @@ def add_authors(g: Graph, res: Union[URIRef, BNode], value, property=SDO.author,
 
         author = URIRef(generate_uri(firstname + "-" + lastname, kwargs.get('baseuri'), prefix="person"))
         if skip_duplicates:
-            if g.query("SELECT ?a WHERE {{ ?a rdf:type schema:Person . ?a schema:givenName \"{firstname}\" . ?a schema:lastName \"{lastname}\" . }}"):
+            q = f"SELECT ?a WHERE {{ ?a a schema:Person . ?a schema:givenName \"{firstname}\" . ?a schema:familyName \"{lastname}\" . }}"
+            if g.query(q, initNs={'schema': SDO }):
                 #person already exists, skipping
                 continue
-            if mail and g.query("SELECT ?a WHERE {{ ?a rdf:type schema:Person . ?a schema:email \"{mail}\" . }}"):
+            if mail and g.query(f"SELECT ?a WHERE {{ ?a a schema:Person . ?a schema:email \"{mail}\" . }}", initNs={ 'schema': SDO }):
                 #mail already exists, skipping
                 continue
 
