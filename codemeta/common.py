@@ -92,6 +92,8 @@ LICENSE_MAP = [ #maps some common licenses to SPDX URIs, mapped with a substring
     ("Eclipse Public License 1", "http://spdx.org/licenses/EPL-1.0"),
     ("Eclipse Public License", "http://spdx.org/licenses/EPL-2.0"),
     ("Common Public Attribution License", "http://spdx.org/licenses/CPAL-1.0"),
+    ("https://www.apache.org/licenses/LICENSE-2.0.txt", "http://spdx.org/licenses/Apache-2.0"),
+    ("Apache License, Version 2.0", "http://spdx.org/licenses/Apache-2.0"),
     ("Apache License 2", "http://spdx.org/licenses/Apache-2.0"),
     ("Apache License", "http://spdx.org/licenses/Apache-1.1"),
     ("Apache-2.0", "http://spdx.org/licenses/Apache-2.0"),
