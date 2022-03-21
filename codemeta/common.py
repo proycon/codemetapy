@@ -407,5 +407,7 @@ def generate_uri(identifier: Union[str,None] = None, baseuri: Union[str,None] = 
         prefix += '/'
     if not baseuri:
         baseuri = "undefined:"
+    elif baseuri[-1] not in ('/','#'):
+        baseuri += '/'
     return baseuri + prefix + identifier
 
