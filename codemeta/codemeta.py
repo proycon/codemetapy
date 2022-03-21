@@ -161,6 +161,9 @@ def build(**kwargs):
 
     founduri = False #indicates whether we found a preferred URI or not
 
+
+    if hasattr(args, 'baseuri') and args.baseuri:
+        args.baseuri = args.baseuri.strip('" ')
     if hasattr(args, 'codeRepository') and args.codeRepository:
         #Use the URI passed
         uri = args.codeRepository.strip('"')
