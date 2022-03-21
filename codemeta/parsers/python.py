@@ -165,10 +165,10 @@ def parse_python(g: Graph, res: Union[URIRef, BNode], packagename: str, crosswal
             isweb = isweb or cat.lower().find("Internet") != -1
 
         if (not found and not isweb) or islibrary:
-            targetproduct = URIRef(generate_uri(pkg.name, baseuri=args.baseuri,prefix="softwarelibrary"))
+            targetproduct = URIRef(generate_uri(packagename, baseuri=args.baseuri,prefix="softwarelibrary"))
             g.add((targetproduct, RDF.type, SOFTWARETYPES.SoftwareLibrary))
-            g.add((targetproduct, SDO.name, Literal(pkg.name)))
-            g.add((targetproduct, SOFTWARETYPES.executableName, Literal(re.sub(r"[-_.]+", "-", pkg.name).lower()))) #see https://python.github.io/peps/pep-0503/
+            g.add((targetproduct, SDO.name, Literal(packagename)))
+            g.add((targetproduct, SOFTWARETYPES.executableName, Literal(re.sub(r"[-_.]+", "-", packagename).lower()))) #see https://python.github.io/peps/pep-0503/
             if args.exactplatformversion:
                 g.add((targetproduct, SDO.runtimePlatform, Literal("Python " + str(sys.version_info.major) + "." + str(sys.version_info.minor) + "." + str(sys.version_info.micro))))
             else:
