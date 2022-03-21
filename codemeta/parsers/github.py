@@ -35,7 +35,10 @@ def rate_limit_get(*args, backoff_rate=2, initial_backoff=1, **kwargs):
         response = response.json()
         if 'message' in response and 'API rate limit exceeded' in response['message']:
             rate_limited = True
-            print(f"Github API: rate limited. Backing off for {initial_backoff} seconds")
+            print(f"Github API: rate limited. Backing off for {initial_backoff} seconds", file=sys.stderr)
+            sys.stderr.flush()
+            if initial_backoff > 120:
+                raise Exception("Github API timed out because of rate limiting, giving up...")
             time.sleep(initial_backoff)
 
             # increase the backoff for next time
