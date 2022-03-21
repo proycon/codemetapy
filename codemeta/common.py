@@ -130,7 +130,7 @@ LICENSE_MAP = [ #maps some common licenses to SPDX URIs, mapped with a substring
 
 
 #properties that may only occur once, last one counts
-SINGULAR_PROPERTIES = ( SDO.name, SDO.version, SDO.description, CODEMETA.developmentStatus, SDO.dateCreated, SDO.dateModified )
+SINGULAR_PROPERTIES = ( SDO.name, SDO.version, SDO.description, CODEMETA.developmentStatus, SDO.dateCreated, SDO.dateModified, SDO.position )
 
 def init_context():
     sources = ( (CODEMETA_LOCAL_SOURCE, CODEMETA_SOURCE), (SCHEMA_LOCAL_SOURCE, SCHEMA_SOURCE), (STYPE_LOCAL_SOURCE, STYPE_SOURCE) )
