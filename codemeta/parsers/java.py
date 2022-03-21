@@ -102,7 +102,7 @@ def parse_java(g: Graph, res: Union[URIRef, BNode], file: IO , crosswalk, args: 
                     if dep_group_id and dep_art_id:
                         depres = URIRef(generate_uri(dep_group_id +"." + dep_art_id, baseuri=args.baseuri,prefix="dependency"))
                         g.add((depres, SDO.identifier, Literal(dep_group_id + "." + dep_art_id)))
-                        g.add((depres, SDO.name, Literal(dep_group_id + "."  + dep_art_id)))
+                        g.add((depres, SDO.name, Literal(dep_art_id)))
                         if dep_version:
                             g.add((depres, SDO.version, Literal(dep_version)))
                         g.add((depres, RDF.type, SDO.SoftwareApplication))
