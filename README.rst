@@ -30,6 +30,10 @@ for your software. At the moment it supports conversions from the following exis
 * Java/Maven packages (``pom.xml``)
 * NodeJS packages (``package.json``)
 * Debian package (``apt show`` output)
+* Github API (when passed a github URL)
+* Web sites/services (see the section on software types and service below)
+    * Simple metadata from HTML ``<meta>`` elements.
+    * Script blocks using ``application/json+ld``
 
 It can also read and manipulate existing ``codemeta.json`` files as well as parse simple AUTHORS/CONTRIBUTORS files. One
 of the most notable features of codemetapy is that it allows chaining to successively update a metadata description based
@@ -87,8 +91,9 @@ For `codemeta:developmentStatus`, codemetapy attempts to assign full `repostatus
 possible
 For `schema:license`, full `SPDX <https://spdx.org>_` URIs are used where possible.
 
-Software Types
----------------
+
+Software Types and services
+-----------------------------
 
 Codemetapy (since 0.4.0) implements an extension to codemeta that allows linking the software source code to the actual
 instantiation of the software, with explicit regard for the interface type. This is done via the `schema:targetProduct`
@@ -98,7 +103,17 @@ types defined in https://github.com/SoftwareUnderstanding/software_types/ . This
 
 This extension is enabled by default and can be disabled by setting the ``--strict`` flag.
 
-The older Entypoint Extension from codemetapy < 0.4.0 is now deprecated.
+When you pass codemetapy a URL it will assume this is where the software is run as a service, and attempt to extract
+metadata from the site and encode is via `targetProduct`. For example, here we read an existing  `codemeta.json` and
+extend it with some place where it is instantiated as a service:
+
+``$ codemetapy codemeta.json https://example.org/``
+
+If served HTML, codemetapy will use your `<script>` block using ``application/json+ld`` if it provides a valid software types (as
+mentioned above). For other HTML, codemetapy will simply extract some metadata from HTML ``<meta>`` elements. Content
+negotation will be used and the we favour json+ld, json and even yaml and XML over HTML.
+
+(Note: the older Entypoint Extension from codemetapy < 0.4.0 is now deprecated)
 
 Graph
 --------------
