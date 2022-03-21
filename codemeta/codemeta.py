@@ -92,7 +92,7 @@ def main():
     parser.add_argument('-o', '--outputtype', dest='output',type=str,help="Metadata output type: json (default), yaml", action='store',required=False, default="json")
     parser.add_argument('-O','--outputfile',  dest='outputfile',type=str,help="Output file", action='store',required=False)
     parser.add_argument('-i','--inputtype', dest='inputtypes',type=str,help="Metadata input type: python, apt (debian packages), registry, json, yaml. May be a comma seperated list of multiple types if files are passed on the command line", action='store',required=False)
-    parser.add_argument('-r','--registry', dest='registry',type=str,help="The given registry file groups multiple JSON-LD metadata together in one JSON file. If specified, the file will be read (or created), and updated. This is a custom extension not part of the CodeMeta specification", action='store',required=False)
+    parser.add_argument('-g','--graph', dest='graph',type=str,help="Output a knowledge graph that groups all input files together. Only JSON input files are supported.", action='store',required=False)
     parser.add_argument('--strict', dest='strict', help="Strictly adhere to the codemeta standard and disable any extensions on top of it", action='store_true')
     parser.add_argument('inputsources', nargs='*', help='Input sources, the nature of the source depends on the type, often a file (or use - for standard input), set -i accordingly with the types (must contain as many items as passed!)')
     parser.add_argument('--no-extras',dest="no_extras",help="Do not parse any extras in the dependency specification", action='store_true', required=False)
@@ -102,7 +102,31 @@ def main():
     args = parser.parse_args()
     if not args.strict:
         args.with_stypes = True
-    build(**args.__dict__)
+    if args.graph:
+        #join multiple inputs into a larger graph
+        join(**args.__dict__)
+    else:
+        #normal behaviour
+        build(**args.__dict__)
+
+def join(**kwargs):
+    """Build a codemeta file"""
+
+    args = AttribDict(kwargs)
+
+    init_context()
+    g = init_graph()
+
+    for source in args.inputsources:
+        print(f"Adding json-ld file from {source} to graph",file=sys.stderr)
+        codemeta.parsers.jsonld.parse_jsonld(g, None, getstream(source), args)
+
+    doc = serialize_to_jsonld(g, None, None)
+    if args.outputfile and args.outputfile != "-":
+        with open(args.outputfile,'w',encoding='utf-8') as fp:
+            fp.write(json.dumps(doc, indent=4, ensure_ascii=False))
+    else:
+        print(json.dumps(doc, indent=4, ensure_ascii=False))
 
 
 def build(**kwargs):

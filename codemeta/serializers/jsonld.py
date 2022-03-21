@@ -192,20 +192,21 @@ def serialize_to_jsonld(g: Graph, res: Union[URIRef,None], newuri: str) -> dict:
     data = json.loads(g.serialize(format='json-ld', auto_compact=True, context=CONTEXT))
 
     #rdflib doesn't do 'framing' so we have to do it in this post-processing step:
-    data = AutoFrame(data).run(str(res)) or data
+    if res:
+        data = AutoFrame(data).run(str(res)) or data
 
-    root, parent = find_main(data)
-    if parent and len(data['@graph']) == 1:
-        #No need for @graph if it contains only one item now:
-        parent.update(root)
-        del data['@graph']
-        root = parent
+        root, parent = find_main(data)
+        if parent and len(data['@graph']) == 1 and res:
+            #No need for @graph if it contains only one item now:
+            parent.update(root)
+            del data['@graph']
+            root = parent
 
-    #assign the new ID to the root
-    if newuri:
-        if 'id' in root:
-            del root['id']
-        root['@id'] = newuri
+        #assign the new ID to the root
+        if newuri:
+            if 'id' in root:
+                del root['id']
+            root['@id'] = newuri
 
     #flatten singletons (contains only @id)
     data = flatten_singletons(data)
