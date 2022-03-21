@@ -36,6 +36,18 @@ def remove_blank_ids(data):
     else:
         return data
 
+def sort_by_position(data):
+    """If list items have a position (schema:position) index, make sure to use it for sorting"""
+    if isinstance(data, (list, tuple)):
+        if any( isinstance(x, dict) and 'position' in x for x in data ):
+            return list(sorted( ( sort_by_position(x) for x in data) , key=lambda x: x['position'] if isinstance(x, dict) and 'position' in x else 99999999 ) )
+        else:
+            return [ sort_by_position(x) for x in data ]
+    elif isinstance(data, dict):
+        for key, value in data.items():
+            data[key] = sort_by_position(value)
+    return data
+
 
 def normalize_schema_org(g: Graph):
     #there is debate on whether to use https of http for schema.org,
@@ -198,6 +210,7 @@ def serialize_to_jsonld(g: Graph, res: Union[URIRef,None], newuri: str) -> dict:
     #flatten singletons (contains only @id)
     data = flatten_singletons(data)
     data = remove_blank_ids(data)
+    data = sort_by_position(data)
     if '@context' in data:
         rewrite_context(data['@context'])
 
