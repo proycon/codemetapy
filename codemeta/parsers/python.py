@@ -158,8 +158,13 @@ def parse_python(g: Graph, res: Union[URIRef, BNode], packagename: str, crosswal
             g.add((res, SDO.targetProduct, targetproduct))
             found = True
 
-        cat = g.value(res, SDO.applicationCategory)
-        if not found or (cat and cat.lower().find("libraries") != -1):
+        islibrary = False
+        isweb = False
+        for (_,_, cat) in g.triples((res, SDO.applicationCategory,None)):
+            islibrary = islibrary or cat.lower().find("libraries") != -1
+            isweb = isweb or cat.lower().find("Internet") != -1
+
+        if (not found and not isweb) or islibrary:
             targetproduct = URIRef(generate_uri(pkg.name, baseuri=args.baseuri,prefix="softwarelibrary"))
             g.add((targetproduct, RDF.type, SOFTWARETYPES.SoftwareLibrary))
             g.add((targetproduct, SDO.name, Literal(pkg.name)))
