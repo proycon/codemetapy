@@ -12,23 +12,31 @@
    :alt: Latest release in the Python Package Index
    :target: https://pypi.org/project/codemetapy/
 
-CodeMetaPy
+Codemetapy
 =================
 
-The goal of CodeMetaPy is to generate the JSON-LD file, codemeta.json containing software metadata describing a Python
-package. For more general information about the CodeMeta Project for defining software metadata, see
+Codemetapy is a command-line tool to work with the `codemeta <https://codemeta.github.io>_` software metadata standard.
+Codemeta builds upon `schema.org <https://schema.org>_` and defines a vocabulary for describing software source code. It
+maps various existing metadata standards to a unified vocabulary.
+
+For more general information about the CodeMeta Project for defining software metadata, see
 https://codemeta.github.io. In particular, new users might want to start with the User Guide, while those looking to
 learn more about JSON-LD and consuming existing codemeta files should see the Developer Guide.
 
-For Python packages, codemetapy uses ``importlib.metadata`` (Python 3.8+) or its backported variant (for older Python
-versions) to read the metadata of installed packages. It should therefore be compatible irregardless of whether you
-specified in your metadata in ``setup.py``, ``setup.cfg``, ``pyproject.toml`` or using any other backend.
+Using codemetapy you can generate a ``codemeta.json`` file, which serialises using `JSON-LD <https://json-ld.org>_` ,
+for your software. At the moment it supports conversions from the following existing metadata specifications:
 
-Moreover, CodeMetaPy also supports conversions from other package types, such as debian packages (APT) (but this is
-limited). For R, see `codemetar <https://github.com/ropensci/codemetar>`_ instead.
+* Python distutils/pip packages (``setup.py``/``pyproject.toml``)
+* Java/Maven packages (``pom.xml``)
+* NodeJS packages (``package.json``)
+* Debian package (``apt show`` output)
 
-One of the most notable features of this tool is that it allows chaining to successively update metadata based on
-multiple sources.
+It can also read and manipulate existing ``codemeta.json`` files as well as parse simple AUTHORS/CONTRIBUTORS files. One
+of the most notable features of codemetapy is that it allows chaining to successively update a metadata description based
+on multiple sources. Codemetapy is used in that way by the `codemeta-harvester
+<https://github.com/proycon/codemeta-harvester>_`, if you are looking for an all-in-one solution to automatically
+generate a `codemeta.json` for your project, then that is the best place to start.
+
 
 Installation
 ----------------
@@ -62,7 +70,7 @@ The tool also supports adding properties through parameters:
 
 To read an existing codemeta.json and extend it:
 
-``$ codemetapy -i json,python codemeta.json somepackage > codemeta.json``
+``$ codemetapy codemeta.json somepackage > codemeta.json``
 
 This tool can also deal with debian packages by parsing the output of ``apt show`` (albeit limited):
 
@@ -72,13 +80,36 @@ Here ``-`` represents standard input, which enables you to use piping solutions 
 input types, you can chain as many as you want. The number of input types specifies must correspond exactly to the
 number of input sources (the positional arguments).
 
-Entrypoint Extension
-----------------------
+Some notes on Vocabulary
+------------------------
 
-Though this is not part of the codemeta specification, the tool currently supports an extra ``entryPoints`` property
-with type ``EntryPoint``. This can be used to describe the entry points specified in a python package (entry points will
-have use a ``file://`` url to refer to the actual entrypoints, this is a bit of a liberal use...). Because this is a
-non-standard extension it has to be explicitly enabled using ``--with-entrypoints``.
+For `codemeta:developmentStatus`, codemetapy attempts to assign full `repostatus <https://www.repostatus.org/>`_ URIs whenever
+possible
+For `schema:license`, full `SPDX <https://spdx.org>_` URIs are used where possible.
+
+Software Types
+---------------
+
+Codemetapy (since 0.4.0) implements an extension to codemeta that allows linking the software source code to the actual
+instantiation of the software, with explicit regard for the interface type. This is done via the `schema:targetProduct`
+property, which takes as range a `schema:SoftwareApplication`, `schema:WebAPI`, `schema:WebSite` or any of the extra
+types defined in https://github.com/SoftwareUnderstanding/software_types/ . This was proposed in `this issue
+<https://github.com/codemeta/codemeta/issues/271>_` .
+
+This extension is enabled by default and can be disabled by setting the ``--strict`` flag.
+
+The older Entypoint Extension from codemetapy < 0.4.0 is now deprecated.
+
+Graph
+--------------
+
+You can use codemetapy to generate one big knowledge graph expressing multiple codemeta resources using the ``--graph``
+parameter:
+
+``$ codemetapy --graph resource1.json resource2.json``
+
+This will produce JSON-LD output with multiple resources in the graph.
+
 
 Integration in setup.py
 -------------------------
@@ -107,8 +138,6 @@ And in your ``setup()`` call add the parameter:
 
 This will ensure your ``setup.py`` works in all cases, even if codemetapy is not installed, and that the command will be
 available if codemetapy is available.
-
-To make use of the entrypoint extension, you need to explicitly specify ``python setup.py codemeta --with-entrypoints``.
 
 If you want to ship your package with the generated ``codemeta.json``, then simply add a line saying ``codemeta.json`` to
 the file ``MANIFEST.in`` in the root of your project.
