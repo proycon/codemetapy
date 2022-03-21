@@ -29,7 +29,7 @@ def rate_limit_get(*args, backoff_rate=2, initial_backoff=1, **kwargs):
     while rate_limited:
         response = requests.get(*args, **kwargs)
         data = response
-        if 'GITHUB_TOKEN' in environ:
+        if 'GITHUB_TOKEN' in environ and environ['GITHUB_TOKEN']:
             data.headers["Authorization"] = "token " + environ['GITHUB_TOKEN']
         rate_limit_remaining = data.headers["x-ratelimit-remaining"]
         epochtime = int(data.headers["x-ratelimit-reset"])
