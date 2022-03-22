@@ -1,9 +1,16 @@
+<!DOCTYPE html>
 <html xmlns="http://www.w3.org/1999/xhtml" xmlns:schema="https://schema.org/" xmlns:codemeta="https://doi.org/10.5063/schema/codemeta-2.0/" xmlns:stype="https://w3id.org/software-types/">
     <head>
+        <meta content="text/html; charset=utf-8" http-equiv="content-type"/>
+        <!-- Enable responsiveness on mobile devices-->
+        <meta content="width=device-width, initial-scale=1.0, maximum-scale=1" name="viewport"/>
         <title>{{ g.value(res, SDO.name) }}</title>
+        {% if css %}
+        <link href="{{ css }}" rel="stylesheet" />
+        {% endif %}
     </head>
     <body>
-        <div about="{{ res }}" typeof="schema:SoftwareSourceCode">
+        <div about="{{ res }}" typeof="schema:SoftwareSourceCode" class="softwaresourcecode">
             <h1 property="schema:name">{{ g.value(res, SDO.name) }}</h1>
             {% if g.value(res, SDO.description) %}
             <div property="schema:description">{{ g.value(res, SDO.description) }}</div>
@@ -46,9 +53,9 @@
                 <dd class="codeRepository"><a rel="schema:codeRepository" href="{{ g.value(res, SDO.codeRepository) }}">{{ g.value(res, SDO.codeRepository) }}</a></dd>
                 {% endif %}
 
-                {% if g.value(res, SDO.issueTracker) %}
+                {% if g.value(res, CODEMETA.issueTracker) %}
                 <dt class="issueTracker" title="A bug-reporting and feature tracking system for this software">Issue Tracker (Support)</dt>
-                <dd class="issueTracker"><a rel="schema:issueTracker" href="{{ g.value(res, SDO.issueTracker) }}">{{ g.value(res, SDO.issueTracker) }}</a></dd>
+                <dd class="issueTracker"><a rel="schema:issueTracker" href="{{ g.value(res, CODEMETA.issueTracker) }}">{{ g.value(res, CODEMETA.issueTracker) }}</a></dd>
                 {% endif %}
 
                 {% if g.value(res, SDO.url) %}
@@ -127,7 +134,7 @@
                 <dd class="maintainer">
                     <ul>
                      {% for label, res2 in get_triples(g, res, SDO.maintainer) %}
-                         {% include 'person_or_org.html' %}
+                     <li>{% include 'person_or_org.html' %}</li>
                      {% endfor %}
                     </ul>
                 </dd>
@@ -137,8 +144,8 @@
                 <dt class="contributor" title="All people who contributed to the project's source code">Contributor(s)</dt>
                 <dd class="contributor">
                     <ul>
-                     {% for label, res2 in get_triples(g, res, SDO.maintainer) %}
-                         {% include 'person_or_org.html' %}
+                     {% for label, res2 in get_triples(g, res, SDO.contributor) %}
+                     <li>{% include 'person_or_org.html' %}</li>
                      {% endfor %}
                     </ul>
                 </dd>
@@ -149,7 +156,7 @@
                 <dd class="producer">
                     <ul>
                      {% for label, res2 in get_triples(g, res, SDO.producer) %}
-                         {% include 'person_or_org.html' %}
+                     <li>{% include 'person_or_org.html' %}</li>
                      {% endfor %}
                     </ul>
                 </dd>
@@ -160,7 +167,7 @@
                 <dd class="publisher">
                     <ul>
                      {% for label, res2 in get_triples(g, res, SDO.publisher) %}
-                         {% include 'person_or_org.html' %}
+                     <li>{% include 'person_or_org.html' %}</li>
                      {% endfor %}
                     </ul>
                 </dd>
@@ -171,7 +178,7 @@
                 <dd class="funder">
                     <ul>
                          {% for label, res2 in get_triples(g, res, SDO.funder, abcsort=True) %}
-                             {% include 'person_or_org.html' %}
+                         <li>{% include 'person_or_org.html' %}</li>
                          {% endfor %}
                     </ul>
                 </dd>

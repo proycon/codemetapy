@@ -36,13 +36,13 @@ def type_label(g: Graph, res: Union[URIRef,None]):
     else:
         return ""
 
-def serialize_to_html(g: Graph, res: Union[URIRef,None]) -> dict:
+def serialize_to_html(g: Graph, res: Union[URIRef,None], args: AttribDict) -> dict:
     """Serialize to HTML with RDFa"""
 
     env = Environment( loader=FileSystemLoader(os.path.join(rootpath[0], 'templates')))
     if res:
         template = env.get_template("softwaresourcecode.html")
-        return template.render(g=g, res=res, SDO=SDO,CODEMETA=CODEMETA, RDF=RDF, get_triples=get_triples, type_label=type_label)
+        return template.render(g=g, res=res, SDO=SDO,CODEMETA=CODEMETA, RDF=RDF, get_triples=get_triples, type_label=type_label, css=args.css)
 
 
 
