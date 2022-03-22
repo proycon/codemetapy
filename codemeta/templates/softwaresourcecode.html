@@ -16,21 +16,27 @@
             <div property="schema:description">{{ g.value(res, SDO.description) }}</div>
             {% endif %}
 
-            {% if g.value(res, SDO.keywords) %}
-            <div class="keywords">
-                <ul>
-                     {% for label, _ in get_triples(g, res, SDO.keywords, abcsort=True) %}
-                        <li property="schema:keywords">{{ label }}</li>
-                     {% endfor %}
-                </ul>
-            </div>
-            {% endif %}
+
 
             {% if g.value(res, SDO.targetProduct) %}
             <div class="targetindex">
                 {% for _,_,targetres in g.triples((res, SDO.targetProduct, None)) %}
                 {% include 'targetproduct.html' %}
                 {% endfor %}
+            </div>
+            {% elif g.value(res, SDO.url) %}
+            <div class="go">
+                <a rel="schema:url" href="{{ g.value(targetres, SDO.url) }}">
+                    <strong>Go to the website</strong>
+                    <tt>{{ g.value(targetres, SDO.url) }}</tt>
+                </a>
+            </div>
+            {% elif g.value(res, SDO.codeRepository) %}
+            <div class="go">
+                <a rel="schema:url" href="{{ g.value(targetres, SDO.codeRepository) }}">
+                    <strong>Go to the source repository</strong>
+                    <tt>{{ g.value(targetres, SDO.codeRepository) }}</tt>
+                </a>
             </div>
             {% endif %}
 
@@ -48,16 +54,6 @@
                 </dd>
                 {% endif %}
 
-                {% if g.value(res, SDO.codeRepository) %}
-                <dt class="codeRepository" title="A version controlled repository where the source code of the software is publicly available">Source code repository</dt>
-                <dd class="codeRepository"><a rel="schema:codeRepository" href="{{ g.value(res, SDO.codeRepository) }}">{{ g.value(res, SDO.codeRepository) }}</a></dd>
-                {% endif %}
-
-                {% if g.value(res, CODEMETA.issueTracker) %}
-                <dt class="issueTracker" title="A bug-reporting and feature tracking system for this software">Issue Tracker (Support)</dt>
-                <dd class="issueTracker"><a rel="schema:issueTracker" href="{{ g.value(res, CODEMETA.issueTracker) }}">{{ g.value(res, CODEMETA.issueTracker) }}</a></dd>
-                {% endif %}
-
                 {% if g.value(res, SDO.url) %}
                 <dt class="url" title="The project website for this software">Software website</dt>
                 <dd class="url">
@@ -69,14 +65,30 @@
                 </dd>
                 {% endif %}
 
-                {% if g.value(res, SDO.license) %}
-                <dt class="license" title="The license under which the source code is published">License</dt>
-                <dd class="license">
+                {% if g.value(res, SDO.codeRepository) %}
+                <dt class="codeRepository" title="A version controlled repository where the source code of the software is available">Source code repository</dt>
+                <dd class="codeRepository"><a rel="schema:codeRepository" href="{{ g.value(res, SDO.codeRepository) }}">{{ g.value(res, SDO.codeRepository) }}</a></dd>
+                {% endif %}
+
+                {% if g.value(res, SDO.applicationCategory) %}
+                <dt class="category">Category</dt>
+                <dd class="category">
                     <ul>
-                        {% for _,_, value in g.triples((res, SDO.license, None)) %}
-                        <li><a rel="schema:license" href="{{ value }}">{{ value }}</a></li>
-                        {% endfor %}
+                         {% for label, _ in get_triples(g, res, SDO.applicationCategory, abcsort=True) %}
+                            <li property="schema:applicationCategory">{{ label }}</li>
+                         {% endfor %}
                     </ul>
+                </dd>
+                {% endif %}
+
+                {% if g.value(res, SDO.keywords) %}
+                <dt class="keywords">Keywords</dt>
+                <dd class="keywords">
+                <ul>
+                     {% for label, _ in get_triples(g, res, SDO.keywords, abcsort=True) %}
+                        <li property="schema:keywords">{{ label }}</li>
+                     {% endfor %}
+                </ul>
                 </dd>
                 {% endif %}
 
@@ -88,6 +100,13 @@
                     </ul>
                 </dd>
                 {% endif %}
+
+                {% if g.value(res, CODEMETA.issueTracker) %}
+                <dt class="issueTracker" title="A bug-reporting and feature tracking system for this software">Issue Tracker (Support)</dt>
+                <dd class="issueTracker"><a rel="schema:issueTracker" href="{{ g.value(res, CODEMETA.issueTracker) }}">{{ g.value(res, CODEMETA.issueTracker) }}</a></dd>
+                {% endif %}
+
+
 
                 {% if g.value(res, SDO.softwareHelp) or g.value(res, CODEMETA.readme) %}
                 <dt class="documentation">Documentation</dt>
@@ -116,6 +135,17 @@
                 </dd>
                 {% endif %}
 
+                {% if g.value(res, SDO.license) %}
+                <dt class="license" title="The license under which the source code is published">License</dt>
+                <dd class="license">
+                    <ul>
+                        {% for _,_, value in g.triples((res, SDO.license, None)) %}
+                        <li><a rel="schema:license" href="{{ value }}">{{ value }}</a></li>
+                        {% endfor %}
+                    </ul>
+                </dd>
+                {% endif %}
+
                 {% if g.value(res, SDO.author)  %}
                 <dt class="author" title="The main people that developed the software">Author(s)</dt>
                 <dd class="author">
@@ -130,7 +160,7 @@
                 {% endif %}
 
                 {% if g.value(res, SDO.maintainer)  %}
-                <dt class="maintainer" title="The person or organisation that is responsible for maintaining the software">Maintainer(s)</dt>
+                <dt class="maintainer" title="The person or organisation that is responsible for maintaining the software and whom you can look for support">Maintainer(s)</dt>
                 <dd class="maintainer">
                     <ul>
                      {% for label, res2 in get_triples(g, res, SDO.maintainer) %}

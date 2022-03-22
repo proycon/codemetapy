@@ -3,7 +3,7 @@ import os.path
 from rdflib import Graph, URIRef, BNode, Literal
 from rdflib.namespace import RDF
 from typing import Union, IO
-from codemeta.common import AttribDict, REPOSTATUS, license_to_spdx, SDO, CODEMETA, SCHEMA_SOURCE, CODEMETA_SOURCE, CONTEXT, DUMMY_NS, SCHEMA_LOCAL_SOURCE, SCHEMA_SOURCE, CODEMETA_LOCAL_SOURCE, CODEMETA_SOURCE, STYPE_SOURCE, STYPE_LOCAL_SOURCE, init_context, SINGULAR_PROPERTIES, merge_graphs
+from codemeta.common import AttribDict, REPOSTATUS, license_to_spdx, SDO, CODEMETA, SOFTWARETYPES, SCHEMA_SOURCE, CODEMETA_SOURCE, CONTEXT, DUMMY_NS, SCHEMA_LOCAL_SOURCE, SCHEMA_SOURCE, CODEMETA_LOCAL_SOURCE, CODEMETA_SOURCE, STYPE_SOURCE, STYPE_LOCAL_SOURCE, init_context, SINGULAR_PROPERTIES, merge_graphs
 from codemeta import __path__ as rootpath
 from jinja2 import Environment, FileSystemLoader
 
@@ -29,7 +29,7 @@ def get_triples(g: Graph, res: Union[URIRef,BNode,None], prop, labelprop=SDO.nam
     return [ tuple(x[:2]) for x in results ]
 
 def type_label(g: Graph, res: Union[URIRef,None]):
-    label = g.value(g, RDF.type)
+    label = g.value(res, RDF.type)
     if label:
         label = label.split("/")[-1]
         return label
@@ -42,7 +42,7 @@ def serialize_to_html(g: Graph, res: Union[URIRef,None], args: AttribDict) -> di
     env = Environment( loader=FileSystemLoader(os.path.join(rootpath[0], 'templates')))
     if res:
         template = env.get_template("softwaresourcecode.html")
-        return template.render(g=g, res=res, SDO=SDO,CODEMETA=CODEMETA, RDF=RDF, get_triples=get_triples, type_label=type_label, css=args.css)
+        return template.render(g=g, res=res, SDO=SDO,CODEMETA=CODEMETA, RDF=RDF, STYPE=SOFTWARETYPES, get_triples=get_triples, type_label=type_label, css=args.css)
 
 
 

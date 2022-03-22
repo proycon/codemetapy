@@ -13,6 +13,7 @@ div.softwaresourcecode div.properties {
 }
 
 dt {
+    cursor: help;
     font-weight: bold;
 }
 
@@ -22,14 +23,64 @@ dd ul {
     padding: 0px;
 }
 
-div.keywords ul {
+dd.keywords ul {
     list-style: none;
 }
 
-div.keywords ul li {
+dd.keywords ul li {
     display: inline-block;
     padding: 2px;
     margin: 2px;
     border: #666 1px solid;
     background: #ddd;
 }
+
+div.properties {
+    margin-top: 10px;
+}
+
+
+div.go {
+    margin-top: 10px;
+    padding: 10px;
+    background: #e1275e;
+    text-align: center;
+    border-radius: 25px;
+}
+div.go a {
+    color: white;
+    font-weight: bold;
+}
+div.go strong {
+    display: block;
+    font-size: 125%;
+}
+div.go tt {
+    display: block;
+    font-size: 90%;
+    font-weight: normal;
+}
+div.go:hover {
+    background: #bb0138;
+}
+
+div.targetProduct {
+    width: 80%;
+    margin-left: auto;
+    margin-right: auto;
+    border-radius: 25px;
+    background: rgb(211, 220, 255);
+}
+
+div.targetProduct div.properties {
+    background: transparent;
+    margin-top: 0px;
+    text-align: right;
+}
+div.targetProduct h2 {
+    margin-left: 20px;
+    color: #bb0138;
+    padding-top: 10px;
+    text-align: center;
+}
+
