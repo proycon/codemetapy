@@ -1,0 +1,48 @@
+                         {% if res2 %}
+                         <span about="{{ res2 }}" typeof="{{ g.value(res2, RDF.type) }}">
+                             {% if g.value(res2, SDO.url) %}
+                                <a rel="schema:url" href="{{ g.value(res2, SDO.url) }}">
+                             {% elif g.value(res2, SDO.email) %}
+                                <a rel="schema:email" href="mailto:{{ g.value(res2, SDO.email) }}">
+                             {% endif %}
+                             {% if g.value(res2, SDO.givenName) %}
+                                <span property="schema:givenName">{{ g.value(res2, SDO.givenName) }}</a>
+                             {% endif %}
+                             {% if g.value(res2, SDO.familyName)  %}
+                                 <span property="schema:familyName">{{ g.value(res2, SDO.familyName) }}</a>
+                             {% elif g.value(res2, SDO.name)  %}
+                                 <span property="schema:name">{{ g.value(res2, SDO.familyName) }}</a>
+                             {% endif %}
+                             {% if g.value(res2, SDO.url) and g.value(res2, SDO.email) %}
+                                 </a> &lt;<a rel="schema:email" href="{{ g.value(res2, SDO.email) }}">{{ g.value(res2, SDO.email) }}</a>&gt;
+                             {% elif g.value(res2, SDO.url) or g.value(res2, SDO.email) %}
+                                 </a>
+                             {% endif %}
+
+                             {% if g.value(res2, SDO.affiliation) %}
+                                 {% for affiliation_label, res3 in get_triples(g, res2, SDO.affiliation) %}
+                                 <span property="schema:affiliation">
+                                     {% if res3 and g.value(res3, SDO.url) %}
+                                     (<a href="{{ g.value(res3, SDO.url) }}">{{ affiliation_label }}</a>)
+                                     {% else %}
+                                        ({{ affiliation_label }})
+                                     {% endif %}
+                                 </span>
+                                 {% endfor %}
+                             {% endif %}
+
+                             {% if g.value(res2, SDO.partOf) %}
+                                 {% for partof_label, res3 in get_triples(g, res2, SDO.partOf) %}
+                                 <span property="schema:affiliation">
+                                     {% if res3 and g.value(res3, SDO.url) %}
+                                     (<a href="{{ g.value(res3, SDO.url) }}">{{ partof_label }}</a>)
+                                     {% else %}
+                                        ({{ partof_label }})
+                                     {% endif %}
+                                 </span>
+                                 {% endfor %}
+                             {% endif %}
+                         </span>
+                         {% else %}
+                            {{ value }}
+                         {% endif %}

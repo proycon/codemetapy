@@ -37,6 +37,7 @@ import codemeta.parsers.web
 import codemeta.parsers.github
 import codemeta.parsers.authors
 from codemeta.serializers.jsonld import serialize_to_jsonld
+from codemeta.serializers.html import serialize_to_html
 
 
 #class PostDevelopCommand(setuptools.command.develop.develop):
@@ -291,6 +292,13 @@ def build(**kwargs):
                 fp.write(json.dumps(doc, indent=4, ensure_ascii=False))
         else:
             print(json.dumps(doc, indent=4, ensure_ascii=False))
+    elif args.output == "html":
+        doc = serialize_to_html(g, res)
+        if args.outputfile and args.outputfile != "-":
+            with open(args.outputfile,'w',encoding='utf-8') as fp:
+                fp.write(doc)
+        else:
+            print(doc)
     else:
         raise Exception("No such output type: ", args.output)
 

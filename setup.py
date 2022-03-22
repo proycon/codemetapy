@@ -38,8 +38,8 @@ setup(
     ],
     zip_safe=False,
     include_package_data=True,
-    package_data = { 'codemeta': ['schema/crosswalk.csv', 'schema/codemeta.jsonld'] },
-    install_requires=[ 'nameparser','importlib_metadata','BeautifulSoup4', 'rdflib >= 6.1.1','requests','lxml','pyyaml' ],
+    package_data = { 'codemeta': ['schema/crosswalk.csv', 'schema/codemeta.jsonld', 'templates/*.html'] },
+    install_requires=[ 'nameparser','importlib_metadata','BeautifulSoup4', 'rdflib >= 6.1.1','requests','lxml','pyyaml','Jinja2'],
     entry_points = {    'console_scripts': [ 'codemetapy = codemeta.codemeta:main' ] },
     cmdclass=cmdclass
 )

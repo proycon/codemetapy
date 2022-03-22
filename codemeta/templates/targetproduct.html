@@ -1,0 +1,71 @@
+<div class="targetProduct" about="{{ targetres }}" typeof="{{ g.value(g, targetres, RDF.type) }}">
+
+    <h2 property="schema:name">{{ g.value(targetres, SDO.name) }}</h2>
+
+    {% if g.value(targetres, SDO.description) and g.value(targetres, SDO.description) != g.value(res, SDO.description) %}
+    <div property="schema:description">{{ g.value(targetres, SDO.description) }}</div>
+    {% endif %}
+
+    {% if (targetres, RDF.type, SDO.WebApplication) or
+      (targetres, RDF.type, SDO.WebAPI) or
+      (targetres, RDF.type, SDO.WebSite) or
+      (targetres, RDF.type, SDO.WebPage) %}
+
+    {% if g.value(targetres, SDO.url) %}
+    <div  class="service-url">
+        <a rel="schema:url" href="{{ g.value(targetres, SDO.url) }}">
+            <strong>Go to the tool</strong>
+            <tt>{{ g.value(targetres, SDO.url) }}</tt>
+        </a>
+    </div>
+    {% endif %}
+
+    {% endif %}
+
+    <div class="properties">
+        <dl>
+            <dt class="type">Type</dt>
+            <dd class="type">
+            {% if g.value(targetres, RDF.type) %}
+                {{ type_label(g, targetres) }}
+            {% endif %}
+            </dd>
+
+            {% if g.value(targetres, STYPE.executableName) %}
+            <dt class="executableName">Executable name</dt>
+            <dd class="executableName"><span property="stype:executableName"> {{ g.value(targetres, STYPE.executableName) }}</span>
+            </dd>
+            {% endif %}
+
+            {% if g.value(targetres, SDO.version) %}
+            <dt class="version">Version</dt>
+            <dd class="version"><span property="schema:version"> {{ g.value(targetres, SDO.version) }}</span>
+            </dd>
+            {% endif %}
+
+
+            {% if g.value(targetres, SDO.maintainer)  %}
+            <dt class="maintainer" title="The person or organisation that is responsible for maintaining the service">Maintainer(s)</dt>
+            <dd class="maintainer">
+                <ul>
+                 {% for label, res2 in get_triples(g, res, SDO.maintainer) %}
+                     {% include 'person_or_org.html' %}
+                 {% endfor %}
+                </ul>
+            </dd>
+            {% endif %}
+
+            {% if g.value(targetres, SDO.provider)  %}
+            <dt class="provider" title="The organisation (or person) that provides the service">Service Provider</dt>
+            <dd class="provider">
+                <ul>
+                 {% for label, res2 in get_triples(g, targetres, SDO.provider) %}
+                     {% include 'person_or_org.html' %}
+                 {% endfor %}
+                </ul>
+            </dd>
+            {% endif %}
+        </dl>
+    </div>
+
+</div>
