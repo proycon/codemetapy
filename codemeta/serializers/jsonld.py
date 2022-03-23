@@ -2,7 +2,7 @@ import sys
 import json
 from typing import Union, IO
 from rdflib import Graph, URIRef, BNode, Literal
-from codemeta.common import AttribDict, REPOSTATUS, license_to_spdx, SDO, CONTEXT, CODEMETA_SOURCE, CODEMETA_LOCAL_SOURCE, SCHEMA_SOURCE, SCHEMA_LOCAL_SOURCE, STYPE_SOURCE, STYPE_LOCAL_SOURCE, init_context
+from codemeta.common import AttribDict, license_to_spdx, SDO, CONTEXT, CODEMETA_SOURCE, CODEMETA_LOCAL_SOURCE, SCHEMA_SOURCE, SCHEMA_LOCAL_SOURCE, STYPE_SOURCE, STYPE_LOCAL_SOURCE, init_context, REPOSTATUS_LOCAL_SOURCE, REPOSTATUS_SOURCE
 
 def flatten_singletons(data):
     """Recursively flattens singleton ``key: { "@id": url }`` instances to ``key: url``"""
@@ -184,6 +184,8 @@ def rewrite_context(context):
                 context[i] = SCHEMA_SOURCE
             elif value == STYPE_LOCAL_SOURCE:
                 context[i] = STYPE_SOURCE
+            elif value == REPOSTATUS_LOCAL_SOURCE:
+                context[i] = REPOSTATUS_SOURCE
 
 def serialize_to_jsonld(g: Graph, res: Union[URIRef,None], newuri: str) -> dict:
     """Serializes the RDF graph to JSON, taking care of 'framing' for embedded nodes"""

@@ -116,8 +116,7 @@ def join(**kwargs):
 
     args = AttribDict(kwargs)
 
-    init_context()
-    g = init_graph()
+    g, contextgraph = init_graph()
 
     for source in args.inputsources:
         print(f"Adding json-ld file from {source} to graph",file=sys.stderr)
@@ -182,8 +181,7 @@ def build(**kwargs):
             print("No input files specified (use - for stdin)",file=sys.stderr)
             sys.exit(2)
 
-    init_context()
-    g = init_graph()
+    g, contextgraph = init_graph()
 
     founduri = False #indicates whether we found a preferred URI or not
 
@@ -294,7 +292,7 @@ def build(**kwargs):
         else:
             print(json.dumps(doc, indent=4, ensure_ascii=False))
     elif args.output == "html":
-        doc = serialize_to_html(g, res, args)
+        doc = serialize_to_html(g, res, args, contextgraph)
         if args.outputfile and args.outputfile != "-":
             with open(args.outputfile,'w',encoding='utf-8') as fp:
                 fp.write(doc)

@@ -107,3 +107,26 @@ img.thumbnail {
     max-width: 120px;
 }
 
+span.positive {
+    display: inline-block;
+    padding: 2px;
+    margin: 2px;
+    border: #aac 1px solid;
+    background: white;
+    color: green;
+    font-size: 0.9em;
+}
+span.negative {
+    display: inline-block;
+    padding: 2px;
+    margin: 2px;
+    border: #aac 1px solid;
+    background: white;
+    color: red;
+    font-size: 0.9em;
+}
+div.warning {
+    color: red;
+    padding: 2px;
+    border: 1px dashed red;
+}

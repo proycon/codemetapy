@@ -55,6 +55,26 @@
             </dd>
             {% endif %}
 
+            {% if (targetres, SDO.isAccessibleForFree, None) in g or (targetres, SDO.publicAccess, None) in g %}
+            <dt class="access" title="Are there limitations regarding access to the service?">Access</dt>
+            <dd class="access">
+            <ul>
+            {% if g.value(targetres, SDO.isAccessibleForFree) is None %}
+            {% elif g.value(targetres, SDO.isAccessibleForFree) %}
+            <li><span property="schema:isAccessibleForFree" content="true" class="positive">accessible for free</span></li>
+            {% else %}
+            <span property="schema:isAccessibleForFree" content="false" class="negative">only accessible at a cost</span>
+            {% endif %}
+            {% if g.value(targetres, SDO.publicAccess) is None %}
+            {% elif g.value(targetres, SDO.publicAccess) %}
+            <span property="schema:publicAccess" content="true" class="positive">public access</span>
+            {% else %}
+            <span property="schema:publicAccess" content="false" class="negative">private access only</span>
+            {% endif %}
+            </ul>
+            </dd>
+            {% endif %}
+
             {% if g.value(targetres, SDO.provider)  %}
             <dt class="provider" title="The organisation (or person) that provides the service">Service Provider</dt>
             <dd class="provider">

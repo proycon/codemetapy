@@ -5,7 +5,7 @@ import requests
 import random
 import re
 from rdflib import Graph, Namespace, URIRef, BNode, Literal
-from rdflib.namespace import RDF
+from rdflib.namespace import RDF, SKOS
 from rdflib.compare import graph_diff
 from typing import Union, IO
 from collections import OrderedDict
@@ -28,10 +28,19 @@ CODEMETA = Namespace("https://codemeta.github.io/terms/")
 #Custom extensions not in codemeta/schema.org (yet), they are proposed in https://github.com/codemeta/codemeta/issues/271 and supersede the above one
 SOFTWARETYPES = Namespace("https://w3id.org/software-types#")
 
+REPOSTATUS = Namespace("https://www.repostatus.org/#")
+
+SPDX = Namespace("http://spdx.org/licences/")
+
+ORCID = Namespace("http://orcid.org/")
+
 SCHEMA_SOURCE = "https://raw.githubusercontent.com/schemaorg/schemaorg/main/data/releases/13.0/schemaorgcontext.jsonld" #schema.org itself doesn't seem to do proper content negotation (or rdflib chokes on it), so we grab the 'latest' release from github instead
 CODEMETA_SOURCE = "https://raw.githubusercontent.com/codemeta/codemeta/2.0/codemeta.jsonld"
 #^-- target of https://doi.org/10.5063/schema/codemeta-2.0, prefer github because that at least serves things reliably for both rdflib and the JsonLD playground
 STYPE_SOURCE = "https://w3id.org/software-types"
+
+REPOSTATUS_SOURCE = "https://raw.githubusercontent.com/proycon/repostatus.org/ontology/badges/latest/ontology.jsonld"
+#^--- TODO: adapt URL after merge upstream (https://github.com/jantman/repostatus.org/pull/48)
 
 
 TMPDIR  = os.environ.get("TMPDIR","/tmp")
@@ -39,6 +48,7 @@ TMPDIR  = os.environ.get("TMPDIR","/tmp")
 SCHEMA_LOCAL_SOURCE = "file://" + os.path.join(TMPDIR, "schemaorgcontext.jsonld")
 CODEMETA_LOCAL_SOURCE = "file://" + os.path.join(TMPDIR, "codemeta.jsonld")
 STYPE_LOCAL_SOURCE = "file://" + os.path.join(TMPDIR, "stype.jsonld")
+REPOSTATUS_LOCAL_SOURCE = "file://" + os.path.join(TMPDIR, "repostatus.jsonld")
 
 COMMON_SOURCEREPOS = ["https://github.com/","http://github.com","https://gitlab.com/","http://gitlab.com/","https://codeberg.org/","http://codeberg.org", "https://git.sr.ht/", "https://bitbucket.com/"]
 
@@ -58,7 +68,7 @@ ENTRYPOINT_CONTEXT = { #these are all custom extensions not in codemeta (yet), t
 }
 
 
-REPOSTATUS= { #maps Python development status to repostatus.org vocabulary (the mapping is debatable)
+REPOSTATUS_MAP = { #maps Python development status to repostatus.org vocabulary (the mapping is debatable)
     "1 - planning": "concept",
     "2 - pre-alpha": "concept",
     "3 - alpha": "wip",
@@ -133,7 +143,7 @@ LICENSE_MAP = [ #maps some common licenses to SPDX URIs, mapped with a substring
 SINGULAR_PROPERTIES = ( SDO.name, SDO.version, SDO.description, CODEMETA.developmentStatus, SDO.dateCreated, SDO.dateModified, SDO.position )
 
 def init_context():
-    sources = ( (CODEMETA_LOCAL_SOURCE, CODEMETA_SOURCE), (SCHEMA_LOCAL_SOURCE, SCHEMA_SOURCE), (STYPE_LOCAL_SOURCE, STYPE_SOURCE) )
+    sources = ( (CODEMETA_LOCAL_SOURCE, CODEMETA_SOURCE), (SCHEMA_LOCAL_SOURCE, SCHEMA_SOURCE), (STYPE_LOCAL_SOURCE, STYPE_SOURCE), (REPOSTATUS_LOCAL_SOURCE, REPOSTATUS_SOURCE) )
 
     for local, remote in sources:
         localfile = local.replace("file://","")
@@ -151,12 +161,34 @@ def init_context():
 def init_graph():
     """Initializes the RDF graph, the context and the prefixes"""
 
-    g = Graph()
-    g.bind('schema', SDO)
-    g.bind('codemeta', CODEMETA)
-    g.bind('stype', SOFTWARETYPES)
+    init_context()
 
-    return g
+    g = Graph()
+
+    #The context graph loads some additional linked data we may need for interpretation (it is not related to @context!),
+    #like the repostatus data. This data is never propagated to the output graph (g)
+
+    contextgraph = Graph()
+    for x in (g, contextgraph):
+        x.bind('schema', SDO)
+        x.bind('codemeta', CODEMETA)
+        x.bind('stype', SOFTWARETYPES)
+
+    contextgraph.bind('repostatus', REPOSTATUS)
+    contextgraph.bind('spdx', SPDX)
+    contextgraph.bind('skos', SKOS)
+    contextgraph.bind('orcid', ORCID)
+
+    #add license names from our license map (faster/easier than ingesting the json-ld from https://github.com/spdx/license-list-data/)
+    for (label, identifier) in LICENSE_MAP:
+        license = URIRef(identifier)
+        if (license, SDO.name, None) not in contextgraph:
+            contextgraph.add((license, SDO.name, Literal(label)))
+
+    with open(REPOSTATUS_LOCAL_SOURCE.replace("file://",""),'rb') as f:
+        contextgraph.parse(data=json.load(f), format="json-ld")
+
+    return g, contextgraph
 
 class AttribDict(dict):
     """Simple dictionary that is addressable via attributes"""
@@ -224,10 +256,12 @@ def add_triple(g: Graph, res: Union[URIRef, BNode],key, value, args: AttribDict,
     else:
         f_add = g.add
     if key == "developmentStatus":
-        if value.strip().lower() in REPOSTATUS:
+        if value.strip().lower() in REPOSTATUS_MAP.values():
+            f_add((res, CODEMETA.developmentStatus, getattr(REPOSTATUS, value.strip().lower()) ))
+        elif value.strip().lower() in REPOSTATUS_MAP:
             #map to repostatus vocabulary
-            value = "https://www.repostatus.org/#" + REPOSTATUS[value.strip().lower()]
-            f_add((res, CODEMETA.developmentStatus, URIRef(value)))
+            repostatus = REPOSTATUS_MAP[value.strip().lower()]
+            f_add((res, CODEMETA.developmentStatus, getattr(REPOSTATUS, repostatus) ))
         else:
             f_add((res, CODEMETA.developmentStatus, Literal(value)))
     elif key == "license":

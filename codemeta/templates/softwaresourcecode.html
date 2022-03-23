@@ -138,7 +138,16 @@
                 <dt class="developmentStatus" title="Indication of the state of this software project regarding ongoing development and support">Development Status</dt>
                 <dd class="developmentStatus">
                     <ul>
-                        <li class="developmentStatus-{{ g.value(res, CODEMETA.developmentStatus) | replace("https://www.repostatus.org/#","") }}"><a rel="codemeta:developmentStatus" href="{{ g.value(res, CODEMETA.developmentStatus) }}">{{ g.value(res, CODEMETA.developmentStatus) | replace("https://www.repostatus.org/#","") }}</a></li>
+                        {% if g.value(res, CODEMETA.developmentStatus).find("repostatus") != -1 %}
+                            {% set repostatus = URIRef(g.value(res, CODEMETA.developmentStatus)) %}
+                            {% set repostatus_id = repostatus.split('#')[-1] %}
+                            <li>
+                                <a rel="codemeta:developmentStatus" href="{{ g.value(res, CODEMETA.developmentStatus) }}"><img src="https://www.repostatus.org/badges/latest/{{ repostatus_id }}.svg" title="{{ contextgraph.value(repostatus, SKOS.prefLabel) }}: {{ contextgraph.value(repostatus, SKOS.definition) }}" alt="{{ contextgraph.value(repostatus, SKOS.prefLabel) }}: {{ contextgraph.value(repostatus, SKOS.definition) }}"  /></a>
+                        {% else %}
+                            <li>{{ g.value(res, CODEMETA.developmentStatus) }}
+                                <div class="warning"><strong>Warning:</strong> Status is not expressed in a known vocabulary</div>
+                            </li>
+                        {% endif %}
                     </ul>
                 </dd>
                 {% endif %}
@@ -182,8 +191,14 @@
                 <dt class="license" title="The license under which the source code is published">License</dt>
                 <dd class="license">
                     <ul>
-                        {% for _,_, value in g.triples((res, SDO.license, None)) %}
-                        <li><a rel="schema:license" href="{{ value }}">{{ value }}</a></li>
+                        {% for _,_, license in g.triples((res, SDO.license, None)) %}
+                        {% if (license, SDO.name, None) in contextgraph %}
+                        <li><a rel="schema:license" href="{{ license }}">{{ contextgraph.value(license, SDO.name) }}</a></li>
+                        {% elif license.startswith("http") %}
+                        <li><a rel="schema:license" href="{{ license }}">{{ license }}</a></li>
+                        {% else %}
+                        <li>{{ license }}</li>
+                        {% endif %}
                         {% endfor %}
                     </ul>
                 </dd>
@@ -294,7 +309,7 @@
                 {% endif %}
 
                 {% if g.value(res, SDO.runtimePlatform) %}
-                <dt class="runtimePlatform">Runtime Platform</dt>
+                <dt class="runtimePlatform" title="The required environment needed for the software to run">Runtime Platform</dt>
                 <dd class="runtimePlatform">
                     <ul>
                          {% for label, _ in get_triples(g, res, SDO.runtimePlatform, abcsort=True) %}
@@ -305,7 +320,7 @@
                 {% endif %}
 
                 {% if g.value(res, SDO.operatingSystem) %}
-                <dt class="operatingSystem">Operating System</dt>
+                <dt class="operatingSystem" title="The operating system on which the software may run">Operating System</dt>
                 <dd class="operatingSystem">
                     <ul>
                          {% for label, _ in get_triples(g, res, SDO.operatingSystem, abcsort=True) %}
@@ -316,7 +331,7 @@
                 {% endif %}
 
                 {% if g.value(res, SDO.processorRequirements) %}
-                <dt class="processorRequirements">Processor Requirements</dt>
+                <dt class="processorRequirements" title="CPU requirements to run the software">Processor Requirements</dt>
                 <dd class="processorRequirements">
                     <ul>
                          {% for label, _ in get_triples(g, res, SDO.processorRequirements) %}
@@ -327,7 +342,7 @@
                 {% endif %}
 
                 {% if g.value(res, SDO.memoryRequirements) %}
-                <dt class="memoryRequirements">Memory Requirements</dt>
+                <dt class="memoryRequirements" title="Memory requirements in order to run the software">Memory Requirements</dt>
                 <dd class="memoryRequirements">
                     <ul>
                          {% for label, _ in get_triples(g, res, SDO.memoryRequirements) %}
@@ -338,7 +353,7 @@
                 {% endif %}
 
                 {% if g.value(res, SDO.permissions) %}
-                <dt class="permissions">Permissions</dt>
+                <dt class="permissions" title="Permissions that are needed to run the software">Permissions</dt>
                 <dd class="permissions">
                     <ul>
                          {% for label, _ in get_triples(g, res, SDO.permissions) %}
