@@ -5,7 +5,7 @@
      <li property="schema:author">
          {% include 'reference_author.html' %}
      </li>
-     {% endif %}
+     {% endfor %}
 </ul>
 
 {% if g.value(ref, SDO.datePublished) %}
