@@ -2,8 +2,6 @@
 <html xmlns="http://www.w3.org/1999/xhtml" xmlns:schema="https://schema.org/" xmlns:codemeta="https://doi.org/10.5063/schema/codemeta-2.0/" xmlns:stype="https://w3id.org/software-types/">
     <head>
         <meta content="text/html; charset=utf-8" http-equiv="content-type"/>
-        <!-- Enable responsiveness on mobile devices-->
-        <meta content="width=device-width, initial-scale=1.0, maximum-scale=1" name="viewport"/>
         <title>{{ g.value(res, SDO.name) }}</title>
         {% if css %}
         <link href="{{ css }}" rel="stylesheet" />
@@ -11,14 +9,21 @@
     </head>
     <body>
         <div about="{{ res }}" typeof="schema:SoftwareSourceCode" class="softwaresourcecode">
+            <div class="leftcolumn">
             <h1 property="schema:name">{{ g.value(res, SDO.name) }}</h1>
+
+            {% if g.value(res, SDO.thumbnailUrl) %}
+            <img class="thumbnail" src="{{ g.value(res, SDO.thumbnailUrl) }}" alt="{{ g.value(res, SDO.name) }}" />
+            {% endif %}
+
             {% if g.value(res, SDO.description) %}
             <div property="schema:description">{{ g.value(res, SDO.description) }}</div>
             {% endif %}
 
 
-
             {% if g.value(res, SDO.targetProduct) %}
+            <h3>Provided tools &amp; services</h3>
+
             <div class="targetindex">
                 {% for _,_,targetres in g.triples((res, SDO.targetProduct, None)) %}
                 {% include 'targetproduct.html' %}
@@ -40,10 +45,47 @@
             </div>
             {% endif %}
 
-            <div class="properties">
+            </div>
+
+            {% if g.value(res, SDO.screenshot)  %}
+            <h3>Screenshots</h3>
+
+            <div class="screenshots">
+                {% for url, res2 in get_triples(g, res, SDO.author, SDO.url) %}
+                    <img src="{{ url }}" title="{{ g.value(res2, SDO.caption) }}" />
+                {% endfor %}
+            </div>
+            {% endif %}
+
+            {% if g.value(res, CODEMETA.referencePublication) or g.value(res, SDO.citation) %}
+            <h3>References</h3>
+
+            <div class="references">
+                <ul>
+                {% for title, ref in get_triples(g, res, CODEMETA.referencePublication) %}
+                {% if ref %}
+                <li>{% include 'reference.html' %}</li>
+                {% else %}
+                <li>{{ title }}</li>
+                {% endif %}
+                {% endfor %}
+                {% for title, ref in get_triples(g, res, SDO.citation) %}
+                {% if ref %}
+                <li>{% include 'reference.html' %}</li>
+                {% else %}
+                <li>{{ title }}</li>
+                {% endif %}
+                {% endfor %}
+                </ul>
+            </div>
+            {% endif %}
+
+
+            <div class="properties rightcolumn">
+             <h3>Properties</h3>
              <dl>
                 {% if g.value(res, SDO.version) %}
-                <dt class="version">Version</dt>
+                <dt class="version" title="The latest version of this software">Version</dt>
                 <dd class="version"><span property="schema:version">
                     {{ g.value(res, SDO.version) }}</span>
 
@@ -134,6 +176,7 @@
                     </ul>
                 </dd>
                 {% endif %}
+
 
                 {% if g.value(res, SDO.license) %}
                 <dt class="license" title="The license under which the source code is published">License</dt>
@@ -304,6 +347,21 @@
                     </ul>
                 </dd>
                 {% endif %}
+
+                {% if g.value(res, SDO.dateCreated) %}
+                <dt class="dateCreated" title="The date and time at which the software (all versions) was first created">Created</dt>
+                <dd class="dateCreated">
+                    {{ g.value(res, SDO.dateCreated) }}
+                </dd>
+                {% endif %}
+
+                {% if g.value(res, SDO.dateModified) %}
+                <dt class="dateModified" title="The date and time at which the software (either this version or all versions) was last modified">Last modified</dt>
+                <dd class="dateModified">
+                    {{ g.value(res, SDO.dateModified) }}
+                </dd>
+                {% endif %}
+
 
              </dl>
             </div>

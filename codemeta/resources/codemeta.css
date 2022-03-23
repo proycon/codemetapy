@@ -3,13 +3,30 @@ body {
     font-size: 0.8em;
 }
 
-div.softwaresourcecode {
+div.leftcolumn {
+    flex: 60%;
+    padding-right: 10px;
+}
 
+div.rightcolumn {
+    flex: 40%;
+}
+
+@media screen and (max-width: 600px) {
+    div.leftcolumn div.rightcolumn {
+        flex: 100%;
+    }
+}
+
+
+div.softwaresourcecode {
+    display: flex;
 }
 
 div.softwaresourcecode div.properties {
-    background: #d9dbe4;
+    background: #e4e4e4;
     padding: 10px;
+    border-radius: 25px;
 }
 
 dt {
@@ -31,8 +48,10 @@ dd.keywords ul li {
     display: inline-block;
     padding: 2px;
     margin: 2px;
-    border: #666 1px solid;
-    background: #ddd;
+    border: #aac 1px solid;
+    background: white;
+    color: black;
+    font-size: 0.9em;
 }
 
 div.properties {
@@ -82,5 +101,9 @@ div.targetProduct h2 {
     color: #bb0138;
     padding-top: 10px;
     text-align: center;
+}
+img.thumbnail {
+    float: left;
+    max-width: 120px;
 }
 
