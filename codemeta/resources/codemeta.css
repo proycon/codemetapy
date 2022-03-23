@@ -195,9 +195,12 @@ div.keywords {
     margin-top: 5px;
     font-size: 90%;
 }
+div.interface {
+    font-size: 90%;
+}
 div.keywords ul {
     display: inline;
 }
-div.keywords ul li {
+div.keywords ul li, div.interface ul li {
     background: #ddd;
 }

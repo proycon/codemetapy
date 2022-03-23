@@ -1,5 +1,13 @@
 <tr about="{{ res }}" class="softwaresourcecode" typeof="schema:SoftwareSourceCode">
-    <td class="name" property="schema:name">{{ g.value(res, SDO.name) }}</td>
+    <td class="name" property="schema:name">
+    {% if baseuri %}
+    <a href="{{ res }}">
+    {% endif %}
+    {{ g.value(res, SDO.name) }}
+    {% if baseuri %}
+    </a>
+    {% endif %}
+    </td>
     <td class="version" property="schema:version">
         {% if  (res, SDO.version, None) in g %}
         {% if g.value(res, SDO.releaseNotes) %}
@@ -32,7 +40,7 @@
     </td>
     <td class="description">
         {% if  (res, SDO.description, None) in g %}
-        <em property="schema:description">{{ g.value(res, SDO.description) }}</em>
+        <em property="schema:description">{{ g.value(res, SDO.description) }}</em> {% if baseuri %}[<a href="{{ res }}">view more</a>]{% endif %}
         {% endif %}
 
         {% if (res, SDO.applicationCategory, None) in g %}
