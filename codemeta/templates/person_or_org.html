@@ -6,11 +6,14 @@
                                 <a rel="schema:email" href="mailto:{{ g.value(res2, SDO.email) }}">
                              {% endif %}
                              {% if g.value(res2, SDO.givenName) %}
-                                <span property="schema:givenName">{{ g.value(res2, SDO.givenName) }}</span>
+                                <i class="fa-user"></i> <span property="schema:givenName">{{ g.value(res2, SDO.givenName) }}</span>
                              {% endif %}
                              {% if g.value(res2, SDO.familyName)  %}
                                  <span property="schema:familyName">{{ g.value(res2, SDO.familyName) }}</span>
                              {% elif g.value(res2, SDO.name)  %}
+                                 {% if (res2, RDF.type, SDO.Organization) in g %}
+                                 <i class="fa-users"></i>
+                                 {% endif %}
                                  <span property="schema:name">{{ g.value(res2, SDO.name) }}</span>
                              {% endif %}
                              {% if g.value(res2, SDO.url) and g.value(res2, SDO.email) %}

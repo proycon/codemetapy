@@ -201,6 +201,7 @@ div.interface {
 div.keywords ul {
     display: inline;
 }
-div.keywords ul li, div.interface ul li {
+div.keywords ul li, td.interface ul li {
     background: #ddd;
+    font-size: 90%;
 }

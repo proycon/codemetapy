@@ -3,9 +3,9 @@
     <head>
         <meta content="text/html; charset=utf-8" http-equiv="content-type"/>
         <title>Tool Index</title>
-        {% if css %}
-        <link href="{{ css }}" rel="stylesheet" />
-        {% endif %}
+        {% for css_url in css %}
+        <link href="{{ css_url }}" rel="stylesheet" />
+        {% endfor %}
     </head>
     <body>
         <table>
