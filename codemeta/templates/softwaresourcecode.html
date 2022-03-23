@@ -109,7 +109,7 @@
                 <dd class="url">
                     <ul>
                         {% for _,_, value in g.triples((res, SDO.url, None)) %}
-                        <li><a rel="schema:url" href="{{ value }}">{{ value }}</a></li>
+                        <li><i class="fa-home"></i>&nbsp;<a rel="schema:url" href="{{ value }}">{{ value }}</a></li>
                         {% endfor %}
                     </ul>
                 </dd>
@@ -117,7 +117,7 @@
 
                 {% if g.value(res, SDO.codeRepository) %}
                 <dt class="codeRepository" title="A version controlled repository where the source code of the software is available">Source code repository</dt>
-                <dd class="codeRepository"><a rel="schema:codeRepository" href="{{ g.value(res, SDO.codeRepository) }}">{{ g.value(res, SDO.codeRepository) }}</a>
+                <dd class="codeRepository"><i class="fa-code-branch"></i>&nbsp;<a rel="schema:codeRepository" href="{{ g.value(res, SDO.codeRepository) }}">{{ g.value(res, SDO.codeRepository) }}</a>
                 {% for img, url, label in get_badge(g, res, "stars") %}
                 {% include 'badge.html' %}
                 {% endfor %}
@@ -136,7 +136,7 @@
                 {% endif %}
 
                 {% if g.value(res, SDO.keywords) %}
-                <dt class="keywords">Keywords</dt>
+                <dt class="keywords">Keywords <i class="fa-tags"></i></dt>
                 <dd class="keywords">
                 <ul>
                      {% for label, _ in get_triples(g, res, SDO.keywords, abcsort=True) %}
