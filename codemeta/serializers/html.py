@@ -28,6 +28,25 @@ def get_triples(g: Graph, res: Union[URIRef,BNode,None], prop, labelprop=SDO.nam
         results.sort()
     return [ tuple(x[:2]) for x in results ]
 
+
+def parse_github_url(s):
+    if not s: return None
+    if s.endswith(".git"): s = s[:-4]
+    if s.startswith("https://github.com/"):
+        owner, repo = s.replace("https://github.com/","").split("/")
+        return owner, repo
+    return None, None
+
+def get_badge(g: Graph, res: Union[URIRef,None], key):
+    owner, repo = parse_github_url(g.value(res, SDO.codeRepository))
+    if owner and repo:
+        #github badges
+        if key == "stars":
+                yield f"https://img.shields.io/github/stars/{owner}/{repo}.svg?style=flat&color=5c7297", None, "Stars are an indicator of the popularity of this project on GitHub"
+        elif key == "issues":
+                yield f"https://img.shields.io/github/issues/{owner}/{repo}.svg?style=flat&color=5c7297", None, "The number of open issues on the issue tracker"
+                yield f"https://img.shields.io/github/issues-closed/{owner}/{repo}.svg?style=flat&color=5c7297", None, "The number of closes issues on the issue tracker"
+
 def type_label(g: Graph, res: Union[URIRef,None]):
     label = g.value(res, RDF.type)
     if label:
@@ -42,7 +61,7 @@ def serialize_to_html(g: Graph, res: Union[URIRef,None], args: AttribDict, conte
     env = Environment( loader=FileSystemLoader(os.path.join(rootpath[0], 'templates')))
     if res:
         template = env.get_template("softwaresourcecode.html")
-        return template.render(g=g, res=res, SDO=SDO,CODEMETA=CODEMETA, RDF=RDF, STYPE=SOFTWARETYPES, REPOSTATUS=REPOSTATUS, SKOS=SKOS, get_triples=get_triples, type_label=type_label, css=args.css, contextgraph=contextgraph, URIRef=URIRef)
+        return template.render(g=g, res=res, SDO=SDO,CODEMETA=CODEMETA, RDF=RDF, STYPE=SOFTWARETYPES, REPOSTATUS=REPOSTATUS, SKOS=SKOS, get_triples=get_triples, type_label=type_label, css=args.css, contextgraph=contextgraph, URIRef=URIRef, get_badge=get_badge)
 
 
 

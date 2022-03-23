@@ -109,7 +109,11 @@
 
                 {% if g.value(res, SDO.codeRepository) %}
                 <dt class="codeRepository" title="A version controlled repository where the source code of the software is available">Source code repository</dt>
-                <dd class="codeRepository"><a rel="schema:codeRepository" href="{{ g.value(res, SDO.codeRepository) }}">{{ g.value(res, SDO.codeRepository) }}</a></dd>
+                <dd class="codeRepository"><a rel="schema:codeRepository" href="{{ g.value(res, SDO.codeRepository) }}">{{ g.value(res, SDO.codeRepository) }}</a>
+                {% for img, url, label in get_badge(g, res, "stars") %}
+                {% include 'badge.html' %}
+                {% endfor %}
+                </dd>
                 {% endif %}
 
                 {% if g.value(res, SDO.applicationCategory) %}
@@ -154,7 +158,11 @@
 
                 {% if g.value(res, CODEMETA.issueTracker) %}
                 <dt class="issueTracker" title="A bug-reporting and feature tracking system for this software">Issue Tracker (Support)</dt>
-                <dd class="issueTracker"><a rel="schema:issueTracker" href="{{ g.value(res, CODEMETA.issueTracker) }}">{{ g.value(res, CODEMETA.issueTracker) }}</a></dd>
+                <dd class="issueTracker"><a rel="schema:issueTracker" href="{{ g.value(res, CODEMETA.issueTracker) }}">{{ g.value(res, CODEMETA.issueTracker) }}</a>
+                {% for img, url, label in get_badge(g, res, "issues") %}
+                {% include 'badge.html' %}
+                {% endfor %}
+                </dd>
                 {% endif %}
 
 
