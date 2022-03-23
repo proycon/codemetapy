@@ -205,3 +205,6 @@ div.keywords ul li, td.interface ul li {
     background: #ddd;
     font-size: 90%;
 }
+div.properties .email, div.properties .affiliation, td .email, td .affiliation {
+    font-size: 80%;
+}
