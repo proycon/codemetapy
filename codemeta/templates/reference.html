@@ -23,7 +23,7 @@
 </a>
 
 {% if g.value(ref, SDO.isPartOf) and g.value( g.value(ref, SDO.isPartOf) , SDO.datePublished) %}
-{% set parentref = g.value( g.value(ref, SDO.isPartOf) %}
+{% set parentref = g.value(ref, SDO.isPartOf) %}
 <span about="{{ parentref }}" typeof="{{ g.value(parentref, RDF.type) }}">
 In:
 {% if g.value(parentref, SDO.name) %}
