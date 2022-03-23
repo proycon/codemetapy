@@ -407,7 +407,7 @@ def reconcile(g: Graph, res: URIRef, args: AttribDict):
     status = g.value(res, CODEMETA.developmentStatus)
     if status and status.startswith(DUMMY_NS):
         status = status[len(DUMMY_NS):]
-        if status.lower() in REPOSTATUS.values():
+        if status.lower() in REPOSTATUS_MAP.values():
             print(f"{HEAD} automatically converting status to repostatus URI",file=sys.stderr)
             g.set((res, CODEMETA.developmentStatus, URIRef("https://www.repostatus.org/#" + status.lower())))
         else:
