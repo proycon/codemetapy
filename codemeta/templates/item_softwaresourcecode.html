@@ -35,7 +35,17 @@
         <em property="schema:description">{{ g.value(res, SDO.description) }}</em>
         {% endif %}
 
-        {% if g.value(res, SDO.keywords) %}
+        {% if (res, SDO.applicationCategory, None) in g %}
+        <div class="keywords">
+        <strong>Category:</strong> <ul>
+             {% for label, _ in get_triples(g, res, SDO.applicationCategory, abcsort=True) %}
+                <li property="schema:">{{ label }}</li>
+             {% endfor %}
+        </ul>
+        </div>
+        {% endif %}
+
+        {% if (res, SDO.keywords, None) in g %}
         <div class="keywords">
         <strong>Keywords:</strong> <ul>
              {% for label, _ in get_triples(g, res, SDO.keywords, abcsort=True) %}
@@ -44,9 +54,10 @@
         </ul>
         </div>
         {% endif %}
+
     </td>
     <td class="developmentStatus" property="codemeta:developmentStatus">
-        {% if g.value(res, CODEMETA.developmentStatus).find("repostatus") != -1 %}
+        {% if (res, CODEMETA.developmentStatus, None) in g and g.value(res, CODEMETA.developmentStatus).find("repostatus") != -1 %}
             {% set repostatus = URIRef(g.value(res, CODEMETA.developmentStatus)) %}
             {% set repostatus_id = repostatus.split('#')[-1] %}
                 <a rel="codemeta:developmentStatus" href="{{ g.value(res, CODEMETA.developmentStatus) }}"><img src="https://www.repostatus.org/badges/latest/{{ repostatus_id }}.svg" title="{{ contextgraph.value(repostatus, SKOS.prefLabel) }}: {{ contextgraph.value(repostatus, SKOS.definition) }}" alt="{{ contextgraph.value(repostatus, SKOS.prefLabel) }}: {{ contextgraph.value(repostatus, SKOS.definition) }}"  /></a>
