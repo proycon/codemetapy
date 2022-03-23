@@ -5,7 +5,7 @@ import requests
 import random
 import re
 from rdflib import Graph, Namespace, URIRef, BNode, Literal
-from rdflib.namespace import RDF, SKOS
+from rdflib.namespace import RDF, RDFS, SKOS
 from rdflib.compare import graph_diff
 from typing import Union, IO
 from collections import OrderedDict
@@ -174,6 +174,7 @@ def init_graph():
         x.bind('codemeta', CODEMETA)
         x.bind('stype', SOFTWARETYPES)
 
+    contextgraph.bind('rdfs', RDFS)
     contextgraph.bind('repostatus', REPOSTATUS)
     contextgraph.bind('spdx', SPDX)
     contextgraph.bind('skos', SKOS)
@@ -184,6 +185,21 @@ def init_graph():
         license = URIRef(identifier)
         if (license, SDO.name, None) not in contextgraph:
             contextgraph.add((license, SDO.name, Literal(label)))
+
+    #Add labels for software types that are not in the software types extension but in schema.org itself (without needing to parse everythign in schema.org)
+    contextgraph.add((SDO.WebApplication, RDFS.label, Literal("Web Application")))
+    contextgraph.add((SDO.WebApplication, RDFS.comment, Literal("A software application served as a service over the web with an interface for human end-users")))
+    contextgraph.add((SDO.WebAPI, RDFS.label, Literal("Web API")))
+    contextgraph.add((SDO.WebApplication, RDFS.comment, Literal("A software application served as a service over the web with an interface for human end-users")))
+    contextgraph.add((SDO.MobileApplication, RDFS.label, Literal("Mobile App")))
+    contextgraph.add((SDO.MobileApplication, RDFS.comment, Literal("A software application for mobile devices")))
+    contextgraph.add((SDO.WebSite, RDFS.label, Literal("Website")))
+    contextgraph.add((SDO.WebSite, RDFS.comment, Literal("A set of related web pages")))
+    contextgraph.add((SDO.WebPage, RDFS.label, Literal("Webpage")))
+    contextgraph.add((SDO.WebPage, RDFS.comment, Literal("A very particular page on the web")))
+
+    with open(STYPE_LOCAL_SOURCE.replace("file://",""),'rb') as f:
+        contextgraph.parse(data=json.load(f), format="json-ld")
 
     with open(REPOSTATUS_LOCAL_SOURCE.replace("file://",""),'rb') as f:
         contextgraph.parse(data=json.load(f), format="json-ld")

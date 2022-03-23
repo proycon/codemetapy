@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:schema="https://schema.org/" xmlns:codemeta="https://doi.org/10.5063/schema/codemeta-2.0/" xmlns:stype="https://w3id.org/software-types/">
+    <head>
+        <meta content="text/html; charset=utf-8" http-equiv="content-type"/>
+        <title>{{ g.value(res, SDO.name) }}</title>
+        {% if css %}
+        <link href="{{ css }}" rel="stylesheet" />
+        {% endif %}
+    </head>
+    <body>
+        <table>
+            <thead>
+                <th class="name">Name</th>
+                <th class="version">Version</th>
+                <th class="interfaces" title="Type of interface that this software offers">Interface type</th>
+                <th class="links" title="Source code repository, project website or service endpoint">Links</th>
+                <th class="description">Description</th>
+                <th class="developmentStatus" title="Development status">Status</th>
+                <th class="maintainer" title="The maintainer is the primary contact person">Maintainer</th>
+                <th class="author" title="The authors/developers of the software">Authors</th>
+                <th class="producer" title="The institute or person who produces the software; or for services the institute or person who provides the service">Producer/Provider</th>
+            </thead>
+            <tbody>
+        {% for res, label in index %}
+        {% include 'item_softwaresourcecode.html' %}
+        {% endfor %}
+            </tbody>
+        </table>
+    </body>
+</html>
