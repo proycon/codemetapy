@@ -125,6 +125,13 @@ parameter:
 
 This will produce JSON-LD output with multiple resources in the graph.
 
+Github API
+-------------------
+
+Codemetapy can make use of the Github API to query metdata from GitHub, but this allows only limited anonymous requests
+before you hit a limit. To allow more requests, please set the environment variable `$GITHUB_TOKEN` to a [personal access
+token](https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/creating-a-personal-access-token).
+
 
 Integration in setup.py
 -------------------------
