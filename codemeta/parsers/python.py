@@ -27,15 +27,27 @@ def splitdependencies(s: str):
     if s[begin:].strip():
         yield s[begin:].strip()
 
+
 def parsedependency(s: str):
     """Parses a pip dependency specification, returning the identifier, version"""
-    identifier = s.split(" ")[0]
-    begin = s.find("(")
-    if begin != -1:
-        end = s.find(")")
-        version = s[begin+1:end].strip().replace("==","")
+    end = min(
+        s.find(" ") if s.find(" ") != -1 else 999999,
+        s.find(">") if s.find(">") != -1 else 999999,
+        s.find("=") if s.find("=") != -1 else 999999
+    )
+    if end != 999999:
+        identifier = s[:end]
     else:
-        version = None
+        return s, ""
+
+    begin = max( s.find(">") , s.find("=")  )
+    if begin != -1:
+        if s[end:begin] in ("=","=="):
+            version = s[begin+1:].strip()
+        else:
+            version = s[end:begin+1] + " " + s[begin+1:].strip()
+    else:
+        version = ""
     return identifier, version
 
 #pylint: disable=W0621
@@ -84,31 +96,6 @@ def parse_python(g: Graph, res: Union[URIRef, BNode], packagename: str, crosswal
                 add_authors(g, res, value, single_author=args.single_author, mail=pkg.metadata.get("Author-email",""), baseuri=args.baseuri)
             elif key == "Author-email":
                 continue #already handled by the above
-            elif key == "Requires-Dist":
-                for dependency in splitdependencies(value):
-                    if dependency.find("extra =") != -1 and args.no_extras:
-                        print("Skipping extra dependency: ",dependency,file=sys.stderr)
-                        continue
-                    dependency, depversion = parsedependency(dependency.strip())
-                    depres = URIRef(generate_uri(dependency, baseuri=args.baseuri,prefix="dependency"))
-                    g.add((depres, RDF.type, SDO.SoftwareApplication))
-                    g.add((depres, SDO.identifier, Literal(dependency)))
-                    g.add((depres, SDO.name, Literal(dependency)))
-                    if args.exactplatformversion:
-                        g.add((depres, SDO.runtimePlatform, Literal("Python " + str(sys.version_info.major) + "." + str(sys.version_info.minor) + "." + str(sys.version_info.micro))))
-                    else:
-                        g.add((depres, SDO.runtimePlatform, Literal("Python 3")))
-                    if depversion:
-                        g.add((depres, SDO.version, Literal(depversion)))
-                    g.add((res, CODEMETA.softwareRequirements, depres))
-            elif key == "Requires-External":
-                for dependency in value.split(','):
-                    dependency = dependency.strip()
-                    depres = URIRef(generate_uri(dependency, baseuri=args.baseuri,prefix="dependency"))
-                    g.add((depres, RDF.type, SDO.SoftwareApplication))
-                    g.add((depres, SDO.identifier, Literal(dependency)))
-                    g.add((depres, SDO.name, Literal(dependency)))
-                    g.add((res, CODEMETA.softwareRequirements, depres))
             elif key.lower() in crosswalk[CWKey.PYPI]:
                 add_triple(g, res, crosswalk[CWKey.PYPI][key.lower()], value, args)
                 if crosswalk[CWKey.PYPI][key.lower()] == "url":
@@ -120,6 +107,22 @@ def parse_python(g: Graph, res: Union[URIRef, BNode], packagename: str, crosswal
                             break
             else:
                 print("WARNING: No translation for distutils key " + key,file=sys.stderr)
+
+    for value in pkg.requires:
+        for dependency in splitdependencies(value):
+            dependency, depversion = parsedependency(dependency.strip())
+            print(f"Found dependency {dependency} {depversion}",file=sys.stderr)
+            depres = URIRef(generate_uri(dependency+depversion.replace(' ',''),args.baseuri,"dependency")) #version number is deliberately in ID here!
+            g.add((depres, RDF.type, SDO.SoftwareApplication))
+            g.add((depres, SDO.identifier, Literal(dependency)))
+            g.add((depres, SDO.name, Literal(dependency)))
+            if args.exactplatformversion:
+                g.add((depres, SDO.runtimePlatform, Literal("Python " + str(sys.version_info.major) + "." + str(sys.version_info.minor) + "." + str(sys.version_info.micro))))
+            else:
+                g.add((depres, SDO.runtimePlatform, Literal("Python 3")))
+            if depversion:
+                g.add((depres, SDO.version, Literal(depversion)))
+            g.add((res, CODEMETA.softwareRequirements, depres))
 
     #ensure 'identifier' is always set
     name = g.value(res, SDO.name)

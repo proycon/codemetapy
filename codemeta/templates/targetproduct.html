@@ -15,7 +15,7 @@
       (targetres, RDF.type, SDO.WebSite) or
       (targetres, RDF.type, SDO.WebPage) %}
 
-    {% if (targetres, SDO.url) in g %}
+    {% if (targetres, SDO.url, None) in g %}
     <div class="go">
         <a rel="schema:url" href="{{ g.value(targetres, SDO.url) }}">
             <strong>Go to the {{ type_label(g, targetres) }}</strong>
