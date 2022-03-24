@@ -9,7 +9,7 @@ else:
 
 from rdflib import Graph, URIRef, BNode, Literal
 from rdflib.namespace import RDF
-from codemeta.common import AttribDict, add_triple, CODEMETA, SOFTWARETYPES, add_authors, SDO, COMMON_SOURCEREPOS, generate_uri
+from codemeta.common import AttribDict, add_triple, CODEMETA, SOFTWARETYPES, add_authors, SDO, COMMON_SOURCEREPOS, generate_uri, get_last_component
 from codemeta.crosswalk import readcrosswalk, CWKey
 
 def splitdependencies(s: str):
@@ -146,8 +146,7 @@ def parse_python(g: Graph, res: Union[URIRef, BNode], packagename: str, crosswal
                     description = ""
             else:
                 description = ""
-
-            targetproduct = URIRef(generate_uri(rawentrypoint.name, baseuri=args.baseuri,prefix=str(interfacetype).lower()))
+            targetproduct = URIRef(generate_uri(rawentrypoint.name, baseuri=args.baseuri,prefix=get_last_component(str(interfacetype)).lower()))
             g.add((targetproduct, RDF.type, interfacetype))
             g.add((targetproduct, SDO.name, Literal(rawentrypoint.name)))
             g.add((targetproduct, SOFTWARETYPES.executableName, Literal(rawentrypoint.name)))

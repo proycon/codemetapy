@@ -391,6 +391,14 @@ def parse_human_name(name):
     lastname = " ".join((humanname.middle, humanname.last)).strip()
     return humanname.first, lastname
 
+
+def get_last_component(uri):
+    index = max(uri.rfind('#'), uri.rfind('/'))
+    if index == -1:
+        return uri
+    else:
+        return uri[index+1:]
+
 def reconcile(g: Graph, res: URIRef, args: AttribDict):
     """Reconcile possible conflicts in the graph and issue warnings."""
     IDENTIFIER = g.value(res, SDO.identifier)
@@ -444,6 +452,7 @@ def merge_graphs(g: Graph ,g2: Graph):
             for (s2,p2,o2) in g.triples((s,p,None)):
                 g.remove((s2,p2,o2))
         g.add((s,p,o))
+
 
 def generate_uri(identifier: Union[str,None] = None, baseuri: Union[str,None] = None, prefix: str= ""):
     """Generate an URI"""

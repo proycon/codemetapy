@@ -2,8 +2,6 @@
     <td class="name" property="schema:name">
         {% if (targetres, SDO.name, None) in g %}
         {{ g.value(targetres, SDO.name) }}
-        {% else %}
-            &dbquot;
         {% endif %}
     </td>
     <td class="version" property="schema:version">
@@ -31,7 +29,6 @@
         <em>{{ g.value(targetres, SDO.description) }}</em>
         {% endif %}
         {% endif %}
-
     </td>
     <td class="developmentStatus" property="codemeta:developmentStatus">
         -

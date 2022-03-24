@@ -38,6 +38,7 @@ import codemeta.parsers.github
 import codemeta.parsers.authors
 from codemeta.serializers.jsonld import serialize_to_jsonld
 from codemeta.serializers.html import serialize_to_html
+from codemeta.serializers.turtle import serialize_to_turtle
 
 
 #class PostDevelopCommand(setuptools.command.develop.develop):
@@ -300,6 +301,16 @@ def build(**kwargs):
                 fp.write(json.dumps(doc, indent=4, ensure_ascii=False))
         else:
             print(json.dumps(doc, indent=4, ensure_ascii=False))
+    elif args.output in ("turtle","ttl"):
+        if not args.baseuri:
+            print("You must set a --baseuri when requesting turtle output",file=sys.stderr)
+            sys.exit(2)
+        doc = serialize_to_turtle(g, res)
+        if args.outputfile and args.outputfile != "-":
+            with open(args.outputfile,'wb') as fp:
+                fp.write(doc)
+        else:
+            print(doc)
     elif args.output == "html":
         doc = serialize_to_html(g, res, args, contextgraph)
         if args.outputfile and args.outputfile != "-":
