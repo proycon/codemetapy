@@ -19,7 +19,7 @@
     <td class="links">
         <ul>
         {% for _,_, value in g.triples((targetres, SDO.url, None)) %}
-        <li><i class="fa-globe"></i>&nbsp;<a rel="schema:url" href="{{ value }}">{{ value }}</a></li>
+        <li><i class="fa-globe"></i>&nbsp;<a rel="schema:url" href="{{ value }}" title="For webapplications and webservices, this is whereyou can access the software as a service on the web">{{ value }}</a></li>
         {% endfor %}
         </ul>
     </td>
@@ -31,7 +31,6 @@
         {% endif %}
     </td>
     <td class="developmentStatus" property="codemeta:developmentStatus">
-        -
     </td>
     <td class="maintainer">
         <ul>

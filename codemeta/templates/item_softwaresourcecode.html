@@ -1,6 +1,6 @@
 <tr about="{{ res }}" class="softwaresourcecode" typeof="schema:SoftwareSourceCode">
     <td class="name" property="schema:name">
-    {% if baseuri %}
+    {% if baseuri and toolstore %}
     <a href="{{ res }}">
     {% endif %}
     {{ g.value(res, SDO.name) }}
@@ -8,15 +8,18 @@
     </a>
     {% endif %}
     </td>
-    <td class="version" property="schema:version">
+    <td class="version">
         {% if  (res, SDO.version, None) in g %}
         {% if g.value(res, SDO.releaseNotes) %}
         <a rel="schema:releaseNotes" href="{{ g.value(res, SDO.releaseNotes) }}" title="release notes for this version">
         {% endif %}
-        {{ g.value(res, SDO.version) }}
+        <span property="schema:version">{{ g.value(res, SDO.version) }}</a>
         {% if g.value(res, SDO.releaseNotes) %}
         </a>
         {% endif %}
+        {% endif %}
+        {% if  (res, SDO.dateModified, None) in g %}
+        <span class="dateModified" property="schema:dateModified" title="Date at which this version was last modified">{{ g.value(res, SDO.dateModified).replace("T"," ").replace("Z"," ") }}</span>
         {% endif %}
     </td>
     <td class="interface">
@@ -29,11 +32,11 @@
     <td class="links">
         <ul>
         {% if  (res, SDO.codeRepository, None) in g %}
-        <li><i class="fa-code-branch"></i>&nbsp;<a rel="schema:codeRepository" href="{{ g.value(res, SDO.codeRepository) }}">{{ g.value(res, SDO.codeRepository) }}</a></li>
+        <li><i class="fa-code-branch"></i>&nbsp;<a rel="schema:codeRepository" href="{{ g.value(res, SDO.codeRepository) }}" title="Here you can find the source code of this software. This is geared towards technical users who want to install the software themselves.">{{ g.value(res, SDO.codeRepository) }}</a></li>
         {% endif %}
         {% for _,_, value in g.triples((res, SDO.url, None)) %}
         {% if value != g.value(res, SDO.codeRepository) %}
-        <li><i class="fa-home"></i>&nbsp;<a rel="schema:url" href="{{ g.value(res, SDO.url) }}">{{ g.value(res, SDO.url) }}</a></li>
+        <li><i class="fa-home"></i>&nbsp;<a rel="schema:url" href="{{ g.value(res, SDO.url) }}" title="This is the project website associated with this software">{{ g.value(res, SDO.url) }}</a></li>
         {% endif %}
         {% endfor %}
         </ul>

@@ -34,16 +34,16 @@
             </div>
             {% elif g.value(res, SDO.url) %}
             <div class="go">
-                <a rel="schema:url" href="{{ g.value(targetres, SDO.url) }}">
-                    <strong>Go to the website</strong>
-                    <tt>{{ g.value(targetres, SDO.url) }}</tt>
+                <a rel="schema:url" href="{{ g.value(res, SDO.url) }}">
+                    <strong>Go to the software website</strong>
+                    <tt>{{ g.value(res, SDO.url) }}</tt>
                 </a>
             </div>
             {% elif g.value(res, SDO.codeRepository) %}
             <div class="go">
-                <a rel="schema:url" href="{{ g.value(targetres, SDO.codeRepository) }}">
+                <a rel="schema:url" href="{{ g.value(res, SDO.codeRepository) }}">
                     <strong>Go to the source repository</strong>
-                    <tt>{{ g.value(targetres, SDO.codeRepository) }}</tt>
+                    <tt>{{ g.value(res, SDO.codeRepository) }}</tt>
                 </a>
             </div>
             {% endif %}
@@ -386,14 +386,14 @@
                 {% if g.value(res, SDO.dateCreated) %}
                 <dt class="dateCreated" title="The date and time at which the software (all versions) was first created">Created</dt>
                 <dd class="dateCreated">
-                    {{ g.value(res, SDO.dateCreated) }}
+                    {{ g.value(res, SDO.dateCreated).replace("T"," ").replace("Z"," ") }}
                 </dd>
                 {% endif %}
 
                 {% if g.value(res, SDO.dateModified) %}
                 <dt class="dateModified" title="The date and time at which the software (either this version or all versions) was last modified">Last modified</dt>
                 <dd class="dateModified">
-                    {{ g.value(res, SDO.dateModified) }}
+                    {{ g.value(res, SDO.dateModified).replace("T"," ").replace("Z"," ")  }}
                 </dd>
                 {% endif %}
 

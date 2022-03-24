@@ -12,7 +12,7 @@
                                  <span property="schema:name">{{ g.value(res2, SDO.name) }}</span>
                              {% endif %}
                              {% if g.value(res2, SDO.url) and g.value(res2, SDO.email) %}
-                                 </a> &lt;<a rel="schema:email" href="mailto{{ g.value(res2, SDO.email) }}">{{ g.value(res2, SDO.email) }}</a>&gt;
+                                 </a> &lt;<a rel="schema:email" href="mailto:{{ g.value(res2, SDO.email) }}">{{ g.value(res2, SDO.email) }}</a>&gt;
                              {% elif g.value(res2, SDO.url) or g.value(res2, SDO.email) %}
                                  </a>
                              {% endif %}

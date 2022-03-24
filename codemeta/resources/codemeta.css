@@ -119,6 +119,15 @@ div.targetProduct div.properties {
     margin-top: 0px;
     text-align: right;
 }
+tr.targetProduct td.links a {
+    font-weight: bold;
+    border-bottom: #2628c9 2px solid;
+    text-decoration: none;
+}
+tr.targetProduct td.developmentStatus, tr.targetProduct td.author {
+    /* these fields are typically empty */
+    background: white;
+}
 div.targetProduct h2 {
     margin-left: 20px;
     color: #bb0138;
@@ -136,8 +145,10 @@ span.positive {
     margin: 2px;
     border: #aac 1px solid;
     background: white;
-    color: green;
     font-size: 0.9em;
+}
+.positive {
+    color: green;
 }
 span.negative {
     display: inline-block;
@@ -145,8 +156,10 @@ span.negative {
     margin: 2px;
     border: #aac 1px solid;
     background: white;
-    color: red;
     font-size: 0.9em;
+}
+.negative {
+    color: red;
 }
 div.warning {
     color: red;
@@ -207,4 +220,10 @@ div.keywords ul li, td.interface ul li {
 }
 div.properties .email, div.properties .affiliation, td .email, td .affiliation {
     font-size: 80%;
+}
+tr.softwaresourcecode span.dateModified {
+    display: block;
+    font-family: monospace;
+    font-size: 75%;
+    cursor: help;
 }
