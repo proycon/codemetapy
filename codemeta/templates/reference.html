@@ -36,9 +36,9 @@ In:
 {% endif %}
 
 {% if g.value(ref, SDO.pageStart)  and g.value(ref, SDO.pageEnd) %}
-, <span property="schema:pageStart">{{ g.value(ref, SDO.pageStart }})</span>-<span property="schema:pageEnd">{{ g.value(ref, SDO.pageEnd }})</span>
+, <span property="schema:pageStart">{{ g.value(ref, SDO.pageStart) }}</span>-<span property="schema:pageEnd">{{ g.value(ref, SDO.pageEnd) }}</span>
 {% elif g.value(ref, SDO.pagination) %}
-, <span property="schema:pagination">{{ g.value(ref, SDO.pagination }})</span>
+, <span property="schema:pagination">{{ g.value(ref, SDO.pagination) }}</span>
 {% endif %}
 
 {% if ref.find("doi.org") %}
