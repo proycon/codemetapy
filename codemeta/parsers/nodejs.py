@@ -79,7 +79,7 @@ def parse_nodejs(g: Graph, res: Union[URIRef, BNode], file: IO , crosswalk, args
             elif key in ('dependencies','devDependencies'):
                 if isinstance(value, dict):
                     for key, versioninfo in value.items():
-                        depres = URIRef(generate_uri(key, baseuri=args.baseuri,prefix="dependency"))
+                        depres = URIRef(generate_uri(key+versioninfo, baseuri=args.baseuri,prefix="dependency"))
                         g.add((depres, RDF.type, SDO.SoftwareApplication))
                         g.add((depres, SDO.name, Literal(key)))
                         g.add((depres, SDO.identifier, Literal(key)))

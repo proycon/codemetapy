@@ -90,7 +90,7 @@ def parse_java(g: Graph, res: Union[URIRef, BNode], file: IO , crosswalk, args: 
         elif key == 'dependencies':
             for key2, node2 in parse_node(node):
                 if key2 == "dependency":
-                    dep_group_id = dep_art_id = dep_version = None
+                    dep_group_id = dep_art_id = dep_version = ""
                     for key3, node3 in parse_node(node2):
                         if key3 == "groupId":
                             dep_group_id = node3.text
@@ -100,7 +100,7 @@ def parse_java(g: Graph, res: Union[URIRef, BNode], file: IO , crosswalk, args: 
                             dep_version = node3.text
 
                     if dep_group_id and dep_art_id:
-                        depres = URIRef(generate_uri(dep_group_id +"." + dep_art_id, baseuri=args.baseuri,prefix="dependency"))
+                        depres = URIRef(generate_uri(dep_group_id +"." + dep_art_id + "." + dep_version.replace(" ",""), baseuri=args.baseuri,prefix="dependency"))
                         g.add((depres, SDO.identifier, Literal(dep_group_id + "." + dep_art_id)))
                         g.add((depres, SDO.name, Literal(dep_art_id)))
                         if dep_version:
