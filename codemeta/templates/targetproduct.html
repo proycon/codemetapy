@@ -10,35 +10,34 @@
     <div property="schema:description">{{ g.value(targetres, SDO.description) }}</div>
     {% endif %}
 
-    {% if (targetres, RDF.type, SDO.WebApplication) or
-      (targetres, RDF.type, SDO.WebAPI) or
-      (targetres, RDF.type, SDO.WebSite) or
-      (targetres, RDF.type, SDO.WebPage) %}
+    {% if (targetres, RDF.type, SDO.WebApplication) in g or
+      (targetres, RDF.type, SDO.WebAPI) in g or
+      (targetres, RDF.type, SDO.WebSite) in g or
+      (targetres, RDF.type, SDO.WebPage) in g %}
 
-    {% if (targetres, SDO.url, None) in g %}
-    <div class="go">
-        <a rel="schema:url" href="{{ g.value(targetres, SDO.url) }}">
-            <strong>Go to the {{ type_label(g, targetres) }}</strong>
-            <tt>{{ g.value(targetres, SDO.url) }}</tt>
-        </a>
-    </div>
-    {% endif %}
+        {% if (targetres, SDO.url, None) in g %}
+        <div class="go">
+            <a rel="schema:url" href="{{ g.value(targetres, SDO.url) }}">
+                <strong>Go to the {{ type_label(g, targetres) }}</strong>
+                <tt>{{ g.value(targetres, SDO.url) }}</tt>
+            </a>
+        </div>
+        {% else %}
+        <div class="warning"><strong>Note:</strong> No URL was registered for this service (yet)</div>
+        {% endif %}
 
     {% endif %}
 
     <div class="properties">
         <dl>
-            {% if not (targetres, RDF.type, SDO.WebApplication) and not
-              (targetres, RDF.type, SDO.WebAPI) and not
-              (targetres, RDF.type, SDO.WebSite) and not
-              (targetres, RDF.type, SDO.WebPage) %}
             <dt class="type">Type</dt>
-            <dd class="type">
-            {% if g.value(targetres, RDF.type) %}
-                {{ type_label(g, targetres) }}
-            {% endif %}
+            <dd class="type interface">
+            <ul>
+            {% for label, comment in get_interface_types(g, targetres, contextgraph, fallback=True) %}
+            <li{% if comment %} title="{{ comment }}"{% endif %}>{{ label }}</li>
+            {% endfor %}
+            </ul>
             </dd>
-            {% endif %}
 
             {% if g.value(targetres, STYPE.executableName) %}
             <dt class="executableName" title="Name of the program or module as used when invoked">Executable name</dt>
@@ -49,8 +48,8 @@
             {% if g.value(targetres, SDO.version) %}
             <dt class="version" title="Version of the tool/service">Version</dt>
             <dd class="version"><span property="schema:version"> {{ g.value(targetres, SDO.version) }}</span>
-            {% if g.value(res, SDO.version) != g.value(targerres, SDO.version) %}
-            <div class="warning"><strong>Warning:</strong> Version does not match latest source release (<tt>{{ g.value(res, SDKO.version) }}</tt>), service may be out of date</div>
+            {% if g.value(res, SDO.version) != g.value(targetres, SDO.version) %}
+            <div class="warning"><strong>Note:</strong> Version does not match latest source release (<tt>{{ g.value(res, SDO.version) }}</tt>), service may be out of date</div>
             {% endif %}
             </dd>
             {% endif %}

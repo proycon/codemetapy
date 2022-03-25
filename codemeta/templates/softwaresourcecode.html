@@ -350,6 +350,17 @@
                 </dd>
                 {% endif %}
 
+                {% if g.value(res, CODEMETA.softwareRequirements) %}
+                <dt class="softwareRequirements" title="Software upon which this software relies to run and/or build">Software dependencies</dt>
+                <dd class="softwareRequirements">
+                 <ul>
+                 {% for label, res2 in get_triples(g, res, CODEMETA.softwareRequirements) %}
+                    <li property="schema:softwareRequirements">{{ label }}</li>
+                 {% endfor %}
+                 </ul>
+                </dd>
+                {% endif %}
+
                 {% if g.value(res, SDO.processorRequirements) %}
                 <dt class="processorRequirements" title="CPU requirements to run the software">Processor Requirements</dt>
                 <dd class="processorRequirements">

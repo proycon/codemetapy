@@ -40,11 +40,11 @@ dd ul, table ul {
     padding: 0px;
 }
 
-.keywords ul {
+.keywords ul, .softwareRequirements ul {
     list-style: none;
 }
 
-.keywords ul li {
+.keywords ul li, .softwareRequirements ul li {
     display: inline-block;
     padding: 2px;
     margin: 2px;
@@ -162,9 +162,11 @@ span.negative {
     color: red;
 }
 div.warning {
-    color: red;
+    color: white;
     padding: 2px;
-    border: 1px dashed red;
+    border: 1px solid red;
+    background: #672525;
+    text-align: center;
 }
 div#footer {
     width: 100%;
@@ -208,13 +210,13 @@ div.keywords {
     margin-top: 5px;
     font-size: 90%;
 }
-div.interface {
+.interface {
     font-size: 90%;
 }
 div.keywords ul {
     display: inline;
 }
-div.keywords ul li, td.interface ul li {
+div.keywords ul li, .interface ul li, dd.softwareRequirements ul li {
     background: #ddd;
     font-size: 90%;
 }
@@ -226,4 +228,7 @@ tr.softwaresourcecode span.dateModified {
     font-family: monospace;
     font-size: 75%;
     cursor: help;
+}
+dd.executableName {
+    font-family: monospace;
 }
