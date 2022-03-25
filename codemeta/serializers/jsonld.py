@@ -4,8 +4,8 @@ from typing import Union, IO
 from rdflib import Graph, URIRef, BNode, Literal
 from codemeta.common import AttribDict, license_to_spdx, SDO, CONTEXT, CODEMETA_SOURCE, CODEMETA_LOCAL_SOURCE, SCHEMA_SOURCE, SCHEMA_LOCAL_SOURCE, STYPE_SOURCE, STYPE_LOCAL_SOURCE, init_context, REPOSTATUS_LOCAL_SOURCE, REPOSTATUS_SOURCE, get_subgraph
 
-def flatten_singletons(data):
-    """Recursively flattens singleton ``key: { "@id": url }`` instances to ``key: url``"""
+def flatten_singletons(data): #TODO: no longer used, remove
+    """Recursively flattens singleton ``key: { "@id": uri }`` instances to ``key: uri``"""
     if isinstance(data, dict):
         for key, value in data.items():
             if isinstance(value, dict):
@@ -215,7 +215,6 @@ def serialize_to_jsonld(g: Graph, res: Union[URIRef,None], newuri: str) -> dict:
             root['@id'] = newuri
 
     #flatten singletons (contains only @id)
-    data = flatten_singletons(data)
     data = remove_blank_ids(data)
     data = sort_by_position(data)
     if '@context' in data:

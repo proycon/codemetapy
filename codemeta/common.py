@@ -468,9 +468,15 @@ def get_subgraph(g: Graph, res: Union[URIRef,BNode], subgraph: Union[Graph,None]
         bind_graph(subgraph)
 
     for pred, obj in g[res]:
-        subgraph.add((res,pred,obj))
         if isinstance(obj, (URIRef, BNode)):
+            subgraph.add((res,pred,obj))
             get_subgraph(g, obj, subgraph)
+        elif obj.startswith("http"):
+            subgraph.add((res,pred,URIRef(obj)))
+            #looks like it could be a URI still, check to be sure:
+            get_subgraph(g, URIRef(obj), subgraph)
+        else:
+            subgraph.add((res,pred,obj))
 
     return subgraph
 
