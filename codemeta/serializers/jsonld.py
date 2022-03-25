@@ -189,7 +189,6 @@ def rewrite_context(context):
 
 def serialize_to_jsonld(g: Graph, res: Union[URIRef,None], newuri: str) -> dict:
     """Serializes the RDF graph to JSON, taking care of 'framing' for embedded nodes"""
-    init_context()
 
     if res:
         #Get the subgraph that focusses on this specific resource

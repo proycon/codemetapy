@@ -163,12 +163,12 @@ IDENTIFIER_MAP = [
 #properties that may only occur once, last one counts
 SINGULAR_PROPERTIES = ( SDO.name, SDO.version, SDO.description, CODEMETA.developmentStatus, SDO.dateCreated, SDO.dateModified, SDO.position )
 
-def init_context():
+def init_context(no_cache=False):
     sources = ( (CODEMETA_LOCAL_SOURCE, CODEMETA_SOURCE), (SCHEMA_LOCAL_SOURCE, SCHEMA_SOURCE), (STYPE_LOCAL_SOURCE, STYPE_SOURCE), (REPOSTATUS_LOCAL_SOURCE, REPOSTATUS_SOURCE) )
 
     for local, remote in sources:
         localfile = local.replace("file://","")
-        if not os.path.exists(localfile):
+        if not os.path.exists(localfile) or no_cache:
             print(f"Downloading context from {remote}", file=sys.stderr)
             r = requests.get(remote, headers={ "Accept": "application/json+ld;q=1.0,application/json;q=0.9,text/plain;q=0.5" })
             r.raise_for_status()
@@ -183,10 +183,10 @@ def bind_graph(g: Graph):
     g.bind('codemeta', CODEMETA)
     g.bind('stype', SOFTWARETYPES)
 
-def init_graph():
+def init_graph(no_cache=False):
     """Initializes the RDF graph, the context and the prefixes"""
 
-    init_context()
+    init_context(no_cache)
 
     g = Graph()
 

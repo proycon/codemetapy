@@ -99,6 +99,7 @@ def main():
     parser.add_argument('-g','--graph', dest='graph',help="Output a knowledge graph that groups all input files together. Only JSON input files are supported.", action='store_true',required=False)
     parser.add_argument('-s','--select', type=str, help="Output only the selected resource (by URI) from the graph", action='store',required=False)
     parser.add_argument('--css',type=str, help="Associate a CSS stylesheet (URL) with the HTML output, multiple stylesheets can be separated by a comma", action='store',  required=False)
+    parser.add_argument('--no-cache',dest="no_cache", help="Do not cache context files, force redownload", action='store_true',  required=False)
     parser.add_argument('--toolstore', help="When converting to HTML, link pages together as served by the CLARIAH tool store (https://github.com/CLARIAH/tool-discovery)", action='store_true',  required=False)
     parser.add_argument('--strict', dest='strict', help="Strictly adhere to the codemeta standard and disable any extensions on top of it", action='store_true')
     parser.add_argument('inputsources', nargs='*', help='Input sources, the nature of the source depends on the type, often a file (or use - for standard input), set -i accordingly with the types (must contain as many items as passed!)')
@@ -152,7 +153,7 @@ def read(**kwargs):
 
     args = AttribDict(kwargs)
 
-    g, contextgraph = init_graph()
+    g, contextgraph = init_graph(args.no_cache)
 
     if not args.inputsources:
         raise Exception("No inputsources specified")
@@ -220,7 +221,7 @@ def build(**kwargs):
         else:
             raise Exception("No input files specified (use - for stdin)",file=sys.stderr)
 
-    g, contextgraph = init_graph()
+    g, contextgraph = init_graph(args.no_cache)
 
     founduri = False #indicates whether we found a preferred URI or not
 
