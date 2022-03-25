@@ -71,7 +71,6 @@ def get_interface_types(g: Graph, res: Union[URIRef,None], contextgraph: Graph, 
     types =  set()
     for _,_,res3 in g.triples((res, RDF.type, None)):
         if res3 != SDO.SoftwareSourceCode:
-            print(res3,file=sys.stderr)
             stype =  contextgraph.value(res3, RDFS.label)
             comment = contextgraph.value(res3, RDFS.comment) #used for definitions
             if stype:
