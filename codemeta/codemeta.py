@@ -86,60 +86,90 @@ class CodeMetaCommand(distutils.cmd.Command):
 props, crosswalk = codemeta.crosswalk.readcrosswalk()
 
 def main():
+    """Main entrypoint for command-line usage"""
+
     parser = argparse.ArgumentParser(description="Converter for Python Distutils (PyPI) Metadata to CodeMeta (JSON-LD) converter. Also supports conversion from other metadata types such as those from Debian packages. The tool can combine metadata from multiple sources.")
     parser.add_argument('-t', '--with-stypes', dest="with_stypes", help="Convert entrypoints to targetProduct and classes reflecting software type (https://github.com/codemeta/codemeta/issues/#271), linking softwareSourceCode to softwareApplication or WebAPI. If enabled, any remote URLs passed to codemetapy will automatically be encoded via targetProduct.", action='store_true',required=False)
     parser.add_argument('--exact-python-version', dest="exactplatformversion", help="Register the exact python interpreter used to generate the metadata as the runtime platform. Will only register the major version otherwise.", action='store_true',required=False)
     parser.add_argument('--single-author', dest="single_author", help="CodemetaPy will attempt to check if there are multiple authors specified in the author field, if you want to disable this behaviour, set this flag", action='store_true',required=False)
     parser.add_argument('-b', '--baseuri',type=str,help="Base URI for resulting SoftwareSourceCode instances (make sure to add a trailing slash)", action='store',required=False)
-    parser.add_argument('-o', '--outputtype', dest='output',type=str,help="Metadata output type: json (default), yaml", action='store',required=False, default="json")
+    parser.add_argument('-o', '--outputtype', dest='output',type=str,help="Output type: json (default), turtle, html", action='store',required=False, default="json")
     parser.add_argument('-O','--outputfile',  dest='outputfile',type=str,help="Output file", action='store',required=False)
     parser.add_argument('-i','--inputtype', dest='inputtypes',type=str,help="Metadata input type: python, apt (debian packages), registry, json, yaml. May be a comma seperated list of multiple types if files are passed on the command line", action='store',required=False)
     parser.add_argument('-g','--graph', dest='graph',help="Output a knowledge graph that groups all input files together. Only JSON input files are supported.", action='store_true',required=False)
+    parser.add_argument('-s','--select', type=str, help="Output only the selected resource (by URI) from the graph", action='store',required=False)
     parser.add_argument('--css',type=str, help="Associate a CSS stylesheet (URL) with the HTML output, multiple stylesheets can be separated by a comma", action='store',  required=False)
     parser.add_argument('--toolstore', help="When converting to HTML, link pages together as served by the CLARIAH tool store (https://github.com/CLARIAH/tool-discovery)", action='store_true',  required=False)
     parser.add_argument('--strict', dest='strict', help="Strictly adhere to the codemeta standard and disable any extensions on top of it", action='store_true')
     parser.add_argument('inputsources', nargs='*', help='Input sources, the nature of the source depends on the type, often a file (or use - for standard input), set -i accordingly with the types (must contain as many items as passed!)')
-    parser.add_argument('--no-extras',dest="no_extras",help="Do not parse any extras in the dependency specification", action='store_true', required=False)
+
     for key, prop in sorted(props.items()):
         if key:
             parser.add_argument('--' + key,dest=key, type=str, help=prop['DESCRIPTION'] + " (Type: "  + prop['TYPE'] + ", Parent: " + prop['PARENT'] + ") [you can format the value string in json if needed]", action='store',required=False)
+
     args = parser.parse_args()
     if not args.strict:
         args.with_stypes = True
     if args.css:
         args.css = [ x.strip() for x in args.css.split(",") ]
+
     if args.graph:
         #join multiple inputs into a larger graph
-        join(**args.__dict__)
+        output = read(**args.__dict__)
     else:
         #normal behaviour
-        build(**args.__dict__)
+        output = build(**args.__dict__)
+    if output:
+        print(output)
 
-def join(**kwargs):
-    """Build a codemeta file"""
+def serialize(g: Graph, res: Union[URIRef,BNode], args: AttribDict, newuri: Union[str,None] = None, contextgraph: Union[Graph,None] = None) -> Graph:
+    if args.output == "json":
+        doc = serialize_to_jsonld(g, res, newuri)
+        if args.outputfile and args.outputfile != "-":
+            with open(args.outputfile,'w',encoding='utf-8') as fp:
+                fp.write(json.dumps(doc, indent=4, ensure_ascii=False))
+        else:
+            return json.dumps(doc, indent=4, ensure_ascii=False)
+    elif args.output in ("turtle","ttl"):
+        doc = serialize_to_turtle(g, res)
+        if args.outputfile and args.outputfile != "-":
+            with open(args.outputfile,'wb') as fp:
+                fp.write(doc)
+        else:
+            return doc
+    elif args.output == "html":
+        doc = serialize_to_html(g, res, args, contextgraph)
+        if args.outputfile and args.outputfile != "-":
+            with open(args.outputfile,'w',encoding='utf-8') as fp:
+                fp.write(doc)
+        else:
+            return doc
+    else:
+        raise Exception("No such output type: ", args.output)
+
+def read(**kwargs):
+    """Read multiple resources together in a graph, and either output it all or output a selection"""
 
     args = AttribDict(kwargs)
 
     g, contextgraph = init_graph()
 
+    if not args.inputsources:
+        raise Exception("No inputsources specified")
+
     for source in args.inputsources:
         print(f"Adding json-ld file from {source} to graph",file=sys.stderr)
         codemeta.parsers.jsonld.parse_jsonld(g, None, getstream(source), args)
 
-    doc = serialize_to_jsonld(g, None, None)
-    if args.output == "json":
-        if args.outputfile and args.outputfile != "-":
-            with open(args.outputfile,'w',encoding='utf-8') as fp:
-                fp.write(json.dumps(doc, indent=4, ensure_ascii=False))
-        else:
-            print(json.dumps(doc, indent=4, ensure_ascii=False))
-    elif args.output == "html":
-        doc = serialize_to_html(g, None, args, contextgraph)
-        if args.outputfile and args.outputfile != "-":
-            with open(args.outputfile,'w',encoding='utf-8') as fp:
-                fp.write(doc)
-        else:
-            print(doc)
+    if args.select:
+        res = URIRef(args.select)
+        if (res, None, None) not in g:
+            raise KeyError("Selected resource does not exists")
+    else:
+        res = None
+
+    return serialize(g, res, args, None, contextgraph)
+
 
 def build(**kwargs):
     """Build a codemeta file"""
@@ -186,11 +216,9 @@ def build(**kwargs):
                 inputsources = [(".".join(d.split(".")[:-1]),"python")]
                 break
             if not inputsources:
-                print("Could not generate egg_info (is python3 pointing to the right interpreter?)",file=sys.stderr)
-                sys.exit(2)
+                raise Exception("Could not generate egg_info (is python3 pointing to the right interpreter?)",file=sys.stderr)
         else:
-            print("No input files specified (use - for stdin)",file=sys.stderr)
-            sys.exit(2)
+            raise Exception("No input files specified (use - for stdin)",file=sys.stderr)
 
     g, contextgraph = init_graph()
 
@@ -294,33 +322,7 @@ def build(**kwargs):
 
     reconcile(g, res, args)
 
-
-    if args.output == "json":
-        doc = serialize_to_jsonld(g, res, uri)
-        if args.outputfile and args.outputfile != "-":
-            with open(args.outputfile,'w',encoding='utf-8') as fp:
-                fp.write(json.dumps(doc, indent=4, ensure_ascii=False))
-        else:
-            print(json.dumps(doc, indent=4, ensure_ascii=False))
-    elif args.output in ("turtle","ttl"):
-        if not args.baseuri:
-            print("You must set a --baseuri when requesting turtle output",file=sys.stderr)
-            sys.exit(2)
-        doc = serialize_to_turtle(g, res)
-        if args.outputfile and args.outputfile != "-":
-            with open(args.outputfile,'wb') as fp:
-                fp.write(doc)
-        else:
-            print(doc)
-    elif args.output == "html":
-        doc = serialize_to_html(g, res, args, contextgraph)
-        if args.outputfile and args.outputfile != "-":
-            with open(args.outputfile,'w',encoding='utf-8') as fp:
-                fp.write(doc)
-        else:
-            print(doc)
-    else:
-        raise Exception("No such output type: ", args.output)
+    return serialize(g, res, args, uri, contextgraph)
 
 
 

@@ -48,7 +48,7 @@
             {% if g.value(targetres, SDO.version) %}
             <dt class="version" title="Version of the tool/service">Version</dt>
             <dd class="version"><span property="schema:version"> {{ g.value(targetres, SDO.version) }}</span>
-            {% if g.value(res, SDO.version) != g.value(targetres, SDO.version) %}
+            {% if res and g.value(res, SDO.version) != g.value(targetres, SDO.version) %}
             <div class="warning"><strong>Note:</strong> Version does not match latest source release (<tt>{{ g.value(res, SDO.version) }}</tt>), service may be out of date</div>
             {% endif %}
             </dd>
@@ -78,8 +78,19 @@
             <dt class="provider" title="The organisation (or person) that provides the service">Service Provider</dt>
             <dd class="provider">
                 <ul>
-                 {% for label, res2 in get_triples(g, targetres, SDO.provider) %}
+                 {% for label, pores in get_triples(g, targetres, SDO.provider) %}
                      {% include 'person_or_org.html' %}
+                 {% endfor %}
+                </ul>
+            </dd>
+            {% endif %}
+
+            {% if g.value(targetres, SDO.publisher)  %}
+            <dt class="publisher" title="The organisation (or person) that publishes the software">Publisher</dt>
+            <dd class="publisher">
+                <ul>
+                 {% for label, pores in get_triples(g, targetres, SDO.publisher) %}
+                 <li>{% include 'person_or_org.html' %}</li>
                  {% endfor %}
                 </ul>
             </dd>
@@ -89,12 +100,49 @@
             <dt class="maintainer" title="The person or organisation that is responsible for maintaining the service">Maintainer(s)</dt>
             <dd class="maintainer">
                 <ul>
-                 {% for label, res2 in get_triples(g, res, SDO.maintainer) %}
+                 {% for label, pores in get_triples(g, targetres, SDO.maintainer) %}
                      {% include 'person_or_org.html' %}
                  {% endfor %}
                 </ul>
             </dd>
             {% endif %}
+
+            {% if g.value(targetres, SDO.funder) %}
+            <dt class="funder" title="funder source (e.g. specific grant)">Funder</dt>
+            <dd class="funder">
+                <ul>
+                     {% for label, pores in get_triples(g, targetres, SDO.funder, abcsort=True) %}
+                     <li>{% include 'person_or_org.html' %}</li>
+                     {% endfor %}
+                </ul>
+            </dd>
+            {% endif %}
+
+            {% if g.value(targetres, SDO.permissions) %}
+            <dt class="permissions" title="Permissions that are needed to run the software">Permissions</dt>
+            <dd class="permissions">
+                <ul>
+                     {% for label, _ in get_triples(g, targetres, SDO.permissions) %}
+                        <li property="schema:permissions">{{ label }}</li>
+                     {% endfor %}
+                </ul>
+            </dd>
+            {% endif %}
+
+            {% if g.value(targetres, SDO.dateCreated) %}
+            <dt class="dateCreated" title="The date and time at which the software/service (all versions) was first created">Created</dt>
+            <dd class="dateCreated">
+                {{ g.value(targetres, SDO.dateCreated).replace("T"," ").replace("Z"," ") }}
+            </dd>
+            {% endif %}
+
+            {% if g.value(targetres, SDO.dateModified) %}
+            <dt class="dateModified" title="The date and time at which the software/service was last modified">Last modified</dt>
+            <dd class="dateModified">
+                {{ g.value(targetres, SDO.dateModified).replace("T"," ").replace("Z"," ")  }}
+            </dd>
+            {% endif %}
+
         </dl>
     </div>
 

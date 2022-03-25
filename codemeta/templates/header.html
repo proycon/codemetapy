@@ -1,0 +1,21 @@
+        <meta content="text/html; charset=utf-8" http-equiv="content-type"/>
+        <title>
+        {% if res and (res, SDO.name, None) in g %}
+            {{ g.value(res, SDO.name) }}
+        {% elif res and (res, SKOS.prefLabel, None) in g %}
+            {{ g.value(res, SKOS.prefLabel) }}
+        {% elif res and (res, RDFS.label, None) in g %}
+            {{ g.value(res, RDFS.label) }}
+        {% elif toolstore %}
+            Tool Index
+        {% endif %}
+        </title>
+        {% if css %}
+        {% for css_url in css %}
+        <link href="{{ css_url }}" rel="stylesheet" />
+        {% endfor %}
+        {% endif %}
+        {% if baseuri and toolstore %}
+        <link rel="alternate" type="application/json+ld" href="{{ res }}.json" />
+        <link rel="alternate" type="text/turtle" href="{{ res }}.ttl" />
+        {% endif %}

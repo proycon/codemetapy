@@ -1,0 +1,25 @@
+
+<dl>
+<dt>Name</dt>
+<dd>
+    {% if (genres, SDO.name, None) in g %}
+     <span property="schema:name">{{ g.value(genres, SDO.name) }}</span>
+    {% elif (genres, SKOS.prefLabel, None) in g %}
+     <span property="rdfs:label">{{ g.value(genres, SKOS.prefLabel) }}</span>
+    {% elif (genres, RDFS.label, None)  in g%}
+     <span property="rdfs:label">{{ g.value(genres, SDO.label) }}</span>
+    {% endif %}
+</dd>
+<dt>Type</dt>
+<dd>
+    {% if (genres, RDF.type, None) in g %}
+     <span property="rdf:type">{{ g.value(genres,RDF.type) }}</span>
+    {% endif %}
+</dd>
+<dt>URL</dt>
+<dd>
+    {% if (genres, SDO.url, None) in g %}
+     <span property="schema:name">{{ g.value(genres, SDO.url) }}</span>
+    {% endif %}
+</dd>
+</dl>

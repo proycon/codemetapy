@@ -2,7 +2,7 @@ import sys
 import json
 from typing import Union, IO
 from rdflib import Graph, URIRef, BNode, Literal
-from codemeta.common import AttribDict, license_to_spdx, SDO, CONTEXT, CODEMETA_SOURCE, CODEMETA_LOCAL_SOURCE, SCHEMA_SOURCE, SCHEMA_LOCAL_SOURCE, STYPE_SOURCE, STYPE_LOCAL_SOURCE, init_context, REPOSTATUS_LOCAL_SOURCE, REPOSTATUS_SOURCE
+from codemeta.common import AttribDict, license_to_spdx, SDO, CONTEXT, CODEMETA_SOURCE, CODEMETA_LOCAL_SOURCE, SCHEMA_SOURCE, SCHEMA_LOCAL_SOURCE, STYPE_SOURCE, STYPE_LOCAL_SOURCE, init_context, REPOSTATUS_LOCAL_SOURCE, REPOSTATUS_SOURCE, get_subgraph
 
 def flatten_singletons(data):
     """Recursively flattens singleton ``key: { "@id": url }`` instances to ``key: url``"""
@@ -163,11 +163,11 @@ class AutoFrame:
                     return obj
         return o
 
-def find_main(data):
-    """Find the main SoftwareSourceCode item in the graph"""
+def find_main(data, res: Union[URIRef,None]):
+    """Find the main item in the graph"""
     if '@graph' in data:
         for item in data:
-            if item.get("@type") == "SoftwareSourceCode" or item.get("type") == "SoftwareSourceCode":
+            if item.get("@id") == str(res):
                 return item, data
         return None, None
     else:
@@ -191,13 +191,17 @@ def serialize_to_jsonld(g: Graph, res: Union[URIRef,None], newuri: str) -> dict:
     """Serializes the RDF graph to JSON, taking care of 'framing' for embedded nodes"""
     init_context()
 
+    if res:
+        #Get the subgraph that focusses on this specific resource
+        g = get_subgraph(g, res)
+
     data = json.loads(g.serialize(format='json-ld', auto_compact=True, context=CONTEXT))
 
     #rdflib doesn't do 'framing' so we have to do it in this post-processing step:
     if res:
         data = AutoFrame(data).run(str(res)) or data
 
-        root, parent = find_main(data)
+        root, parent = find_main(data, res)
         if parent and len(data['@graph']) == 1 and res:
             #No need for @graph if it contains only one item now:
             parent.update(root)

@@ -1,31 +1,31 @@
-                         {% if res2 %}
-                         <span about="{{ res2 }}" typeof="{{ g.value(res2, RDF.type) }}">
-                             {% if (res2, RDF.type, SDO.Organization) in g %}
+                         {% if pores %}
+                         <span about="{{ pores }}" typeof="{{ g.value(pores, RDF.type) }}">
+                             {% if (pores, RDF.type, SDO.Organization) in g %}
                                 <i class="fa-users"></i>&nbsp;
                              {% else %}
                                 <i class="fa-user"></i>&nbsp;
                              {% endif %}
-                             {% if g.value(res2, SDO.url) %}
-                                <a rel="schema:url" href="{{ g.value(res2, SDO.url) }}">
-                             {% elif g.value(res2, SDO.email) %}
-                                <a rel="schema:email" href="mailto:{{ g.value(res2, SDO.email) }}">
+                             {% if g.value(pores, SDO.url) %}
+                                <a rel="schema:url" href="{{ g.value(pores, SDO.url) }}">
+                             {% elif g.value(pores, SDO.email) %}
+                                <a rel="schema:email" href="mailto:{{ g.value(pores, SDO.email) }}">
                              {% endif %}
-                             {% if g.value(res2, SDO.givenName) %}
-                                <span property="schema:givenName">{{ g.value(res2, SDO.givenName) }}</span>
+                             {% if g.value(pores, SDO.givenName) %}
+                                <span property="schema:givenName">{{ g.value(pores, SDO.givenName) }}</span>
                              {% endif %}
-                             {% if g.value(res2, SDO.familyName)  %}
-                                 <span property="schema:familyName">{{ g.value(res2, SDO.familyName) }}</span>
-                             {% elif g.value(res2, SDO.name)  %}
-                                 <span property="schema:name">{{ g.value(res2, SDO.name) }}</span>
+                             {% if g.value(pores, SDO.familyName)  %}
+                                 <span property="schema:familyName">{{ g.value(pores, SDO.familyName) }}</span>
+                             {% elif g.value(pores, SDO.name)  %}
+                                 <span property="schema:name">{{ g.value(pores, SDO.name) }}</span>
                              {% endif %}
-                             {% if g.value(res2, SDO.url) and g.value(res2, SDO.email) %}
-                                 </a> &lt;<a rel="schema:email" href="mailto:{{ g.value(res2, SDO.email) }}" class="email">{{ g.value(res2, SDO.email) }}</a>&gt;
-                             {% elif g.value(res2, SDO.url) or g.value(res2, SDO.email) %}
+                             {% if g.value(pores, SDO.url) and g.value(pores, SDO.email) %}
+                                 </a> &lt;<a rel="schema:email" href="mailto:{{ g.value(pores, SDO.email) }}" class="email">{{ g.value(pores, SDO.email) }}</a>&gt;
+                             {% elif g.value(pores, SDO.url) or g.value(pores, SDO.email) %}
                                  </a>
                              {% endif %}
 
-                             {% if g.value(res2, SDO.affiliation) %}
-                                 {% for affiliation_label, res3 in get_triples(g, res2, SDO.affiliation) %}
+                             {% if g.value(pores, SDO.affiliation) %}
+                                 {% for affiliation_label, res3 in get_triples(g, pores, SDO.affiliation) %}
                                  <span property="schema:affiliation" class="affiliation">
                                      {% if res3 and g.value(res3, SDO.url) %}
                                      (<a href="{{ g.value(res3, SDO.url) }}">{{ affiliation_label }}</a>)
@@ -36,8 +36,8 @@
                                  {% endfor %}
                              {% endif %}
 
-                             {% if g.value(res2, SDO.partOf) %}
-                                 {% for partof_label, res3 in get_triples(g, res2, SDO.partOf) %}
+                             {% if g.value(pores, SDO.partOf) %}
+                                 {% for partof_label, res3 in get_triples(g, pores, SDO.partOf) %}
                                  <span property="schema:affiliation">
                                      {% if res3 and g.value(res3, SDO.url) %}
                                      (<a href="{{ g.value(res3, SDO.url) }}">{{ partof_label }}</a>)

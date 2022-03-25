@@ -138,6 +138,27 @@ LICENSE_MAP = [ #maps some common licenses to SPDX URIs, mapped with a substring
     ("CC-BY-SA-4.0", "http://spdx.org/licenses/CC-BY-SA-4.0"), #not designed for software, not OSI-approved
 ]
 
+#Maps invalid characters in URIs to something sensible (especially characters from dependency version qualifiers)
+IDENTIFIER_MAP = [
+   ('>=', '-ge-'),
+   ('>=', '-le-'),
+   ('==', '-eq-'),
+   ('!=', '-ne-'),
+   ('^', '-ge-'), #used in npm version
+   ('>', '-gt-'),
+   ('<', '-lt-'),
+   ('=', '-eq-'),
+   (' ', '-'),
+   ('&', '-',),
+   ('/', '-',),
+   ('+', '-',),
+   (':', '-',),
+   (';', '-'),
+   ('----', '-'),
+   ('---', '-'),
+   ('--', '-'),
+]
+
 
 #properties that may only occur once, last one counts
 SINGULAR_PROPERTIES = ( SDO.name, SDO.version, SDO.description, CODEMETA.developmentStatus, SDO.dateCreated, SDO.dateModified, SDO.position )
@@ -157,6 +178,10 @@ def init_context():
                                            #     have in schema .org(without an extra @type: @id), ensure the two are
                                            #     equal (without the @type)
 
+def bind_graph(g: Graph):
+    g.bind('schema', SDO)
+    g.bind('codemeta', CODEMETA)
+    g.bind('stype', SOFTWARETYPES)
 
 def init_graph():
     """Initializes the RDF graph, the context and the prefixes"""
@@ -170,9 +195,7 @@ def init_graph():
 
     contextgraph = Graph()
     for x in (g, contextgraph):
-        x.bind('schema', SDO)
-        x.bind('codemeta', CODEMETA)
-        x.bind('stype', SOFTWARETYPES)
+        bind_graph(x)
 
     contextgraph.bind('rdfs', RDFS)
     contextgraph.bind('repostatus', REPOSTATUS)
@@ -437,6 +460,21 @@ def reconcile(g: Graph, res: URIRef, args: AttribDict):
 #        elif key == "license":
 #            data[key] = license_to_spdx(value, args)
 
+def get_subgraph(g: Graph, res: Union[URIRef,BNode], subgraph: Union[Graph,None] = None) -> Graph:
+    """Add everything referenced from the specified resource to the new subgraph"""
+
+    if subgraph is None:
+        subgraph = Graph()
+        bind_graph(subgraph)
+
+    for pred, obj in g[res]:
+        subgraph.add((res,pred,obj))
+        if isinstance(obj, (URIRef, BNode)):
+            get_subgraph(g, obj, subgraph)
+
+    return subgraph
+
+
 def getstream(source: str):
     """Opens an file (or use - for stdin) and returns the file descriptor"""
     if source == '-':
@@ -460,8 +498,9 @@ def generate_uri(identifier: Union[str,None] = None, baseuri: Union[str,None] = 
         identifier = "N" + "%032x" % random.getrandbits(128)
     else:
         identifier = identifier.lower()
-        for c in (' ','&','/','+',':',',',';'):
-            identifier = identifier.replace(c,'-')
+        for pattern, replacement in IDENTIFIER_MAP:
+            identifier = identifier.replace(pattern,replacement) #not the most efficient but it'll do
+        identifier = identifier.strip("-")
     if prefix and prefix[-1] not in ('/','#'):
         prefix += '/'
     if not baseuri:

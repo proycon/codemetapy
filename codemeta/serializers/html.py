@@ -4,7 +4,7 @@ from datetime import datetime
 from rdflib import Graph, URIRef, BNode, Literal
 from rdflib.namespace import RDF, SKOS, RDFS
 from typing import Union, IO
-from codemeta.common import AttribDict, REPOSTATUS, license_to_spdx, SDO, CODEMETA, SOFTWARETYPES, SCHEMA_SOURCE, CODEMETA_SOURCE, CONTEXT, DUMMY_NS, SCHEMA_LOCAL_SOURCE, SCHEMA_SOURCE, CODEMETA_LOCAL_SOURCE, CODEMETA_SOURCE, STYPE_SOURCE, STYPE_LOCAL_SOURCE, init_context, SINGULAR_PROPERTIES, merge_graphs
+from codemeta.common import AttribDict, REPOSTATUS, license_to_spdx, SDO, CODEMETA, SOFTWARETYPES, SCHEMA_SOURCE, CODEMETA_SOURCE, CONTEXT, DUMMY_NS, SCHEMA_LOCAL_SOURCE, SCHEMA_SOURCE, CODEMETA_LOCAL_SOURCE, CODEMETA_SOURCE, STYPE_SOURCE, STYPE_LOCAL_SOURCE, init_context, SINGULAR_PROPERTIES, merge_graphs, get_subgraph
 from codemeta import __path__ as rootpath
 from jinja2 import Environment, FileSystemLoader
 
@@ -91,14 +91,32 @@ def get_interface_types(g: Graph, res: Union[URIRef,None], contextgraph: Graph, 
 def serialize_to_html(g: Graph, res: Union[URIRef,None], args: AttribDict, contextgraph: Graph) -> dict:
     """Serialize to HTML with RDFa"""
 
-    env = Environment( loader=FileSystemLoader(os.path.join(rootpath[0], 'templates')), autoescape=True)
     if res:
-        template = env.get_template("softwaresourcecode.html")
+        #Get the subgraph that focusses on this specific resource
+        g = get_subgraph(g, res)
+
+    env = Environment( loader=FileSystemLoader(os.path.join(rootpath[0], 'templates')), autoescape=True, trim_blocks=True, lstrip_blocks=True)
+    if res:
+        if (res, RDF.type, SDO.SoftwareSourceCode) in g:
+            template = "page_softwaresourcecode.html"
+        elif (res, RDF.type, SDO.SoftwareApplication) in g \
+             or (res, RDF.type, SDO.WebPage) in g \
+             or (res, RDF.type, SDO.WebSite) in g \
+             or (res, RDF.type, SDO.WebAPI) in g \
+             or (res, RDF.type, SOFTWARETYPES.CommandLineApplication) in g \
+             or (res, RDF.type, SOFTWARETYPES.SoftwareLibrary) in g:
+            template = "page_targetproduct.html"
+        elif (res, RDF.type, SDO.Person) in g \
+            or (res, RDF.type, SDO.Organization):
+            template = "page_person_or_org.html"
+        else:
+            template = "page_generic.html"
         index = []
     else:
-        template = env.get_template("index.html")
+        template = "index.html"
         index = get_index(g)
-    return template.render(g=g, res=res, SDO=SDO,CODEMETA=CODEMETA, RDF=RDF, STYPE=SOFTWARETYPES, REPOSTATUS=REPOSTATUS, SKOS=SKOS, get_triples=get_triples, type_label=type_label, css=args.css, contextgraph=contextgraph, URIRef=URIRef, get_badge=get_badge, now=datetime.now().strftime("%Y-%m-%d %H:%M:%S"), index=index, get_interface_types=get_interface_types,baseuri=args.baseuri, toolstore=args.toolstore)
+    template = env.get_template(template)
+    return template.render(g=g, res=res, SDO=SDO,CODEMETA=CODEMETA, RDF=RDF, STYPE=SOFTWARETYPES, REPOSTATUS=REPOSTATUS, SKOS=SKOS, get_triples=get_triples, type_label=type_label, css=args.css, contextgraph=contextgraph, URIRef=URIRef, get_badge=get_badge, now=datetime.now().strftime("%Y-%m-%d %H:%M:%S"), index=index, get_interface_types=get_interface_types,baseuri=args.baseuri,baseurl=args.baseurl, toolstore=args.toolstore)
 
 
 
