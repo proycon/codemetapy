@@ -460,23 +460,21 @@ def reconcile(g: Graph, res: URIRef, args: AttribDict):
 #        elif key == "license":
 #            data[key] = license_to_spdx(value, args)
 
-def get_subgraph(g: Graph, res: Union[URIRef,BNode], subgraph: Union[Graph,None] = None) -> Graph:
+def get_subgraph(g: Graph, res: Union[URIRef,BNode], subgraph: Union[Graph,None] = None, history: set = None ) -> Graph:
     """Add everything referenced from the specified resource to the new subgraph"""
 
     if subgraph is None:
         subgraph = Graph()
         bind_graph(subgraph)
 
+    if history is None:
+        history = set()
+
     for pred, obj in g[res]:
-        if isinstance(obj, (URIRef, BNode)):
-            subgraph.add((res,pred,obj))
-            get_subgraph(g, obj, subgraph)
-        elif obj.startswith("http"):
-            subgraph.add((res,pred,URIRef(obj)))
-            #looks like it could be a URI still, check to be sure:
-            get_subgraph(g, URIRef(obj), subgraph)
-        else:
-            subgraph.add((res,pred,obj))
+        subgraph.add((res,pred,obj))
+        if isinstance(obj, (URIRef, BNode)) and obj not in history:
+            history.add(obj)
+            get_subgraph(g, obj, subgraph, history)
 
     return subgraph
 
