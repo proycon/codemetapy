@@ -338,13 +338,19 @@
         </dd>
         {% endif %}
 
-        {% if g.value(sscres, CODEMETA.softwareRequirements) %}
+        {% if (sscres,CODEMETA.softwareRequirements, None) in g or (sscres, SDO.softwareRequirements, None) in g %}
         <dt class="softwareRequirements" title="Software upon which this software relies to run and/or build">Software dependencies</dt>
         <dd class="softwareRequirements">
          <ul>
+         {% if g.value(sscres, CODEMETA.softwareRequirements) %}
          {% for label, res2 in get_triples(g, sscres, CODEMETA.softwareRequirements) %}
             <li property="schema:softwareRequirements">{{ label }}</li>
          {% endfor %}
+         {% elif g.value(sscres, SDO.softwareRequirements) %}
+         {% for label, res2 in get_triples(g, sscres, SDO.softwareRequirements) %}
+            <li property="schema:softwareRequirements">{{ label }}</li>
+         {% endfor %}
+         {% endif %}
          </ul>
         </dd>
         {% endif %}
@@ -390,7 +396,7 @@
         {% endif %}
 
         {% if g.value(sscres, SDO.dateModified) %}
-        <dt class="dateModified" title="The date and time at which the software (either this version or all versions) was last modified">Last modified</dt>
+        <dt class="dateModified" title="The date and time at which the software (this specific version, when available) was last modified">Last modified</dt>
         <dd class="dateModified">
             {{ g.value(sscres, SDO.dateModified).replace("T"," ").replace("Z"," ")  }}
 
