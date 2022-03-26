@@ -236,3 +236,17 @@ tr.softwaresourcecode span.dateModified {
 dd.executableName {
     font-family: monospace;
 }
+div.reference {
+    display: inline;
+}
+div.reference ul {
+    list-style: none;
+    margin: 0px;
+    padding: 0px;
+}
+div.reference ul, div.reference ul li {
+    display: inline;
+    font-style: italic;
+}
+div.reference ul li:after { content: ", "; }
+div.reference ul li:last-child:after { content: ""; }

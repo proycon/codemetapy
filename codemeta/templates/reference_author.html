@@ -1,20 +1,22 @@
-                         {% if res2 %}
-                         <span about="{{ res2 }}" typeof="{{ g.value(res2, RDF.type) }}">
-                             {% if g.value(res2, SDO.url) %}
-                                <a rel="schema:url" href="{{ g.value(res2, SDO.url) }}">
-                             {% elif g.value(res2, SDO.email) %}
-                                <a rel="schema:email" href="mailto:{{ g.value(res2, SDO.email) }}">
+                         {% if aures %}
+                         <span about="{{ aures }}" typeof="{{ g.value(aures, RDF.type) }}">
+                             {% if g.value(aures, SDO.url) %}
+                                <a rel="schema:url" href="{{ g.value(aures, SDO.url) }}">
+                             {% elif g.value(aures, SDO.email) %}
+                                <a rel="schema:email" href="mailto:{{ g.value(aures, SDO.email) }}">
                              {% endif %}
-                             {% if g.value(res2, SDO.familyName)  %}
-                                 <span property="schema:familyName">{{ g.value(res2, SDO.familyName) }}</span>,
-                                 <span property="schema:givenName">{{ g.value(res2, SDO.givenName) }}</span>
-                             {% elif g.value(res2, SDO.name)  %}
-                                 <span property="schema:name">{{ g.value(res2, SDO.name) }}</span>
+                             {% if g.value(aures, SDO.familyName)  %}
+                                 <span property="schema:familyName">{{ g.value(aures, SDO.familyName) }}</span>,
+                                 <span property="schema:givenName">{{ g.value(aures, SDO.givenName) }}</span>
+                             {% elif g.value(aures, SDO.name)  %}
+                                 <span property="schema:name">{{ g.value(aures, SDO.name) }}</span>
                              {% endif %}
-                             {% if g.value(res2, SDO.url) and g.value(res2, SDO.email) %}
-                                 </a> &lt;<a rel="schema:email" href="mailto:{{ g.value(res2, SDO.email) }}">{{ g.value(res2, SDO.email) }}</a>&gt;
-                             {% elif g.value(res2, SDO.url) or g.value(res2, SDO.email) %}
+                             {% if g.value(aures, SDO.url) and g.value(aures, SDO.email) %}
+                                 </a> &lt;<a rel="schema:email" href="mailto:{{ g.value(aures, SDO.email) }}">{{ g.value(aures, SDO.email) }}</a>&gt;
+                             {% elif g.value(aures, SDO.url) or g.value(aures, SDO.email) %}
                                  </a>
+                             {% else %}
+                                {{ aures }}
                              {% endif %}
                          </span>
                          {% else %}

@@ -1,7 +1,7 @@
 <div class="reference" about="{{ ref }}" typeof="{{ g.value(ref, RDF.type ) }}">
 
 <ul>
-     {% for label, res2 in get_triples(g, res, SDO.author) %}
+     {% for label, aures in get_triples(g, ref, SDO.author) %}
      <li property="schema:author">
          {% include 'reference_author.html' %}
      </li>
@@ -26,27 +26,26 @@
 {% if g.value(ref, SDO.isPartOf) and g.value( g.value(ref, SDO.isPartOf) , SDO.datePublished) %}
     {% set parentref = g.value(ref, SDO.isPartOf) %}
     <span about="{{ parentref }}" typeof="{{ g.value(parentref, RDF.type) }}">
-    In:
+    . In:
     {% if g.value(parentref, SDO.name) %}
     <span property="schema:name">{{ g.value(parentref, SDO.name) }}</span>
     {% endif %}
     {% if g.value(parentref, SDO.issue) %}
-    , <span property="schema:issue">{{ g.value(parentref, SDO.issue) }}</span>
+    , <span property="schema:issue" title="The issue (e.g. journal/proceedings) in which this publication has been published">{{ g.value(parentref, SDO.issue) }}</span>
     {% endif %}
     </span>
 {% endif %}
 
 {% if g.value(ref, SDO.pageStart)  and g.value(ref, SDO.pageEnd) %}
-, <span property="schema:pageStart">{{ g.value(ref, SDO.pageStart) }}</span>-<span property="schema:pageEnd">{{ g.value(ref, SDO.pageEnd) }}</span>
+, <span property="schema:pageStart" title="page number where this publication can be found">{{ g.value(ref, SDO.pageStart) }}</span>-<span property="schema:pageEnd">{{ g.value(ref, SDO.pageEnd) }}</span>
 {% elif g.value(ref, SDO.pagination) %}
-, <span property="schema:pagination">{{ g.value(ref, SDO.pagination) }}</span>
+, <span property="schema:pagination" title="page number where this publication ends">{{ g.value(ref, SDO.pagination) }}</span>
 {% endif %}
 
-{% if ref.find("doi.org") %}
-, <a property="schema:identifier" href="{{ ref }}">{{ ref }}</a>
+{% if ref.find("doi.org") != -1 %}
+, <a property="schema:identifier" href="{{ ref }}" title="The DOI identifier">{{ ref }}</a>
 {% elif ref.find("doi:") != -1 %}
-, <span property="schema:identifier">{{ ref }}</a>
-{% elif g.value(ref, SDO.identifier) %}
-, <span property="schema:identifier">{{ g.value(ref, SDO.identifier) }}</span>
+, <span property="schema:identifier" title="The DOI identifier">{{ ref }}</a>
 {% endif %}
+
 </div>
