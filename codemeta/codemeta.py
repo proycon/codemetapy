@@ -26,7 +26,7 @@ from rdflib.namespace import RDF
 from rdflib.plugins.shared.jsonld.context import Context
 import rdflib.plugins.serializers.jsonld
 
-from codemeta.common import init_graph, init_context, CODEMETA, AttribDict, getstream, CONTEXT, SDO, reconcile, add_triple, generate_uri
+from codemeta.common import init_graph, init_context, CODEMETA, AttribDict, getstream, CONTEXT, SDO, reconcile, add_triple, generate_uri, remap_uri
 import codemeta.crosswalk
 import codemeta.parsers.python
 import codemeta.parsers.debian
@@ -123,9 +123,9 @@ def main():
     if output:
         print(output)
 
-def serialize(g: Graph, res: Union[URIRef,BNode], args: AttribDict, newuri: Union[str,None] = None, contextgraph: Union[Graph,None] = None) -> Graph:
+def serialize(g: Graph, res: Union[URIRef,BNode], args: AttribDict, contextgraph: Union[Graph,None] = None) -> Graph:
     if args.output == "json":
-        doc = serialize_to_jsonld(g, res, newuri)
+        doc = serialize_to_jsonld(g, res)
         if args.outputfile and args.outputfile != "-":
             with open(args.outputfile,'w',encoding='utf-8') as fp:
                 fp.write(json.dumps(doc, indent=4, ensure_ascii=False))
@@ -223,19 +223,27 @@ def build(**kwargs):
 
     g, contextgraph = init_graph(args.no_cache)
 
-    founduri = False #indicates whether we found a preferred URI or not
+    seturi = False #indicates whether we have set a final URI
 
 
-    if hasattr(args, 'baseuri') and args.baseuri:
+    if args.baseuri:
         args.baseuri = args.baseuri.strip('" ')
-    if hasattr(args, 'codeRepository') and args.codeRepository:
-        #Use the URI passed
+
+    if args.baseuri and args.identifier:
+        #Explicit identifier and baseuri passed, authoritative
+        identifier = args.identifier.strip('" ')
+        uri = generate_uri(identifier, args.baseuri)
+        print(f"URI set based on explicit identifier: {uri}",file=sys.stderr)
+        seturi = True
+    elif args.codeRepository:
+        #Use the one from the codeRepository that was explicitly passed
         uri = args.codeRepository.strip('"')
-        founduri = True
+        print(f"URI derived from explicitly passed codeRepository: {uri}",file=sys.stderr)
+        seturi = True
     else:
         #Generate a temporary ID to use for the SoftwareSourceCode resource
         #The ID will be overwritten with a more fitting one upon serialisation
-        if hasattr(args, 'identifier') and args.identifier:
+        if args.identifier:
             identifier = args.identifier.strip('"')
         else:
             identifier = os.path.basename(inputsources[0][0]).lower()
@@ -244,6 +252,8 @@ def build(**kwargs):
             identifier = identifier.replace(".pom.xml","").replace("pom.xml","")
             identifier = identifier.replace(".package.json","").replace("package.json","")
         uri = generate_uri(identifier, args.baseuri)
+        print(f"URI automatically generated, may be overriden later: {uri}",file=sys.stderr)
+        seturi = False #this URI is not authoritative and will be overwritten later
 
     #add the root resource
     res = URIRef(uri)
@@ -266,29 +276,29 @@ def build(**kwargs):
         elif inputtype == "python":
             print(f"Obtaining python package metadata for: {source}",file=sys.stderr)
             #source is a name of a package
-            prefuri = codemeta.parsers.python.parse_python(g, res, source, crosswalk, args) or prefuri
+            prefuri = codemeta.parsers.python.parse_python(g, res, source, crosswalk, args)
         elif inputtype == "debian":
             print(f"Parsing debian package from {source}",file=sys.stderr)
             aptlines = getstream(source).read().split("\n")
-            prefuri = codemeta.parsers.debian.parse_debian(g, res, aptlines, crosswalk, args) or prefuri
+            prefuri = codemeta.parsers.debian.parse_debian(g, res, aptlines, crosswalk, args)
         elif inputtype == "nodejs":
             print(f"Parsing npm package.json from {source}",file=sys.stderr)
             f = getstream(source)
-            prefuri = codemeta.parsers.nodejs.parse_nodejs(g, res, f, crosswalk, args) or prefuri
+            prefuri = codemeta.parsers.nodejs.parse_nodejs(g, res, f, crosswalk, args)
         elif inputtype == "java":
             print(f"Parsing java/maven pom.xml from {source}",file=sys.stderr)
             f = getstream(source)
-            prefuri = codemeta.parsers.java.parse_java(g, res, f, crosswalk, args) or prefuri
+            prefuri = codemeta.parsers.java.parse_java(g, res, f, crosswalk, args)
         elif inputtype == "json":
             print(f"Parsing json-ld file from {source}",file=sys.stderr)
-            prefuri = codemeta.parsers.jsonld.parse_jsonld(g, res, getstream(source), args) or prefuri
+            prefuri = codemeta.parsers.jsonld.parse_jsonld(g, res, getstream(source), args)
         elif inputtype == "github":
             source = source.replace("https://api.github.com/repos/","")
             source = source.replace("https://github.com/","")
             source = source.replace("git@github.com:","")
             if source.endswith(".git"): source = source[:-4]
             print(f"Querying GitHub API for {source}",file=sys.stderr)
-            prefuri = codemeta.parsers.github.parse_github(g, res, source, args) or prefuri
+            prefuri = codemeta.parsers.github.parse_github(g, res, source, args)
         elif inputtype in ('authors', 'contributors','maintainers'):
             print(f"Extracting {inputtype} from {source}",file=sys.stderr)
             if inputtype == 'authors':
@@ -302,28 +312,30 @@ def build(**kwargs):
             raise ValueError(f"Unknown input type: {inputtype}")
 
 
-        #Set preferred URL
-        if prefuri and not founduri:
+        #Set preferred URL if we haven't found a URI yet
+        if prefuri and not seturi:
             uri = prefuri
-            print(f"Setting preferred URI to {uri} based on source {source}",file=sys.stderr)
-            founduri = True
+            print(f"    Setting preferred URI to {uri} based on source {source}",file=sys.stderr)
+            seturi = True
 
+    #Process command-line arguments last
     for key in props:
         if hasattr(args, key):
             value = getattr(args, key)
             if value: value = value.strip('"')
             if value:
                 add_triple(g, res, key, value, args, replace=True)
-                if key == 'identifier' and not founduri:
-                    if args.baseuri:
-                        uri = args.baseuri +  identifier
-                    else:
-                        uri = "undefined:" + identifier
-                    founduri = True
 
+
+    if uri != str(res):
+        print(f"Remapping URI: {res} -> {uri}",file=sys.stderr)
+        g = remap_uri(g, str(res), uri)
+        res = URIRef(uri)
+
+    #Test and fix conflicts in the graph (and report them)
     reconcile(g, res, args)
 
-    return serialize(g, res, args, uri, contextgraph)
+    return serialize(g, res, args, contextgraph)
 
 
 

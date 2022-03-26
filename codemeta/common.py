@@ -231,7 +231,7 @@ def init_graph(no_cache=False):
 
 class AttribDict(dict):
     """Simple dictionary that is addressable via attributes"""
-    def __init__(self, d):
+    def __init__(self, d: dict):
         self.__dict__ = d
 
     def __getattr__(self, key):
@@ -485,15 +485,45 @@ def getstream(source: str):
         return sys.stdin
     return open(source,'r',encoding='utf-8')
 
-def merge_graphs(g: Graph ,g2: Graph):
-    """Merge two graphs, but taking care to replace certain properties that are known to take a single value"""
+
+def remap_uri(g: Graph, map_uri_from, map_uri_to) -> Graph:
+    """Remap URIRefs and return a new graph. Only handles subjects and objects."""
+    res = URIRef(map_uri_from)
+    if (res, None, None) in g or (None,None,res) in g:
+        g2 = Graph()
+        bind_graph(g2)
+        #pylint: disable=W1114 #arguments are not out of order here
+        merge_graphs(g2, g, map_uri_from, map_uri_to)
+        return g2
+    else:
+        #nothing to do, return input as-is
+        return g
+
+def merge_graphs(g: Graph ,g2: Graph, map_uri_from=None, map_uri_to=None):
+    """Merge two graphs, but taking care to replace certain properties that are known to take a single value, and mapping URIs where needed"""
+    i = 0
+    remapped = 0
+    removed = 0
     both, first, second = graph_diff(g, g2)
     for (s,p,o) in second:
+        if map_uri_from and map_uri_to:
+            if s == URIRef(map_uri_from):
+                s = URIRef(map_uri_to)
+                remapped += 1
+            if o == URIRef(map_uri_from):
+                remapped += 1
+                o = URIRef(map_uri_to)
+        if isinstance(o, URIRef) and str(o).startswith(DUMMY_NS):
+            #remove dummy namespace
+            o = Literal(str(o).replace(DUMMY_NS, ""))
         if p in SINGULAR_PROPERTIES:
             #remove existing triples in the graph
             for (s2,p2,o2) in g.triples((s,p,None)):
                 g.remove((s2,p2,o2))
+                removed += 1
         g.add((s,p,o))
+        i += 1
+    print(f"    Merged {i} triples, removed {removed} superseded values, remapped {remapped} uris",file=sys.stderr)
 
 
 def generate_uri(identifier: Union[str,None] = None, baseuri: Union[str,None] = None, prefix: str= ""):

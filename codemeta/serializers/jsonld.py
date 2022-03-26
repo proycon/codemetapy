@@ -167,7 +167,7 @@ def find_main(data, res: Union[URIRef,None]):
     """Find the main item in the graph"""
     if '@graph' in data:
         for item in data:
-            if item.get("@id") == str(res):
+            if isinstance(item, dict) and item.get("@id") == str(res):
                 return item, data
         return None, None
     else:
@@ -187,7 +187,7 @@ def rewrite_context(context):
             elif value == REPOSTATUS_LOCAL_SOURCE:
                 context[i] = REPOSTATUS_SOURCE
 
-def serialize_to_jsonld(g: Graph, res: Union[URIRef,None], newuri: str) -> dict:
+def serialize_to_jsonld(g: Graph, res: Union[URIRef,None]) -> dict:
     """Serializes the RDF graph to JSON, taking care of 'framing' for embedded nodes"""
 
     if res:
@@ -207,13 +207,6 @@ def serialize_to_jsonld(g: Graph, res: Union[URIRef,None], newuri: str) -> dict:
             del data['@graph']
             root = parent
 
-        #assign the new ID to the root
-        if newuri:
-            if 'id' in root:
-                del root['id']
-            root['@id'] = newuri
-
-    #flatten singletons (contains only @id)
     data = remove_blank_ids(data)
     data = sort_by_position(data)
     if '@context' in data:

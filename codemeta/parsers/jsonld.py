@@ -30,6 +30,32 @@ def parse_jsonld(g: Graph, res: Union[BNode, URIRef,None], file_descriptor: IO, 
     return parse_jsonld_data(g,res, data, args)
 
 
+def find_main_id(data: dict)  -> Union[str,None]:
+    """Find the main URI in the JSON-LD resource, if there is only one, return None otherwise"""
+    if '@graph' in data and len(data['@graph']) == 1:
+        root = data['@graph'][0]
+    else:
+        root = data
+
+    for k in ('@id','id'):
+        if k in root:
+            return root[k]
+
+    return None
+
+
+def inject_uri(data: dict, res: URIRef):
+    if '@graph' in data and len(data['@graph']) == 1:
+        data['@graph'][0]["@id"] = str(res)
+        print(f"    Injected URI {res}",file=sys.stderr)
+    elif '@graph' in data and len(data['@graph']) == 0:
+        print("    NOTE: Graph is empty!",file=sys.stderr)
+    elif '@graph' not in data:
+        data["@id"] = str(res)
+        print(f"    Injected URI {res}",file=sys.stderr)
+    else:
+        raise Exception("JSON-LD file does not describe a single resource (did you mean to use --graph instead?)")
+
 def parse_jsonld_data(g: Graph, res: Union[BNode, URIRef,None], data: dict, args: AttribDict) -> Union[str,None]:
     #download schemas needed for context
     init_context()
@@ -37,29 +63,17 @@ def parse_jsonld_data(g: Graph, res: Union[BNode, URIRef,None], data: dict, args
     #preprocess json
     if '@context' not in data:
         data['@context'] = CONTEXT
-        print("WARNING: Not a valid JSON-LD document, @context missing! Attempting to inject automatically...", file=sys.stderr)
+        print("    NOTE: Not a valid JSON-LD document, @context missing! Attempting to inject automatically...", file=sys.stderr)
 
     #rewrite context using the local schemas
     rewrite_context(data['@context'])
 
-    prefuri = None
-    if isinstance(res, URIRef):
-        if '@graph' in data and len(data['@graph']) == 1:
-            #force same ID as the resource (to facilitate merging), but return the preferred URI to be used on serialisation again
-            for k in ('id','@id'):
-                if k in data['@graph'][0]:
-                    prefuri = data['@graph'][0][k]
-            data['@graph'][0]["@id"] = str(res)
-            if 'id' in data['@graph'][0]: del data['@graph'][0]['id'] #prefer @id over id
-        elif '@id' in data or 'id' in data:
-            #force same ID as the resource (to facilitate merging), but return the preferred URI to be used on serialisation again
-            for k in ('id','@id'):
-                if k in data:
-                    prefuri = data[k]
-            data["@id"] = str(res)
-            if 'id' in data: del data['id'] #prefer @id over id
-        elif '@graph' not in data:
-            data["@id"] = str(res)
+    founduri = find_main_id(data)
+    if not founduri and isinstance(res, URIRef):
+        #JSON-LD doesn't specify an ID at all, inject one prior to parsing with rdflib
+        inject_uri(data, res)
+    else:
+        print(f"    Found main resource with URI {founduri}",file=sys.stderr)
 
     #reserialize
     data = json.dumps(data, indent=4)
@@ -69,7 +83,7 @@ def parse_jsonld_data(g: Graph, res: Union[BNode, URIRef,None], data: dict, args
     g2.parse(data=data, format="json-ld", context=CONTEXT, publicID=DUMMY_NS)
     # ^--  We assign an a dummy namespace to items that are supposed to be an ID but aren't
 
-    merge_graphs(g,g2)
+    merge_graphs(g,g2, map_uri_from=founduri, map_uri_to=str(res) if res else None)
 
-    if not (isinstance(prefuri,str) and prefuri.startswith("undefined:")):
-        return prefuri #return preferred uri
+    if not (isinstance(founduri,str) and founduri.startswith("undefined:")):
+        return founduri #return preferred uri
