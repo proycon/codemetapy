@@ -169,7 +169,7 @@ def read(**kwargs):
     else:
         res = None
 
-    return serialize(g, res, args, None, contextgraph)
+    return serialize(g, res, args, contextgraph)
 
 
 def build(**kwargs):
