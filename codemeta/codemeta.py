@@ -217,9 +217,9 @@ def build(**kwargs):
                 inputsources = [(".".join(d.split(".")[:-1]),"python")]
                 break
             if not inputsources:
-                raise Exception("Could not generate egg_info (is python3 pointing to the right interpreter?)",file=sys.stderr)
+                raise Exception("Could not generate egg_info (is python3 pointing to the right interpreter?)")
         else:
-            raise Exception("No input files specified (use - for stdin)",file=sys.stderr)
+            raise Exception("No input files specified (use - for stdin)")
 
     g, contextgraph = init_graph(args.no_cache)
 
