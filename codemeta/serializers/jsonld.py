@@ -207,7 +207,6 @@ def serialize_to_jsonld(g: Graph, res: Union[URIRef,None]) -> dict:
             del data['@graph']
             root = parent
 
-    #data = remove_blank_ids(data)
     data = sort_by_position(data)
     if '@context' in data:
         rewrite_context(data['@context'])

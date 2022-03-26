@@ -55,7 +55,7 @@ def parse_github(g: Graph, res: Union[URIRef, BNode], source, args: AttribDict) 
     """Query and parse from the github API"""
 
     try:
-        owner, repo = source.split("/")
+        owner, repo = source.strip("/").split("/")
     except:
         raise ValueError("Github API sources must follow owner/repo syntax")
 
