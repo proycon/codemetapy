@@ -80,10 +80,15 @@ div.go {
     background: #e1275e;
     text-align: center;
     border-radius: 25px;
+    color: white;
+    font-weight: bold;
 }
 div.go a {
     color: white;
     font-weight: bold;
+}
+div.go i {
+    font-size: 125%;
 }
 div.go strong {
     display: block;
