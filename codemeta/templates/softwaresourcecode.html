@@ -20,7 +20,7 @@
     </div>
     {% elif g.value(sscres, SDO.url) %}
     <div class="go">
-        <i class="fa-home"><i>
+        <i class="fa-home"></i>
         <a rel="schema:url" href="{{ g.value(sscres, SDO.url) }}">
             <strong>Go to the software website</strong>
             <tt>{{ g.value(sscres, SDO.url) }}</tt>
@@ -28,7 +28,7 @@
     </div>
     {% elif g.value(sscres, SDO.codeRepository) %}
     <div class="go">
-        <i class="fa-code-branch"><i>
+        <i class="fa-code-branch"></i>
         <a rel="schema:url" href="{{ g.value(sscres, SDO.codeRepository) }}">
             <strong>Go to the source repository</strong>
             <tt>{{ g.value(sscres, SDO.codeRepository) }}</tt>

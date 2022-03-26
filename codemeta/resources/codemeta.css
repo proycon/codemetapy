@@ -88,10 +88,9 @@ div.go a {
     font-weight: bold;
 }
 div.go i {
-    font-size: 125%;
+    font-size: 200%;
 }
 div.go strong {
-    display: block;
     font-size: 125%;
 }
 div.go tt {
