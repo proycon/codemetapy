@@ -26,7 +26,7 @@ def get_triples(g: Graph, res: Union[URIRef,BNode,None], prop, labelprop=SDO.nam
     if havepos:
         results.sort(key=lambda x: x[2])
     if abcsort:
-        results.sort()
+        results.sort(key=lambda x: x[0].lower())
     return [ tuple(x[:2]) for x in results ]
 
 def get_index(g: Graph):
