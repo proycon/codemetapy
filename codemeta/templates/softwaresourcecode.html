@@ -391,6 +391,10 @@
         <dt class="dateModified" title="The date and time at which the software (either this version or all versions) was last modified">Last modified</dt>
         <dd class="dateModified">
             {{ g.value(sscres, SDO.dateModified).replace("T"," ").replace("Z"," ")  }}
+
+            {% for img, url, label in get_badge(g, sscres, "lastcommits") %}
+            {% include 'badge.html' %}
+            {% endfor %}
         </dd>
         {% endif %}
 

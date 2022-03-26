@@ -56,6 +56,9 @@ def get_badge(g: Graph, res: Union[URIRef,None], key):
         elif key == "issues":
             yield f"https://img.shields.io/github/issues/{owner}/{repo}.svg?style=flat&color=5c7297", None, "The number of open issues on the issue tracker"
             yield f"https://img.shields.io/github/issues-closed/{owner}/{repo}.svg?style=flat&color=5c7297", None, "The number of closes issues on the issue tracker"
+        elif key == "lastcommit":
+            yield f"https://img.shields.io/github/last-commit/{owner}/{repo}.svg?style=flat&color=5c7297", None, "Last commit (main branch). Gives an indication of project development activity and rough indication of how up-to-date the latest release is."
+            yield f"https://img.shields.io/github/commits-since/{owner}/{repo}/latest.svg?style=flat&color=5c7297&sort=semver", None, "Number of commits since the last release. Gives an indication of project development activity and rough indication of how up-to-date the latest release is."
 
 def type_label(g: Graph, res: Union[URIRef,None]):
     label = g.value(res, RDF.type)
