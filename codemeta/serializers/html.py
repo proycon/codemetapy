@@ -34,7 +34,7 @@ def get_index(g: Graph):
     for res,_,_ in g.triples((None, RDF.type, SDO.SoftwareSourceCode)):
         label = g.value(res, SDO.name)
         results.append((res, label))
-    results.sort(key=lambda x: x[1])
+    results.sort(key=lambda x: x[1].lower())
     return results
 
 
