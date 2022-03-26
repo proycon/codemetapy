@@ -2,7 +2,7 @@ import sys
 import json
 from rdflib import Graph, URIRef, BNode, Literal
 from typing import Union, IO
-from codemeta.common import AttribDict, REPOSTATUS, license_to_spdx, SDO, SCHEMA_SOURCE, CODEMETA_SOURCE, CONTEXT, DUMMY_NS, SCHEMA_LOCAL_SOURCE, SCHEMA_SOURCE, CODEMETA_LOCAL_SOURCE, CODEMETA_SOURCE, STYPE_SOURCE, STYPE_LOCAL_SOURCE, init_context, SINGULAR_PROPERTIES, merge_graphs
+from codemeta.common import AttribDict, REPOSTATUS, license_to_spdx, SDO, SCHEMA_SOURCE, CODEMETA_SOURCE, CONTEXT, DUMMY_NS, SCHEMA_LOCAL_SOURCE, SCHEMA_SOURCE, CODEMETA_LOCAL_SOURCE, CODEMETA_SOURCE, STYPE_SOURCE, STYPE_LOCAL_SOURCE, init_context, SINGULAR_PROPERTIES, merge_graphs, generate_uri
 
 
 def rewrite_context(context):
@@ -85,5 +85,7 @@ def parse_jsonld_data(g: Graph, res: Union[BNode, URIRef,None], data: dict, args
 
     merge_graphs(g,g2, map_uri_from=founduri, map_uri_to=str(res) if res else None)
 
-    if not (isinstance(founduri,str) and founduri.startswith("undefined:")):
+    if not founduri and (res, SDO.identifier, None) in g and args.baseuri:
+        return generate_uri(g.value(res, SDO.identifier), args.baseuri)
+    elif founduri and not founduri.startswith("undefined:"):
         return founduri #return preferred uri
