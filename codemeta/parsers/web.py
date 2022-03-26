@@ -131,6 +131,10 @@ def parse_web(g: Graph, res: Union[URIRef, BNode], url, args: AttribDict) -> Ite
                     add_authors(g, targetres, clamdata['author'], baseuri=args.baseuri)
                 if clamdata['email']:
                     g.add((targetres, SDO.email, Literal(clamdata['email'])))
+                if clamdata['url']:
+                    g.add((targetres, SDO.url, Literal(clamdata['url'])))
+                else:
+                    g.add((targetres, SDO.url, Literal(url)))
                 if clamdata['provider']:
                     g.add((targetres, SDO.provider, Literal(clamdata['provider'])))
                 if clamdata['version']:
