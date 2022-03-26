@@ -1,12 +1,11 @@
 import sys
 import json
+from typing import Union, Iterator
 import requests
 import yaml
-from io import StringIO
-from typing import Union, IO
 from rdflib import Graph, URIRef, BNode, Literal
 from rdflib.namespace import RDF
-from codemeta.common import AttribDict, SDO, generate_uri
+from codemeta.common import AttribDict, SDO, generate_uri, add_authors, get_last_component
 from codemeta.parsers.jsonld import parse_jsonld_data
 from bs4 import BeautifulSoup
 
@@ -33,7 +32,31 @@ def get_meta(soup, *keys, default=""):
                 return value.get('content')
     return default
 
-def parse_web(g: Graph, res: Union[URIRef, BNode], url, args: AttribDict) -> Union[URIRef,BNode,None]:
+
+def get_soup(soup,elementname, attribname=None):
+    for e in soup.find_all(elementname):
+        if attribname:
+            v = e.get(attribname)
+            return v
+        elif e.text:
+            return e.text
+    return ""
+
+def parse_clam(soup):
+    return {
+        "name": get_soup(soup,"clam","name"),
+        "url": get_soup(soup, "clam", "baseurl"),
+        "description": get_soup(soup, "description"),
+        "author": get_soup(soup, "author"),
+        "provider": get_soup(soup, "affiliation"),
+        "email": get_soup(soup, "email"),
+        "version": get_soup(soup, "version"),
+        "license": get_soup(soup, "license")
+    }
+
+
+
+def parse_web(g: Graph, res: Union[URIRef, BNode], url, args: AttribDict) -> Iterator[Union[URIRef,BNode,None]]:
     r = requests.get(url, headers={ "Accept": "application/json+ld;q=1.0,application/json;q=0.9,application/x-yaml;q=0.8,application/xml;q=0.7;text/html;q=0.6;text/plain;q=0.1" })
     r.raise_for_status()
     contenttype = r.headers.get('content-type').split(';')[0].strip()
@@ -83,14 +106,39 @@ def parse_web(g: Graph, res: Union[URIRef, BNode], url, args: AttribDict) -> Uni
             if v: g.add((targetres, SDO.thumbnailUrl, Literal(v)))
 
             v = get_meta(soup, "schema:author", "author")
-            if v: g.add((targetres, SDO.author, Literal(v)))
+            if v: add_authors(g, targetres, v, baseuri=args.baseuri)
 
             v = get_meta(soup, "schema:keywords", "keywords")
             if v:
                 for item in v.split(","):
                     if item: g.add((targetres, SDO.keywords, Literal(v)))
 
-            return targetres
+            yield targetres
+            data = None
+    elif contenttype in ("application/xml", "text/xml"):
+        soup = BeautifulSoup(r.text, 'xml')
+        if soup.find("clam") and args.with_stypes:
+            print("    Parsing CLAM metadata",file=sys.stderr)
+            clamdata = parse_clam(soup)
+            for restype in (SDO.WebApplication, SDO.WebAPI):
+                assert clamdata['name']
+                targetres = URIRef(generate_uri(clamdata['name'], baseuri=args.baseuri,prefix=get_last_component(str(restype).lower())))
+                if clamdata['name']:
+                    g.add((targetres, SDO.name, Literal(clamdata['name'])))
+                if clamdata['description']:
+                    g.add((targetres, SDO.description, Literal(clamdata['description'])))
+                if clamdata['author']:
+                    add_authors(g, targetres, clamdata['author'], baseuri=args.baseuri)
+                if clamdata['email']:
+                    g.add((targetres, SDO.email, Literal(clamdata['email'])))
+                if clamdata['provider']:
+                    g.add((targetres, SDO.provider, Literal(clamdata['provider'])))
+                if clamdata['version']:
+                    g.add((targetres, SDO.version, Literal(clamdata['version'])))
+                yield targetres
+            data = None
+        else:
+            print("    Remote returned unrecognized XML",file=sys.stderr)
     else:
         print(f"    Remote returned unknown contenttype: {contenttype}",file=sys.stderr)
 
@@ -107,5 +155,3 @@ def parse_web(g: Graph, res: Union[URIRef, BNode], url, args: AttribDict) -> Uni
             raise NotImplementedError #TODO
         else:
             print(f"    Unable to detect data type of data returned by {url}",file=sys.stderr)
-
-    return None

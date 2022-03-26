@@ -267,11 +267,13 @@ def build(**kwargs):
         prefuri = None #preferred URI returned by the parsing method
         if inputtype == "web":
             print(f"Obtaining metadata from remote URL {source}",file=sys.stderr)
-            targetres = codemeta.parsers.web.parse_web(g, res, source, args)
-            if targetres and args.with_stypes:
-                print(f"Adding service (targetProduct) {source}",file=sys.stderr)
-                g.add((res, SDO.targetProduct, targetres))
-            else:
+            found = False
+            for targetres in codemeta.parsers.web.parse_web(g, res, source, args):
+                if targetres and args.with_stypes:
+                    found = True
+                    print(f"Adding service (targetProduct) {source}",file=sys.stderr)
+                    g.add((res, SDO.targetProduct, targetres))
+            if not found:
                 print(f"(no metadata found at remote URL)",file=sys.stderr)
         elif inputtype == "python":
             print(f"Obtaining python package metadata for: {source}",file=sys.stderr)
