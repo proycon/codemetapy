@@ -437,17 +437,17 @@ def reconcile(g: Graph, res: URIRef, args: AttribDict):
         print(f"{HEAD} license not set",file=sys.stderr)
 
     status = g.value(res, CODEMETA.developmentStatus)
-    if status and status.startswith(DUMMY_NS):
-        status = status[len(DUMMY_NS):]
+    if status and not status.startswith("http"):
         if status.lower() in REPOSTATUS_MAP.values():
             print(f"{HEAD} automatically converting status to repostatus URI",file=sys.stderr)
             g.set((res, CODEMETA.developmentStatus, URIRef("https://www.repostatus.org/#" + status.lower())))
         else:
+            print(f"{HEAD} status is not expressed using repostatus vocabulary: {status}",file=sys.stderr)
             g.set((res, CODEMETA.developmentStatus, Literal(status)))
 
     license = g.value(res, SDO.license)
-    if license and license.startswith(DUMMY_NS):
-        license = license_to_spdx(license[len(DUMMY_NS):])
+    if license and not license.startswith("http"):
+        license = license_to_spdx(license)
         if license.startswith("http"):
             print(f"{HEAD} automatically converting license to spdx URI",file=sys.stderr)
             g.set((res, SDO.license, URIRef(license)))
