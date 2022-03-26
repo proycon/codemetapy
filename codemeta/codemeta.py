@@ -128,9 +128,9 @@ def serialize(g: Graph, res: Union[URIRef,BNode], args: AttribDict, contextgraph
         doc = serialize_to_jsonld(g, res)
         if args.outputfile and args.outputfile != "-":
             with open(args.outputfile,'w',encoding='utf-8') as fp:
-                fp.write(json.dumps(doc, indent=4, ensure_ascii=False))
+                fp.write(json.dumps(doc, indent=4, ensure_ascii=False, sort_keys=True))
         else:
-            return json.dumps(doc, indent=4, ensure_ascii=False)
+            return json.dumps(doc, indent=4, ensure_ascii=False, sort_keys=True)
     elif args.output in ("turtle","ttl"):
         doc = serialize_to_turtle(g, res)
         if args.outputfile and args.outputfile != "-":
