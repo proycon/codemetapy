@@ -44,6 +44,8 @@
     <td class="description">
         {% if  (res, SDO.description, None) in g %}
         <em property="schema:description">{{ g.value(res, SDO.description) }}</em> {% if baseuri %}[<a href="{{ res }}">view more</a>]{% endif %}
+        {% else %}
+        <span class="negative">No description provided</span>
         {% endif %}
 
         {% if (res, SDO.applicationCategory, None) in g %}
@@ -72,8 +74,10 @@
             {% set repostatus = URIRef(g.value(res, CODEMETA.developmentStatus)) %}
             {% set repostatus_id = repostatus.split('#')[-1] %}
                 <a rel="codemeta:developmentStatus" href="{{ g.value(res, CODEMETA.developmentStatus) }}"><img src="https://www.repostatus.org/badges/latest/{{ repostatus_id }}.svg" title="{{ contextgraph.value(repostatus, SKOS.prefLabel) }}: {{ contextgraph.value(repostatus, SKOS.definition) }}" alt="{{ contextgraph.value(repostatus, SKOS.prefLabel) }}: {{ contextgraph.value(repostatus, SKOS.definition) }}"  /></a>
-        {% else %}
+        {% elif (res, CODEMETA.developmentStatus, None) in g %}
             {{ g.value(res, CODEMETA.developmentStatus) }}
+        {% else  %}
+            <span class="negative" title="No development status was provided nor could be extracted automatically">unknown</span>
         {% endif %}
     </td>
     <td class="maintainer">

@@ -163,7 +163,7 @@ span.negative {
     font-size: 0.9em;
 }
 .negative {
-    color: red;
+    color: #da4800 !important;
 }
 div.warning {
     color: white;
