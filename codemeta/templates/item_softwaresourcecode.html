@@ -29,18 +29,6 @@
         {% endfor %}
         </ul>
     </td>
-    <td class="links">
-        <ul>
-        {% if  (res, SDO.codeRepository, None) in g %}
-        <li><i class="fa-code-branch"></i>&nbsp;<a rel="schema:codeRepository" href="{{ g.value(res, SDO.codeRepository) }}" title="Here you can find the source code of this software. This is geared towards technical users who want to install the software themselves.">{{ g.value(res, SDO.codeRepository) }}</a></li>
-        {% endif %}
-        {% for _,_, value in g.triples((res, SDO.url, None)) %}
-        {% if value != g.value(res, SDO.codeRepository) %}
-        <li><i class="fa-home"></i>&nbsp;<a rel="schema:url" href="{{ g.value(res, SDO.url) }}" title="This is the project website associated with this software">{{ g.value(res, SDO.url) }}</a></li>
-        {% endif %}
-        {% endfor %}
-        </ul>
-    </td>
     <td class="description">
         {% if  (res, SDO.description, None) in g %}
         <em property="schema:description">{{ g.value(res, SDO.description) }}</em> {% if baseuri %}[<a href="{{ res }}">view more</a>]{% endif %}
@@ -68,6 +56,18 @@
         </div>
         {% endif %}
 
+    </td>
+    <td class="links">
+        <ul>
+        {% if  (res, SDO.codeRepository, None) in g %}
+        <li><i class="fa-code-branch"></i>&nbsp;<a rel="schema:codeRepository" href="{{ g.value(res, SDO.codeRepository) }}" title="Here you can find the source code of this software. This is geared towards technical users who want to install the software themselves.">{{ g.value(res, SDO.codeRepository) }}</a></li>
+        {% endif %}
+        {% for _,_, value in g.triples((res, SDO.url, None)) %}
+        {% if value != g.value(res, SDO.codeRepository) %}
+        <li><i class="fa-home"></i>&nbsp;<a rel="schema:url" href="{{ g.value(res, SDO.url) }}" title="This is the project website associated with this software">{{ g.value(res, SDO.url) }}</a></li>
+        {% endif %}
+        {% endfor %}
+        </ul>
     </td>
     <td class="developmentStatus" property="codemeta:developmentStatus">
         {% if (res, CODEMETA.developmentStatus, None) in g and g.value(res, CODEMETA.developmentStatus).find("repostatus") != -1 %}

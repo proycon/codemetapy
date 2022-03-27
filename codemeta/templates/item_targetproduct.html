@@ -16,19 +16,19 @@
         {% endfor %}
         </ul>
     </td>
-    <td class="links">
-        <ul>
-        {% for _,_, value in g.triples((targetres, SDO.url, None)) %}
-        <li><i class="fa-globe"></i>&nbsp;<a rel="schema:url" href="{{ value }}" title="For webapplications and webservices, this is whereyou can access the software as a service on the web">{{ value }}</a></li>
-        {% endfor %}
-        </ul>
-    </td>
     <td class="description" property="schema:description">
         {% if  (targetres, SDO.description, None) in g %}
         {% if g.value(targetres, SDO.description) != g.value(res, SDO.description) %}
         <em>{{ g.value(targetres, SDO.description) }}</em>
         {% endif %}
         {% endif %}
+    </td>
+    <td class="links">
+        <ul>
+        {% for _,_, value in g.triples((targetres, SDO.url, None)) %}
+        <li><i class="fa-globe"></i>&nbsp;<a rel="schema:url" href="{{ value }}" title="For webapplications and webservices, this is whereyou can access the software as a service on the web">{{ value }}</a></li>
+        {% endfor %}
+        </ul>
     </td>
     <td class="developmentStatus" property="codemeta:developmentStatus">
     </td>
