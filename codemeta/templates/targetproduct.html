@@ -76,6 +76,47 @@
             </dd>
             {% endif %}
 
+            {% if (targetres, SDO.softwareHelp, None) in g or (targetres, SDO.documentation, None) in g  %}
+            <dt class="documentation">Documentation</dt>
+            <dd class="documentation">
+            <ul>
+            {% if g.value(targetres, SDO.softwareHelp) %}
+            {% for _,_, res2 in g.triples((targetres, SDO.softwareHelp, None)) %}
+                {% if g.value(res2, SDO.name) and g.value(res2, SDO.url) %}
+                <li about="{{ res2 }}" typeof="{{ g.value(res2, RDF.type) }}"><i class="fa-book"></i>&nbsp;<a rel="schema:url" href="{{ g.value(res2, SDO.url) }}"><span property="schema:name">{{ g.value(res2, SDO.name) }}</span></a></li>
+                {% elif g.value(res2, SDO.url) %}
+                <li about="{{ res2 }}" typeof="{{ g.value(res2, RDF.type) }}"><i class="fa-book"></i>&nbsp;<a rel="schema:url" href="{{ g.value(res2, SDO.url) }}">{{ g.value(res2, SDO.url) }}</a></li>
+                {% endif %}
+            {% endfor %}
+            {% endif %}
+            {% if g.value(targetres, SDO.documentation) %}
+            {% for _,_, res2 in g.triples((targetres, SDO.documentation, None)) %}
+                {% if g.value(res2, SDO.name) and g.value(res2, SDO.url) %}
+                <li about="{{ res2 }}" typeof="{{ g.value(res2, RDF.type) }}"><i class="fa-book"></i>&nbsp;<a rel="schema:url" href="{{ g.value(res2, SDO.url) }}"><span property="schema:name">{{ g.value(res2, SDO.name) }}</span></a></li>
+                {% elif g.value(res2, SDO.url) %}
+                <li about="{{ res2 }}" typeof="{{ g.value(res2, RDF.type) }}"><i class="fa-book"></i>&nbsp;<a rel="schema:url" href="{{ g.value(res2, SDO.url) }}">{{ g.value(res2, SDO.url) }}</a></li>
+                {% endif %}
+            {% endfor %}
+            {% endif %}
+            </ul>
+            </dd>
+            {% endif %}
+
+
+            {% if g.value(targetres, SDO.termsOfService) %}
+            <dt class="termsOfService" title="The terms under which the service is offered">Terms of Service</dt>
+            <dd class="termsOfService">
+                <ul>
+                    {% for _,_, tos in g.triples((targetres, SDO.termsOfService, None)) %}
+                    {% if tos.startswith("http") %}
+                    <li><a rel="schema:termsOfService" href="{{ tos }}">{{ tos }}</a></li>
+                    {% else %}
+                    <li>{{ tos }}</li>
+                    {% endif %}
+                </ul>
+            </dd>
+            {% endif %}
+
             {% if g.value(targetres, SDO.provider)  %}
             <dt class="provider" title="The organisation (or person) that provides the service">Service Provider</dt>
             <dd class="provider">

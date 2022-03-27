@@ -1,5 +1,6 @@
 import sys
 import json
+import os.path
 from typing import Union, Iterator
 import requests
 import yaml
@@ -134,6 +135,8 @@ def parse_web(g: Graph, res: Union[URIRef, BNode], url, args: AttribDict) -> Ite
                     g.add((targetres, SDO.email, Literal(clamdata['email'])))
                 if clamdata['url']:
                     g.add((targetres, SDO.url, Literal(clamdata['url'])))
+                    if restype == SDO.WebAPI:
+                        g.add((targetres, SDO.documentation, Literal(os.path.join(clamdata['url'],"info")))) #Proposed in schemaorg/schemaorg#1423
                 else:
                     g.add((targetres, SDO.url, Literal(url)))
                 if clamdata['provider']:

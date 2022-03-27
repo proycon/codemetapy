@@ -167,7 +167,6 @@
         {% endif %}
 
 
-
         {% if g.value(sscres, SDO.softwareHelp) or g.value(sscres, CODEMETA.readme) %}
         <dt class="documentation">Documentation</dt>
         <dd class="documentation">
@@ -184,6 +183,15 @@
                 {% endif %}
                 {% if g.value(sscres, SDO.softwareHelp) %}
                 {% for _,_, res2 in g.triples((sscres, SDO.softwareHelp, None)) %}
+                    {% if g.value(res2, SDO.name) and g.value(res2, SDO.url) %}
+                    <li about="{{ res2 }}" typeof="{{ g.value(res2, RDF.type) }}"><i class="fa-book"></i>&nbsp;<a rel="schema:url" href="{{ g.value(res2, SDO.url) }}"><span property="schema:name">{{ g.value(res2, SDO.name) }}</span></a></li>
+                    {% elif g.value(res2, SDO.url) %}
+                    <li about="{{ res2 }}" typeof="{{ g.value(res2, RDF.type) }}"><i class="fa-book"></i>&nbsp;<a rel="schema:url" href="{{ g.value(res2, SDO.url) }}">{{ g.value(res2, SDO.url) }}</a></li>
+                    {% endif %}
+                {% endfor %}
+                {% endif %}
+                {% if g.value(sscres, SDO.documentation) %}
+                {% for _,_, res2 in g.triples((sscres, SDO.documentation, None)) %}
                     {% if g.value(res2, SDO.name) and g.value(res2, SDO.url) %}
                     <li about="{{ res2 }}" typeof="{{ g.value(res2, RDF.type) }}"><i class="fa-book"></i>&nbsp;<a rel="schema:url" href="{{ g.value(res2, SDO.url) }}"><span property="schema:name">{{ g.value(res2, SDO.name) }}</span></a></li>
                     {% elif g.value(res2, SDO.url) %}
