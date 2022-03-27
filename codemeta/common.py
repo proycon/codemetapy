@@ -4,6 +4,7 @@ import json
 import requests
 import random
 import re
+from collections import Counter
 from rdflib import Graph, Namespace, URIRef, BNode, Literal
 from rdflib.namespace import RDF, RDFS, SKOS
 from rdflib.compare import graph_diff
@@ -159,6 +160,69 @@ IDENTIFIER_MAP = [
    ('---', '-'),
    ('--', '-'),
 ]
+
+#keywords that may be indicative of a certain interface type
+INTERFACE_CLUES = [ #order matters, only one is picked
+   ("web application", SDO.WebApplication),
+   ("webapp", SDO.WebApplication),
+   ("web-based", SDO.WebApplication),
+   ("website", SDO.WebSite),
+   ("webpage", SDO.WebPage),
+   ("web service", SDO.WebAPI),
+   ("webservice", SDO.WebAPI),
+   ("restful", SDO.WebAPI),
+   ("rest service", SDO.WebAPI),
+   ("web api", SDO.WebAPI),
+   ("library", SOFTWARETYPES.SoftwareLibrary),
+   ("module", SOFTWARETYPES.SoftwareLibrary),
+   ("command-line", SOFTWARETYPES.CommandLineApplication),
+   ("command line", SOFTWARETYPES.CommandLineApplication),
+   ("commandline", SOFTWARETYPES.CommandLineApplication),
+   ("desktop application", SOFTWARETYPES.DesktopApplication),
+   ("windows application", SOFTWARETYPES.DesktopApplication),
+   ("windows software", SOFTWARETYPES.DesktopApplication),
+   ("mac application", SOFTWARETYPES.DesktopApplication),
+   ("graphical user-interface", SOFTWARETYPES.DesktopApplication),
+   ("graphical user interface", SOFTWARETYPES.DesktopApplication),
+   ("gnome", SOFTWARETYPES.DesktopApplication),
+   ("gtk+", SOFTWARETYPES.DesktopApplication),
+   (" qt ", SOFTWARETYPES.DesktopApplication),
+   (" gui", SOFTWARETYPES.DesktopApplication),
+   ("desktop gui", SOFTWARETYPES.DesktopApplication),
+   ("android app", SOFTWARETYPES.MobileApplication),
+   ("ios app", SOFTWARETYPES.MobileApplication),
+   ("mobile app", SOFTWARETYPES.MobileApplication),
+   ("in a terminal", SOFTWARETYPES.CommandLineApplication),
+   ("in the terminal", SOFTWARETYPES.CommandLineApplication),
+   ("from the terminal", SOFTWARETYPES.CommandLineApplication),
+   ("from a terminal", SOFTWARETYPES.CommandLineApplication),
+   (" api ", SOFTWARETYPES.SoftwareLibrary)
+]
+
+INTERFACE_CLUES_DEPS = {
+    "django": SOFTWARETYPES.WebApplication,
+    "flask": SOFTWARETYPES.WebApplication,
+    "clam": SOFTWARETYPES.WebApplication,
+    "react": SOFTWARETYPES.WebApplication,
+    "vue": SOFTWARETYPES.WebApplication,
+    "jquery": SOFTWARETYPES.WebApplication,
+    "gatsby": SOFTWARETYPES.WebApplication,
+    "angular": SOFTWARETYPES.WebApplication,
+    "laravel": SOFTWARETYPES.WebApplication,
+    "drupal": SOFTWARETYPES.WebApplication,
+    "wordpress": SOFTWARETYPES.WebApplication,
+    "joomla": SOFTWARETYPES.WebApplication,
+    "spring": SOFTWARETYPES.WebApplication,
+    "fastapi": SOFTWARETYPES.WebService, #the distinction webservice/webapplication on the basis of dependencies is fairly ambiguous
+    "bottle": SOFTWARETYPES.WebService,
+    "hug": SOFTWARETYPES.WebService,
+    "falcon": SOFTWARETYPES.WebService,
+    "tornado": SOFTWARETYPES.WebService,
+    "cherrypy": SOFTWARETYPES.WebService,
+    "ncurses": SOFTWARETYPES.TerminalApplication,
+    "click": SOFTWARETYPES.CommandLineApplication
+}
+
 
 
 #properties that may only occur once, last one counts
@@ -454,12 +518,46 @@ def reconcile(g: Graph, res: URIRef, args: AttribDict):
         else:
             g.set((res, SDO.license, Literal(license)))
 
-#        if key == "developmentStatus":
-#            if args.with_repostatus and value.strip().lower() in REPOSTATUS:
-#                #map to repostatus vocabulary
-#                data[key] = "https://www.repostatus.org/#" + REPOSTATUS[value.strip().lower()]
-#        elif key == "license":
-#            data[key] = license_to_spdx(value, args)
+    if (res, SDO.targetProduct, None) not in g:
+        #we have no target products, that means we have no associated interface types,
+        #see if we can extract some clues from the keywords or the description
+        #and add a targetproduct (with only a type)
+        guess_interfacetype(g,res)
+
+
+def guess_interfacetype(g: Graph, res: Union[URIRef,BNode]) -> Union[BNode,None]:
+    IDENTIFIER = g.value(res, SDO.identifier)
+    if not IDENTIFIER: IDENTIFIER = str(res)
+    HEAD = f"[CODEMETA VALIDATION ({IDENTIFIER})]"
+
+    counter = Counter() #we count clues for all kinds of types we can find and pick the highest one
+    keywords = [ o.lower() for _,_,o in g.triples((res, SDO.keywords, None)) ]
+    for clue, interfacetype in INTERFACE_CLUES:
+        for keyword in keywords:
+            if keyword.find(clue) != -1:
+                counter.update(interfacetype)
+    description = g.value(res, SDO.description)
+    if description:
+        description = description.lower()
+        for clue, interfacetype in INTERFACE_CLUES:
+            if description.find(clue) != -1:
+                counter.update(interfacetype)
+    #can we infer a type from the dependencies?
+    for _,_, depres in g.triples((res,SDO.softwareRequirements,None)):
+        depname = g.value(depres,SDO.name)
+        if depname:
+            depname = depname.lower()
+            if depname in INTERFACE_CLUES_DEPS:
+                counter.update(INTERFACE_CLUES_DEPS[depname])
+
+    if counter:
+        print(f"{HEAD} Guessing interface type {interfacetype} based on clues",file=sys.stderr)
+        interfacetype = max(counter)
+        targetres = BNode()
+        g.set((targetres, SDO.type, interfacetype))
+        g.set((res, SDO.targetProduct, targetres))
+        return targetres
+
 
 def get_subgraph(g: Graph, res: Union[URIRef,BNode], subgraph: Union[Graph,None] = None, history: set = None ) -> Graph:
     """Add everything referenced from the specified resource to the new subgraph"""
@@ -496,9 +594,8 @@ def remap_uri(g: Graph, map_uri_from, map_uri_to) -> Graph:
         #pylint: disable=W1114 #arguments are not out of order here
         merge_graphs(g2, g, map_uri_from, map_uri_to)
         return g2
-    else:
-        #nothing to do, return input as-is
-        return g
+    #nothing to do, return input as-is
+    return g
 
 def merge_graphs(g: Graph ,g2: Graph, map_uri_from=None, map_uri_to=None):
     """Merge two graphs, but taking care to replace certain properties that are known to take a single value, and mapping URIs where needed"""

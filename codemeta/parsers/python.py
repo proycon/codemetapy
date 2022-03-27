@@ -12,6 +12,8 @@ from rdflib.namespace import RDF
 from codemeta.common import AttribDict, add_triple, CODEMETA, SOFTWARETYPES, add_authors, SDO, COMMON_SOURCEREPOS, generate_uri, get_last_component
 from codemeta.crosswalk import readcrosswalk, CWKey
 
+
+
 def splitdependencies(s: str):
     """Split a string of multiple (python) dependencies"""
     begin = 0
@@ -164,7 +166,7 @@ def parse_python(g: Graph, res: Union[URIRef, BNode], packagename: str, crosswal
         isweb = False
         for (_,_, cat) in g.triples((res, SDO.applicationCategory,None)):
             islibrary = islibrary or cat.lower().find("libraries") != -1
-            isweb = isweb or cat.lower().find("Internet") != -1
+            isweb = isweb or cat.lower().find("internet") != -1 or cat.lower().find("web") != -1 or cat.lower().find("www") != -1
 
         if (not found and not isweb) or islibrary:
             targetproduct = URIRef(generate_uri(packagename, baseuri=args.baseuri,prefix="softwarelibrary"))
