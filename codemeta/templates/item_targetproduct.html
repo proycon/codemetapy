@@ -34,21 +34,21 @@
     </td>
     <td class="maintainer">
         <ul>
-         {% for label, res2 in get_triples(g, targetres, SDO.maintainer) %}
+         {% for label, pores in get_triples(g, targetres, SDO.maintainer) %}
          <li>{% include 'person_or_org.html' %}</li>
          {% endfor %}
         </ul>
     </td>
     <td class="author">
         <ul>
-         {% for label, res2 in get_triples(g, targetres, SDO.author) %}
+         {% for label, pores in get_triples(g, targetres, SDO.author) %}
          <li>{% include 'person_or_org.html' %}</li>
          {% endfor %}
         </ul>
     </td>
     <td class="producer">
         <ul>
-         {% for label, res2 in get_triples(g, targetres, SDO.producer) %}
+         {% for label, pores in get_triples(g, targetres, SDO.producer) %}
          <li>{% include 'person_or_org.html' %}</li>
          {% endfor %}
         </ul>
