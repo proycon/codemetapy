@@ -1,7 +1,11 @@
 <tr about="{{ targetres }}" typeof="{{ g.value(targetres, RDF.type) }}" class="targetProduct">
     <td class="name" property="schema:name">
         {% if (targetres, SDO.name, None) in g %}
+        {% if sscres %}
+        <a href="{{ sscres }}">{{ g.value(targetres, SDO.name) }}</a>
+        {% else %}
         {{ g.value(targetres, SDO.name) }}
+        {% endif %}
         {% endif %}
     </td>
     <td class="version" property="schema:version">

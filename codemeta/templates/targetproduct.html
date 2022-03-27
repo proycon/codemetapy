@@ -1,3 +1,4 @@
+{% if g.value(targetres, SDO.name) or g.value(targetres, STYPE.executableName) or g.value(targetres, SDO.url) %}
 <div class="targetProduct" about="{{ targetres }}" typeof="{{ g.value(targetres, RDF.type) }}">
 
     {% if g.value(targetres, SDO.name) %}
@@ -148,3 +149,4 @@
     </div>
 
 </div>
+{% endif %}
