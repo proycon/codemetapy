@@ -554,7 +554,7 @@ def guess_interfacetype(g: Graph, res: Union[URIRef,BNode]) -> Union[BNode,None]
         print(f"{HEAD} Guessing interface type {interfacetype} based on clues",file=sys.stderr)
         interfacetype = max(counter)
         targetres = BNode()
-        g.set((targetres, SDO.type, interfacetype))
+        g.set((targetres, RDF.type, interfacetype))
         g.set((res, SDO.targetProduct, targetres))
         return targetres
 
