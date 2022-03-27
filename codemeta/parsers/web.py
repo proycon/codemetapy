@@ -123,6 +123,7 @@ def parse_web(g: Graph, res: Union[URIRef, BNode], url, args: AttribDict) -> Ite
             for restype in (SDO.WebApplication, SDO.WebAPI):
                 assert clamdata['name']
                 targetres = URIRef(generate_uri(clamdata['name'], baseuri=args.baseuri,prefix=get_last_component(str(restype).lower())))
+                g.add((targetres, RDF.type, restype))
                 if clamdata['name']:
                     g.add((targetres, SDO.name, Literal(clamdata['name'])))
                 if clamdata['description']:
