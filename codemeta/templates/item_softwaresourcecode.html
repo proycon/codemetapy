@@ -16,6 +16,8 @@
         <span property="schema:version">{{ g.value(res, SDO.version) }}</a>
         {% if g.value(res, SDO.releaseNotes) %}
         </a>
+        {% else %}
+        <span class="negative">unknown</span>
         {% endif %}
         {% endif %}
         {% if  (res, SDO.dateModified, None) in g %}
