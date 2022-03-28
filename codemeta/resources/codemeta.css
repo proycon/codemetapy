@@ -123,7 +123,7 @@ div.targetProduct div.properties {
     margin-top: 0px;
     text-align: right;
 }
-tr.targetProduct td.links a {
+tr.targetProduct td.links a.mainlink {
     font-weight: bold;
     border-bottom: #2628c9 2px solid;
     text-decoration: none;
