@@ -451,7 +451,7 @@ def add_authors(g: Graph, res: Union[URIRef, BNode], value, property=SDO.author,
         g.add((author, RDF.type, SDO.Person))
         g.add((author, SDO.givenName, Literal(firstname)))
         g.add((author, SDO.familyName, Literal(lastname)))
-        if mail:
+        if mail and '@' in mail:
             g.add((author, SDO.email, Literal(mail)))
         if url:
             g.add((author, SDO.url, Literal(url.strip("() "))))
