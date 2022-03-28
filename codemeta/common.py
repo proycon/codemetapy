@@ -535,20 +535,20 @@ def guess_interfacetype(g: Graph, res: Union[URIRef,BNode]) -> Union[BNode,None]
     for clue, interfacetype in INTERFACE_CLUES:
         for keyword in keywords:
             if keyword.find(clue) != -1:
-                counter.update(interfacetype)
+                counter.update({interfacetype:1})
     description = g.value(res, SDO.description)
     if description:
         description = description.lower()
         for clue, interfacetype in INTERFACE_CLUES:
             if description.find(clue) != -1:
-                counter.update(interfacetype)
+                counter.update({interfacetype:1})
     #can we infer a type from the dependencies?
     for _,_, depres in g.triples((res,SDO.softwareRequirements,None)):
         depname = g.value(depres,SDO.name)
         if depname:
             depname = depname.lower()
             if depname in INTERFACE_CLUES_DEPS:
-                counter.update(INTERFACE_CLUES_DEPS[depname])
+                counter.update({INTERFACE_CLUES_DEPS[depname]:1})
 
     if counter:
         print(f"{HEAD} Guessing interface type {interfacetype} based on clues",file=sys.stderr)
