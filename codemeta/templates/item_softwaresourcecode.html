@@ -85,14 +85,14 @@
     <td class="maintainer">
         <ul>
          {% for label, pores in get_triples(g, res, SDO.maintainer) %}
-         <li>{% include 'person_or_org.html' %}</li>
+         <li>{% include 'person_or_org_minimal.html' %}</li>
          {% endfor %}
         </ul>
     </td>
     <td class="author">
         <ul>
          {% for label, pores in get_triples(g, res, SDO.author) %}
-         <li>{% include 'person_or_org.html' %}</li>
+         <li>{% include 'person_or_org_minimal.html' %}</li>
          {% endfor %}
         </ul>
     </td>
@@ -107,8 +107,8 @@
 
 {% if g.value(res, SDO.targetProduct) %}
 {% for _,_,targetres in g.triples((res, SDO.targetProduct, None)) %}
-<tr class="targetProduct">
+{% if g.value(targetres, SDO.name) or g.value(targetres, STYPE.executableName) or g.value(targetres, SDO.url) %}
 {% include 'item_targetproduct.html' %}
-</tr>
+{% endif %}
 {% endfor %}
 {% endif %}

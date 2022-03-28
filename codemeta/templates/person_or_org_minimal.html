@@ -1,0 +1,27 @@
+                         {% if pores %}
+                         <span about="{{ pores }}" typeof="{{ g.value(pores, RDF.type) }}">
+                             {% if (pores, RDF.type, SDO.Organization) in g %}
+                                <i class="fa-users"></i>&nbsp;
+                             {% else %}
+                                <i class="fa-user"></i>&nbsp;
+                             {% endif %}
+                             {% if g.value(pores, SDO.email) %}
+                                <a rel="schema:email" href="mailto:{{ g.value(pores, SDO.email) }}">
+                             {% elif g.value(pores, SDO.url) %}
+                                <a rel="schema:url" href="{{ g.value(pores, SDO.url) }}">
+                             {% endif %}
+                             {% if g.value(pores, SDO.givenName) %}
+                                <span property="schema:givenName">{{ g.value(pores, SDO.givenName) }}</span>
+                             {% endif %}
+                             {% if g.value(pores, SDO.familyName)  %}
+                                 <span property="schema:familyName">{{ g.value(pores, SDO.familyName) }}</span>
+                             {% elif g.value(pores, SDO.name)  %}
+                                 <span property="schema:name">{{ g.value(pores, SDO.name) }}</span>
+                             {% endif %}
+                             {% if g.value(pores, SDO.url) or g.value(pores, SDO.email) %}
+                                 </a>
+                             {% endif %}
+                         </span>
+                         {% else %}
+                            {{ label }}
+                         {% endif %}

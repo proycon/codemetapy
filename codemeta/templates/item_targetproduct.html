@@ -1,8 +1,8 @@
-<tr about="{{ targetres }}" typeof="{{ g.value(targetres, RDF.type) }}" class="targetProduct">
+<tr about="{{ targetres }}" typeof="{{ g.value(targetres, RDF.type) }}" class="targetProduct {{ get_last_component(g.value(targetres, RDF.type)) }}">
     <td class="name" property="schema:name">
         {% if (targetres, SDO.name, None) in g %}
-        {% if sscres %}
-        <a href="{{ sscres }}">{{ g.value(targetres, SDO.name) }}</a>
+        {% if res != targetres %}
+        <a href="{{ res }}">{{ g.value(targetres, SDO.name) }}</a>
         {% else %}
         {{ g.value(targetres, SDO.name) }}
         {% endif %}
@@ -32,8 +32,8 @@
         {% for _,_, value in g.triples((targetres, SDO.url, None)) %}
         {% if (targetres, RDF.type, SDO.WebApplication) in g or (targetres, RDF.type, SDO.WebSite) in g or (targetres, RDF.type, SDO.WebPage) in g or (targetres, RDF.type, STYPE.NotebookApplication) in g %}
         <li><i class="fa-globe"></i>&nbsp;<a rel="schema:url" class="mainlink" href="{{ value }}" title="For webapplications and webservices, this is whereyou can access the software as a service on the web">{{ value }}</a></li>
-        {% elif (targetres. RDF.type, SDO.WebAPI) in g %}
-        <li><i class="fa-gear"></i>&nbsp;<a rel="schema:url" href="{{ value }}" title="For webapplications and webservices, this is whereyou can access the software as a service on the web">{{ value }}</a></li>
+        {% elif (targetres, RDF.type, SDO.WebAPI) in g %}
+        <li><i class="fa-cog"></i>&nbsp;<a rel="schema:url" href="{{ value }}" title="For webapplications and webservices, this is whereyou can access the software as a service on the web">{{ value }}</a></li>
         {% endif %}
         {% endfor %}
         </ul>
@@ -43,14 +43,14 @@
     <td class="maintainer">
         <ul>
          {% for label, pores in get_triples(g, targetres, SDO.maintainer) %}
-         <li>{% include 'person_or_org.html' %}</li>
+         <li>{% include 'person_or_org_minimal.html' %}</li>
          {% endfor %}
         </ul>
     </td>
     <td class="author">
         <ul>
          {% for label, pores in get_triples(g, targetres, SDO.author) %}
-         <li>{% include 'person_or_org.html' %}</li>
+         <li>{% include 'person_or_org_minimal.html' %}</li>
          {% endfor %}
         </ul>
     </td>

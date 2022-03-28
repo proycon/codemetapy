@@ -14,7 +14,7 @@
     <h3>Provided tools &amp; services</h3>
 
     <div class="targetindex">
-        {% for _,_,targetres in g.triples((sscres, SDO.targetProduct, None)) %}
+        {% for _, targetres in get_triples(g, sscres, SDO.targetProduct, abcsort=True) %}
         {% include 'targetproduct.html' %}
         {% endfor %}
     </div>

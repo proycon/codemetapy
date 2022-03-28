@@ -522,10 +522,10 @@ def reconcile(g: Graph, res: URIRef, args: AttribDict):
         #we have no target products, that means we have no associated interface types,
         #see if we can extract some clues from the keywords or the description
         #and add a targetproduct (with only a type)
-        guess_interfacetype(g,res)
+        guess_interfacetype(g,res, args)
 
 
-def guess_interfacetype(g: Graph, res: Union[URIRef,BNode]) -> Union[BNode,None]:
+def guess_interfacetype(g: Graph, res: Union[URIRef,BNode], args: AttribDict) -> Union[URIRef,None]:
     IDENTIFIER = g.value(res, SDO.identifier)
     if not IDENTIFIER: IDENTIFIER = str(res)
     HEAD = f"[CODEMETA VALIDATION ({IDENTIFIER})]"
@@ -553,7 +553,7 @@ def guess_interfacetype(g: Graph, res: Union[URIRef,BNode]) -> Union[BNode,None]
     if counter:
         print(f"{HEAD} Guessing interface type {interfacetype} based on clues",file=sys.stderr)
         interfacetype = max(counter)
-        targetres = BNode()
+        targetres = URIRef(generate_uri(baseuri=args.baseuri, prefix="stub"))
         g.set((targetres, RDF.type, interfacetype))
         g.set((res, SDO.targetProduct, targetres))
         return targetres

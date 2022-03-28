@@ -36,13 +36,34 @@
                                  {% endfor %}
                              {% endif %}
 
+                             {% if g.value(pores, SDO.parentOrganization) %}
+                                 {% for partof_label, res3 in get_triples(g, pores, SDO.parentOrganization) %}
+                                 <span property="schema:affiliation">
+                                     {% if res3 and g.value(res3, SDO.url) %}
+                                     , <a href="{{ g.value(res3, SDO.url) }}">{{ partof_label }}</a>
+                                         {% if g.value(res3, SDO.parentOrganization) %}
+                                             {% for partof_label2, res4 in get_triples(g, res3, SDO.parentOrganization) %}
+                                                 {% if res4 and g.value(res4, SDO.url) %}
+                                                     , <a href="{{ g.value(res4, SDO.url) }}">{{ partof_label2 }}</a>
+                                                 {% else %}
+                                                     , <em>({{ partof_label2 }})</em>
+                                                 {% endif %}
+                                             {% endfor %}
+                                         {% endif %}
+                                     {% else %}
+                                     , <em>({{ partof_label }})</em>
+                                     {% endif %}
+                                 </span>
+                                 {% endfor %}
+                             {% endif %}
+
                              {% if g.value(pores, SDO.partOf) %}
                                  {% for partof_label, res3 in get_triples(g, pores, SDO.partOf) %}
                                  <span property="schema:affiliation">
                                      {% if res3 and g.value(res3, SDO.url) %}
-                                     (<a href="{{ g.value(res3, SDO.url) }}">{{ partof_label }}</a>)
+                                     , <a href="{{ g.value(res3, SDO.url) }}">{{ partof_label }}</a>
                                      {% else %}
-                                     <em>({{ partof_label }})</em>
+                                     , <em>({{ partof_label }})</em>
                                      {% endif %}
                                  </span>
                                  {% endfor %}

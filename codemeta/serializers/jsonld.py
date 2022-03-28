@@ -40,7 +40,10 @@ def sort_by_position(data):
     """If list items have a position (schema:position) index, make sure to use it for sorting"""
     if isinstance(data, (list, tuple)):
         if any( isinstance(x, dict) and 'position' in x for x in data ):
-            return list(sorted( ( sort_by_position(x) for x in data) , key=lambda x: x['position'] if isinstance(x, dict) and 'position' in x else 99999999 ) )
+            try:
+                return list(sorted( ( sort_by_position(x) for x in data) , key=lambda x: x['position'] if isinstance(x, dict) and 'position' in x else 99999999 ) )
+            except TypeError: #in rare cases this might fail because of some inconsistency, return unsorted then
+                return [ sort_by_position(x) for x in data ]
         else:
             return [ sort_by_position(x) for x in data ]
     elif isinstance(data, dict):

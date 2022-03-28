@@ -1,5 +1,5 @@
 {% if g.value(targetres, SDO.name) or g.value(targetres, STYPE.executableName) or g.value(targetres, SDO.url) %}
-<div class="targetProduct" about="{{ targetres }}" typeof="{{ g.value(targetres, RDF.type) }}">
+<div class="targetProduct {{ get_last_component(g.value(targetres, RDF.type)) }}" about="{{ targetres }}" typeof="{{ g.value(targetres, RDF.type) }}">
 
     {% if g.value(targetres, SDO.name) %}
     <h2 property="schema:name">{{ g.value(targetres, SDO.name) }}</h2>
@@ -14,11 +14,26 @@
     {% if (targetres, RDF.type, SDO.WebApplication) in g or
       (targetres, RDF.type, SDO.WebAPI) in g or
       (targetres, RDF.type, SDO.WebSite) in g or
+      (targetres, RDF.type, SDO.NotebookApplication) in g or
       (targetres, RDF.type, SDO.WebPage) in g %}
 
         {% if (targetres, SDO.url, None) in g %}
         <div class="go">
             <i class="fa-globe"></i>
+            <a rel="schema:url" href="{{ g.value(targetres, SDO.url) }}">
+                <strong>Go to the {{ type_label(g, targetres) }}</strong>
+                <tt>{{ g.value(targetres, SDO.url) }}</tt>
+            </a>
+        </div>
+        {% else %}
+        <div class="warning"><strong>Note:</strong> No URL was registered for this service (yet)</div>
+        {% endif %}
+
+    {% elif (targetres, RDF.type, SDO.WebAPI) in g %}
+
+        {% if (targetres, SDO.url, None) in g %}
+        <div class="go">
+            <i class="fa-cog"></i>
             <a rel="schema:url" href="{{ g.value(targetres, SDO.url) }}">
                 <strong>Go to the {{ type_label(g, targetres) }}</strong>
                 <tt>{{ g.value(targetres, SDO.url) }}</tt>
