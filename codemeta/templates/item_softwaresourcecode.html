@@ -16,9 +16,9 @@
         <span property="schema:version">{{ g.value(res, SDO.version) }}</a>
         {% if g.value(res, SDO.releaseNotes) %}
         </a>
+        {% endif %}
         {% else %}
         <span class="negative">unknown</span>
-        {% endif %}
         {% endif %}
         {% if  (res, SDO.dateModified, None) in g %}
         <span class="dateModified" property="schema:dateModified" title="Date at which this version was last modified">{{ g.value(res, SDO.dateModified).replace("T"," ").replace("Z"," ") }}</span>
