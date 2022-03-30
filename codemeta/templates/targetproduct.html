@@ -110,6 +110,10 @@
                 <li about="{{ res2 }}" typeof="{{ g.value(res2, RDF.type) }}"><i class="fa-book"></i>&nbsp;<a rel="schema:url" href="{{ g.value(res2, SDO.url) }}"><span property="schema:name">{{ g.value(res2, SDO.name) }}</span></a></li>
                 {% elif g.value(res2, SDO.url) %}
                 <li about="{{ res2 }}" typeof="{{ g.value(res2, RDF.type) }}"><i class="fa-book"></i>&nbsp;<a rel="schema:url" href="{{ g.value(res2, SDO.url) }}">{{ g.value(res2, SDO.url) }}</a></li>
+                {% elif res2 and res2.startswith("http") %}
+                <li><i class="fa-book"></i>&nbsp;<a rel="schema:documentation" href="{{ res2 }}">{{ res2 }}</a></li>
+                {% elif res2  %}
+                <li><i class="fa-book"></i>&nbsp;{{ res2 }}</li>
                 {% endif %}
             {% endfor %}
             {% endif %}
