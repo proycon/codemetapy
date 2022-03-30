@@ -1,4 +1,4 @@
-                         {% if pores %}
+                         {% if is_resource(pores) %}
                          <span about="{{ pores }}" typeof="{{ g.value(pores, RDF.type) }}">
                              {% if (pores, RDF.type, SDO.Organization) in g %}
                                 <i class="fa-users"></i>&nbsp;
@@ -22,6 +22,8 @@
                                  </a>
                              {% endif %}
                          </span>
-                         {% else %}
+                         {% elif pores %}
+                            {{ pores }}
+                         {% elif label %}
                             {{ label }}
                          {% endif %}
