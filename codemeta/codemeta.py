@@ -102,6 +102,7 @@ def main():
     parser.add_argument('--no-cache',dest="no_cache", help="Do not cache context files, force redownload", action='store_true',  required=False)
     parser.add_argument('--toolstore', help="When converting to HTML, link pages together as served by the CLARIAH tool store (https://github.com/CLARIAH/tool-discovery)", action='store_true',  required=False)
     parser.add_argument('--strict', dest='strict', help="Strictly adhere to the codemeta standard and disable any extensions on top of it", action='store_true')
+    parser.add_argument('--released', help="Signal that this software is released, this affects whether development status maps to either WIP or active", action='store_true')
     parser.add_argument('inputsources', nargs='*', help='Input sources, the nature of the source depends on the type, often a file (or use - for standard input), set -i accordingly with the types (must contain as many items as passed!)')
 
     for key, prop in sorted(props.items()):

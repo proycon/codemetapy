@@ -73,7 +73,7 @@ REPOSTATUS_MAP = { #maps Python development status to repostatus.org vocabulary 
     "1 - planning": "concept",
     "2 - pre-alpha": "concept",
     "3 - alpha": "wip",
-    "4 - beta": "wip",
+    "4 - beta": "wip", #note, if --released is set this maps to "active" instead
     "5 - production/stable": "active",
     "6 - mature": "active",
     "7 - inactive": "inactive",
@@ -365,6 +365,9 @@ def add_triple(g: Graph, res: Union[URIRef, BNode],key, value, args: AttribDict,
         elif value.strip().lower() in REPOSTATUS_MAP:
             #map to repostatus vocabulary
             repostatus = REPOSTATUS_MAP[value.strip().lower()]
+            if args.released and value.strip().lower().find("beta") and repostatus == "wip":
+                #beta maps to active if --released is set
+                repostatus = "active"
             f_add((res, CODEMETA.developmentStatus, getattr(REPOSTATUS, repostatus) ))
         else:
             f_add((res, CODEMETA.developmentStatus, Literal(value)))
