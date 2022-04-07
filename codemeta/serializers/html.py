@@ -3,8 +3,8 @@ import os.path
 from datetime import datetime
 from rdflib import Graph, URIRef, BNode, Literal
 from rdflib.namespace import RDF, SKOS, RDFS
-from typing import Union, IO
-from codemeta.common import AttribDict, REPOSTATUS, license_to_spdx, SDO, CODEMETA, SOFTWARETYPES, SCHEMA_SOURCE, CODEMETA_SOURCE, CONTEXT, DUMMY_NS, SCHEMA_LOCAL_SOURCE, SCHEMA_SOURCE, CODEMETA_LOCAL_SOURCE, CODEMETA_SOURCE, STYPE_SOURCE, STYPE_LOCAL_SOURCE, init_context, SINGULAR_PROPERTIES, merge_graphs, get_subgraph, get_last_component
+from typing import Union, IO, Optional, Sequence
+from codemeta.common import AttribDict, REPOSTATUS, license_to_spdx, SDO, CODEMETA, SOFTWARETYPES, SCHEMA_SOURCE, CODEMETA_SOURCE, CONTEXT, DUMMY_NS, SCHEMA_LOCAL_SOURCE, SCHEMA_SOURCE, CODEMETA_LOCAL_SOURCE, CODEMETA_SOURCE, STYPE_SOURCE, STYPE_LOCAL_SOURCE, init_context, SINGULAR_PROPERTIES, merge_graphs, get_subgraph, get_last_component, query
 from codemeta import __path__ as rootpath
 from jinja2 import Environment, FileSystemLoader
 
@@ -53,14 +53,15 @@ def _get_sortkey2(g: Graph, res: Union[URIRef,BNode,None]):
         return 999
 
 
-def get_index(g: Graph):
+def get_index(g: Graph, restype=SDO.SoftwareSourceCode):
     results = []
-    for res,_,_ in g.triples((None, RDF.type, SDO.SoftwareSourceCode)):
+    for res,_,_ in g.triples((None, RDF.type, restype)):
         label = g.value(res, SDO.name)
         if label:
             results.append((res, label))
     results.sort(key=lambda x: x[1].lower())
     return results
+
 
 
 def is_resource(res) -> bool:
@@ -118,15 +119,15 @@ def get_interface_types(g: Graph, res: Union[URIRef,None], contextgraph: Graph, 
 
 
 
-def serialize_to_html(g: Graph, res: Union[URIRef,None], args: AttribDict, contextgraph: Graph) -> dict:
+def serialize_to_html(g: Graph, res: Union[Sequence,URIRef,None], args: AttribDict, contextgraph: Graph, sparql_query: Optional[str] = None) -> dict:
     """Serialize to HTML with RDFa"""
 
-    if res:
+    if res and not isinstance(res, (list,tuple)):
         #Get the subgraph that focusses on this specific resource
         g = get_subgraph(g, res)
 
     env = Environment( loader=FileSystemLoader(os.path.join(rootpath[0], 'templates')), autoescape=True, trim_blocks=True, lstrip_blocks=True)
-    if res:
+    if res and not isinstance(res, (list,tuple)):
         if (res, RDF.type, SDO.SoftwareSourceCode) in g:
             template = "page_softwaresourcecode.html"
         elif (res, RDF.type, SDO.SoftwareApplication) in g \
@@ -144,7 +145,13 @@ def serialize_to_html(g: Graph, res: Union[URIRef,None], args: AttribDict, conte
         index = []
     else:
         template = "index.html"
-        index = get_index(g)
+        if isinstance(res, (list,tuple)):
+            index = [ (x, g.value(x, SDO.name)) for x in res ]
+            res = None
+        elif sparql_query:
+            index = query(g, sparql_query)
+        else:
+            index = get_index(g)
     template = env.get_template(template)
     return template.render(g=g, res=res, SDO=SDO,CODEMETA=CODEMETA, RDF=RDF,RDFS=RDFS,STYPE=SOFTWARETYPES, REPOSTATUS=REPOSTATUS, SKOS=SKOS, get_triples=get_triples, type_label=type_label, css=args.css, contextgraph=contextgraph, URIRef=URIRef, get_badge=get_badge, now=datetime.now().strftime("%Y-%m-%d %H:%M:%S"), index=index, get_interface_types=get_interface_types,baseuri=args.baseuri,baseurl=args.baseurl, toolstore=args.toolstore, get_last_component=get_last_component, is_resource=is_resource)
 

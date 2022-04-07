@@ -8,7 +8,7 @@ from collections import Counter
 from rdflib import Graph, Namespace, URIRef, BNode, Literal
 from rdflib.namespace import RDF, RDFS, SKOS
 from rdflib.compare import graph_diff
-from typing import Union, IO
+from typing import Union, IO, Sequence
 from collections import OrderedDict
 from nameparser import HumanName
 
@@ -562,7 +562,7 @@ def guess_interfacetype(g: Graph, res: Union[URIRef,BNode], args: AttribDict) ->
         return targetres
 
 
-def get_subgraph(g: Graph, res: Union[URIRef,BNode], subgraph: Union[Graph,None] = None, history: set = None ) -> Graph:
+def get_subgraph(g: Graph, reslist: Sequence[Union[URIRef,BNode]], subgraph: Union[Graph,None] = None, history: set = None ) -> Graph:
     """Add everything referenced from the specified resource to the new subgraph"""
 
     if subgraph is None:
@@ -572,11 +572,12 @@ def get_subgraph(g: Graph, res: Union[URIRef,BNode], subgraph: Union[Graph,None]
     if history is None:
         history = set()
 
-    for pred, obj in g[res]:
-        subgraph.add((res,pred,obj))
-        if isinstance(obj, (URIRef, BNode)) and obj not in history:
-            history.add(obj)
-            get_subgraph(g, obj, subgraph, history)
+    for res in reslist:
+        for pred, obj in g[res]:
+            subgraph.add((res,pred,obj))
+            if isinstance(obj, (URIRef, BNode)) and obj not in history:
+                history.add(obj)
+                get_subgraph(g, [obj], subgraph, history)
 
     return subgraph
 
@@ -644,3 +645,15 @@ def generate_uri(identifier: Union[str,None] = None, baseuri: Union[str,None] = 
         baseuri += '/'
     return baseuri + prefix + identifier
 
+def query(g: Graph, sparql_query: str, restype=SDO.SoftwareSourceCode):
+    results = []
+    for result in g.query(sparql_query):
+        try:
+            if result.res and (result.res, RDF.type, restype) in g:
+                label = g.value(result.res, SDO.name)
+                if label:
+                    results.append((result.res, label))
+        except AttributeError:
+            raise ValueError("Invalid query: Expected ?res in SPARQL query")
+    results.sort(key=lambda x: x[1].lower())
+    return results

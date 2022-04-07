@@ -1,6 +1,6 @@
 import sys
 import json
-from typing import Union, IO
+from typing import Union, IO, Sequence
 from rdflib import Graph, URIRef, BNode, Literal
 from codemeta.common import AttribDict, license_to_spdx, SDO, CONTEXT, CODEMETA_SOURCE, CODEMETA_LOCAL_SOURCE, SCHEMA_SOURCE, SCHEMA_LOCAL_SOURCE, STYPE_SOURCE, STYPE_LOCAL_SOURCE, init_context, REPOSTATUS_LOCAL_SOURCE, REPOSTATUS_SOURCE, get_subgraph
 
@@ -190,17 +190,21 @@ def rewrite_context(context):
             elif value == REPOSTATUS_LOCAL_SOURCE:
                 context[i] = REPOSTATUS_SOURCE
 
-def serialize_to_jsonld(g: Graph, res: Union[URIRef,None]) -> dict:
+def serialize_to_jsonld(g: Graph, res: Union[Sequence,URIRef,None]) -> dict:
     """Serializes the RDF graph to JSON, taking care of 'framing' for embedded nodes"""
 
     if res:
-        #Get the subgraph that focusses on this specific resource
-        g = get_subgraph(g, res)
+        #Get the subgraph that focusses on this specific resource (or multiple)
+        if isinstance(res, (list,tuple)):
+            g = get_subgraph(g, res)
+        else:
+            g = get_subgraph(g, [res])
 
     data = json.loads(g.serialize(format='json-ld', auto_compact=True, context=CONTEXT))
 
-    #rdflib doesn't do 'framing' so we have to do it in this post-processing step:
-    if res:
+    #rdflib doesn't do 'framing' so we have to do it in this post-processing step
+    #if we have a single resource
+    if res and (not isinstance(res, (list,tuple)) or len(res) == 1):
         data = AutoFrame(data).run(str(res)) or data
 
         root, parent = find_main(data, res)

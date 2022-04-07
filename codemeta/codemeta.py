@@ -16,7 +16,7 @@ import os.path
 import glob
 import random
 from collections import OrderedDict, defaultdict
-from typing import Union, IO
+from typing import Union, IO, Optional, Sequence
 import copy
 import distutils.cmd #note: will be removed in python 3.12!
 #pylint: disable=C0413
@@ -26,7 +26,7 @@ from rdflib.namespace import RDF
 from rdflib.plugins.shared.jsonld.context import Context
 import rdflib.plugins.serializers.jsonld
 
-from codemeta.common import init_graph, init_context, CODEMETA, AttribDict, getstream, CONTEXT, SDO, reconcile, add_triple, generate_uri, remap_uri
+from codemeta.common import init_graph, init_context, CODEMETA, AttribDict, getstream, CONTEXT, SDO, reconcile, add_triple, generate_uri, remap_uri, query
 import codemeta.crosswalk
 import codemeta.parsers.python
 import codemeta.parsers.debian
@@ -124,8 +124,10 @@ def main():
     if output:
         print(output)
 
-def serialize(g: Graph, res: Union[URIRef,BNode], args: AttribDict, contextgraph: Union[Graph,None] = None) -> Graph:
+
+def serialize(g: Graph, res: Union[Sequence,URIRef,BNode,None], args: AttribDict, contextgraph: Union[Graph,None] = None, sparql_query: Optional[str] = None) -> Graph:
     if args.output == "json":
+        if sparql_query: res = [ x[0]  for x in query(g, sparql_query) ]
         doc = serialize_to_jsonld(g, res)
         if args.outputfile and args.outputfile != "-":
             with open(args.outputfile,'w',encoding='utf-8') as fp:
@@ -133,6 +135,7 @@ def serialize(g: Graph, res: Union[URIRef,BNode], args: AttribDict, contextgraph
         else:
             return json.dumps(doc, indent=4, ensure_ascii=False, sort_keys=True)
     elif args.output in ("turtle","ttl"):
+        if sparql_query: res = [ x[0]  for x in query(g, sparql_query) ]
         doc = serialize_to_turtle(g, res)
         if args.outputfile and args.outputfile != "-":
             with open(args.outputfile,'wb') as fp:
@@ -140,7 +143,7 @@ def serialize(g: Graph, res: Union[URIRef,BNode], args: AttribDict, contextgraph
         else:
             return doc
     elif args.output == "html":
-        doc = serialize_to_html(g, res, args, contextgraph)
+        doc = serialize_to_html(g, res, args, contextgraph, sparql_query) #note: sparql query is applied in serialization function if needed
         if args.outputfile and args.outputfile != "-":
             with open(args.outputfile,'w',encoding='utf-8') as fp:
                 fp.write(doc)
