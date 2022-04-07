@@ -124,7 +124,7 @@ def serialize_to_html(g: Graph, res: Union[Sequence,URIRef,None], args: AttribDi
 
     if res and not isinstance(res, (list,tuple)):
         #Get the subgraph that focusses on this specific resource
-        g = get_subgraph(g, res)
+        g = get_subgraph(g, [res])
 
     env = Environment( loader=FileSystemLoader(os.path.join(rootpath[0], 'templates')), autoescape=True, trim_blocks=True, lstrip_blocks=True)
     if res and not isinstance(res, (list,tuple)):

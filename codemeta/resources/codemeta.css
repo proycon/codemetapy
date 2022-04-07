@@ -202,17 +202,17 @@ th.description, td.description {
 th.maintainer, th.author, th.producer {
     width: 8%;
 }
-div.keywords {
+div.keywords, div.category {
     margin-top: 5px;
     font-size: 90%;
 }
 .interface {
     font-size: 90%;
 }
-div.keywords ul {
+div.keywords ul, div.category ul {
     display: inline;
 }
-div.keywords ul li, .interface ul li, dd.softwareRequirements ul li {
+div.keywords ul li, .interface ul li, dd.softwareRequirements ul li, div.category ul li {
     background: #ddd;
     font-size: 90%;
 }
