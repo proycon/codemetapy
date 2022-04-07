@@ -19,11 +19,11 @@ div.rightcolumn {
 }
 
 
-div.softwaresourcecode {
+body.page div.softwaresourcecode {
     display: flex;
 }
 
-div.softwaresourcecode div.properties {
+body.page div.softwaresourcecode div.properties {
     background: #e4e4e4;
     padding: 10px;
     border-radius: 25px;
@@ -40,11 +40,11 @@ dd ul, table ul {
     padding: 0px;
 }
 
-.keywords ul, .softwareRequirements ul {
+.keywords ul, .softwareRequirements ul, .category ul li {
     list-style: none;
 }
 
-.keywords ul li, .softwareRequirements ul li {
+.keywords ul li, .softwareRequirements ul li, .category ul li {
     display: inline-block;
     padding: 2px;
     margin: 2px;
@@ -242,3 +242,141 @@ div.reference ul, div.reference ul li {
 }
 div.reference ul li:after { content: ", "; }
 div.reference ul li:last-child:after { content: ""; }
+
+body.cards {
+    background: #d1dbe1 url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAgAAAAICAYAAADED76LAAAAGXRFWHRTb2Z0d2FyZQBBZG9iZSBJbWFnZVJlYWR5ccllPAAAAD1JREFUeNpiYmBgMAZihv///2PFjAxQAOKgA0ZGRmMGZAXIGGYyVmPhknh1YlOALgkWwycJV4BLEoQBAgwA2xBhP01jk8EAAAAASUVORK5CYII=) 0 0 repeat fixed;
+}
+
+a {
+    text-decoration: none;
+}
+a, a:visited {
+    color: #2350ff;
+}
+a:hover {
+    text-decoration: underline;
+    color: #bb0138;
+}
+
+div.card {
+    min-width: 320px;
+    max-width: 580px;
+    border: 1px solid #cbdfe5;
+    border-radius: 20px;
+    background: #fff;
+    padding: 10px;
+    text-align: center;
+    margin-bottom: 15px;
+    margin-left: auto;
+    margin-right: auto;
+}
+div.card h2 {
+    color: #000c48;
+    margin-bottom: 2px;
+}
+div.card h2 span.version {
+    font-size: 60%;
+    font-weight: normal;
+}
+div.card div.interface {
+    float: left;
+    margin-top: -9%;
+    font-size: 80%;
+    opacity: 0.75;
+}
+div.card div.developmentStatus {
+    float: right;
+    margin-top: -9%;
+    font-size: 80%;
+    opacity: 0.75;
+}
+div.card div.keywords, div.card div.category {
+    text-align: left;
+}
+div.card div.keywords li, div.card div.category li {
+    color: #666;
+    border: none;
+}
+div.card ul {
+    margin: 0px;
+    padding: 0px;
+}
+div.card div.interface li {
+    border-radius: 25px;
+}
+div.card div.links {
+    margin-top: 2px;
+    clear: both;
+}
+div.card div.links li {
+    list-style: none;
+}
+div.card div.links li {
+    display: block;
+    border-radius: 5px;
+    margin-bottom: 2px;
+    background: #cbdfe5;
+    padding: 3px;
+}
+div.card div.links a {
+    font-weight: bold;
+}
+div.card div.links li {
+    border: 1px solid #cbdfe7;
+}
+div.card div.links li:hover {
+    border: 1px #bb0138 solid;
+}
+div.card div.links li.go {
+    background: #2350ff;
+}
+div.card div.links li:hover {
+    background: #bb0138;
+}
+div.card div.links li.go span.description {
+    color: #ccc;
+}
+div.card div.links li.go a, div.card div.links li.go a:visited, div.card div.links li:hover, div.card div.links li:hover a {
+    color: white;
+}
+div.card div.author ul, div.card div.producer ul {
+    list-style: none;
+}
+div.card div.author li, div.card div.producer li {
+    display: inline-block;
+    font-size: 90%;
+}
+div.card div.author li, div.card div.producer li, div.card div.author li a, div.card div.producer li a{
+    color: #0092bc;
+}
+
+div.card div.dateCreated {
+    display: inline;
+    font-size: 80%;
+    text-align: center;
+    color: #666;
+}
+div.card div.dateModified {
+    display: inline;
+    font-size: 80%;
+    text-align: center;
+    color: #666;
+}
+div card div.links li>a {
+    font-size: 110%;
+}
+div.card div.links li tt {
+    display: block;
+    font-size: 80%;
+}
+div.card div.links li span.description {
+    display: block;
+    font-style: italic;
+    font-size: 80%;
+}
+
+
+
+
+
+

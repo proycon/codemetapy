@@ -125,7 +125,7 @@ def main():
         print(output)
 
 
-def serialize(g: Graph, res: Union[Sequence,URIRef,BNode,None], args: AttribDict, contextgraph: Union[Graph,None] = None, sparql_query: Optional[str] = None) -> Graph:
+def serialize(g: Graph, res: Union[Sequence,URIRef,BNode,None], args: AttribDict, contextgraph: Union[Graph,None] = None, sparql_query: Optional[str] = None, **kwargs) -> Graph:
     if args.output == "json":
         if sparql_query: res = [ x[0]  for x in query(g, sparql_query) ]
         doc = serialize_to_jsonld(g, res)
@@ -143,7 +143,7 @@ def serialize(g: Graph, res: Union[Sequence,URIRef,BNode,None], args: AttribDict
         else:
             return doc
     elif args.output == "html":
-        doc = serialize_to_html(g, res, args, contextgraph, sparql_query) #note: sparql query is applied in serialization function if needed
+        doc = serialize_to_html(g, res, args, contextgraph, sparql_query, **kwargs) #note: sparql query is applied in serialization function if needed
         if args.outputfile and args.outputfile != "-":
             with open(args.outputfile,'w',encoding='utf-8') as fp:
                 fp.write(doc)

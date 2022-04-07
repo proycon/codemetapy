@@ -1,0 +1,165 @@
+<div about="{{ res }}" class="card softwaresourcecode" typeof="schema:SoftwareSourceCode">
+    <h2>
+        <span class="name" property="schema:name">
+        {% if baseuri and toolstore %}
+        <a href="{{ res }}">
+        {% endif %}
+        {{ g.value(res, SDO.name) }}
+        {% if baseuri %}
+        </a>
+        {% endif %}
+        </span>
+        <span class="version">
+            {% if  (res, SDO.version, None) in g %}
+            {% if g.value(res, SDO.releaseNotes) %}
+            <a rel="schema:releaseNotes" href="{{ g.value(res, SDO.releaseNotes) }}" title="release notes for this version">
+            {% endif %}
+            <span property="schema:version">{{ g.value(res, SDO.version) }}</a>
+            {% if g.value(res, SDO.releaseNotes) %}
+            </a>
+            {% endif %}
+            {% endif %}
+        </span>
+    </h2>
+
+    <div class="interface">
+        <ul>
+        {% for label, comment in get_interface_types(g, res, contextgraph,fallback=True) %}
+        {% if label != "Unknown" %}
+        <li{% if comment %} title="{{ comment }}"{% endif %}>{{ label }}</li>
+        {% endif %}
+        {% endfor %}
+        </ul>
+    </div>
+
+    <div class="developmentStatus" property="codemeta:developmentStatus">
+        {% if (res, CODEMETA.developmentStatus, None) in g and g.value(res, CODEMETA.developmentStatus).find("repostatus") != -1 %}
+            {% set repostatus = URIRef(g.value(res, CODEMETA.developmentStatus)) %}
+            {% set repostatus_id = repostatus.split('#')[-1] %}
+                <a rel="codemeta:developmentStatus" href="{{ g.value(res, CODEMETA.developmentStatus) }}"><img src="https://www.repostatus.org/badges/latest/{{ repostatus_id }}.svg" title="{{ contextgraph.value(repostatus, SKOS.prefLabel) }}: {{ contextgraph.value(repostatus, SKOS.definition) }}" alt="{{ contextgraph.value(repostatus, SKOS.prefLabel) }}: {{ contextgraph.value(repostatus, SKOS.definition) }}"  /></a>
+        {% elif (res, CODEMETA.developmentStatus, None) in g %}
+            {{ g.value(res, CODEMETA.developmentStatus) }}
+        {% endif %}
+    </div>
+
+    {% if (res, SDO.author, None) in g %}
+    <div class="author">
+        <ul>
+         {% for label, pores in get_triples(g, res, SDO.author) %}
+         <li{% if (res, SDO.maintainer, pores) in g %} class="maintainer"{% endif %}>{% include 'person_or_org_minimal.html' %}</li>
+         {% endfor %}
+        </ul>
+    </div>
+    {% endif %}
+
+    {% if (res, SDO.producer, None) in g %}
+    <div class="producer">
+        <ul>
+         {% for label, pores in get_triples(g, res, SDO.producer) %}
+         <li>{% include 'person_or_org.html' %}</li>
+         {% endfor %}
+        </ul>
+    </div>
+    {% endif %}
+
+    <div class="description">
+        {% if  (res, SDO.description, None) in g %}
+        <em property="schema:description">{{ g.value(res, SDO.description) }}</em> {% if baseuri %}[<a href="{{ res }}">view more</a>]{% endif %}
+        {% else %}
+        <span class="negative">No description provided</span>
+        {% endif %}
+
+    </div>
+
+
+
+    {% if (res, SDO.applicationCategory, None) in g %}
+    <div class="category">
+        <i class="fa-sitemap"></i> <ul>
+         {% for label, _ in get_triples(g, res, SDO.applicationCategory, abcsort=True) %}
+            <li property="schema:">{{ label }}</li>
+         {% endfor %}
+        </ul>
+    </div>
+    {% endif %}
+
+    {% if (res, SDO.keywords, None) in g %}
+    <div class="keywords">
+        <i class="fa-tags"></i> <ul>
+         {% for label, _ in get_triples(g, res, SDO.keywords, abcsort=True) %}
+            <li property="schema:keywords">{{ label }}</li>
+         {% endfor %}
+    </ul>
+    </div>
+    {% endif %}
+
+    <div class="links">
+        <ul>
+        {% for _,_, value in g.triples((res, SDO.url, None)) %}
+        {% if value != g.value(res, SDO.codeRepository) %}
+        <li><i class="fa-home"></i>&nbsp;<a rel="schema:url" href="{{ g.value(res, SDO.url) }}" title="This is the project website associated with this software">Website</a></li>
+        {% endif %}
+        {% endfor %}
+        {% if  (res, SDO.codeRepository, None) in g %}
+        <li><i class="fa-code-branch"></i>&nbsp;<a rel="schema:codeRepository" href="{{ g.value(res, SDO.codeRepository) }}" title="Here you can find the source code of this software. This is geared towards technical users who want to install the software themselves.">Source code</a></li>
+        {% endif %}
+
+        {% for _,_,targetres in g.triples((res, SDO.targetProduct, None)) %}
+        {% if g.value(targetres, SDO.name) or g.value(targetres, STYPE.executableName) or g.value(targetres, SDO.url) %}
+
+            {% if (targetres, RDF.type, SDO.WebApplication) in g or
+              (targetres, RDF.type, SDO.WebSite) in g or
+              (targetres, RDF.type, SDO.NotebookApplication) in g or
+              (targetres, RDF.type, SDO.WebPage) in g %}
+
+                {% if (targetres, SDO.url, None) in g %}
+                <li class="go">
+                    <i class="fa-globe"></i>
+                    <a rel="schema:url" href="{{ g.value(targetres, SDO.url) }}">
+                        <strong>Go to {{ g.value(targetres, SDO.name) }}</strong> <em>({{ type_label(g, targetres) }})</em>
+                        <tt>{{ g.value(targetres, SDO.url) }}</tt>
+                    </a>
+                    {% if (targetres, SDO.description, None) in g %}
+                    <span class="description">{{ g.value(targetres, SDO.description) }}</span>
+                    {% endif %}
+                </li>
+                {% endif %}
+
+            {% elif (targetres, RDF.type, SDO.WebAPI) in g %}
+
+                {% if (targetres, SDO.url, None) in g %}
+                <li>
+                    <i class="fa-cog"></i>
+                    <a rel="schema:url" href="{{ g.value(targetres, SDO.url) }}">
+                        Web API: {{ g.value(targetres, SDO.name) }}
+                        <tt>{{ g.value(targetres, SDO.url) }}</tt>
+                    </a>
+                    {% if (targetres, SDO.description, None) in g %}
+                    <span class="description">{{ g.value(targetres, SDO.description) }}</span>
+                    {% endif %}
+                </li>
+                {% endif %}
+
+            {% endif %}
+
+
+        {% endif %}
+        {% endfor %}
+
+        </ul>
+    </div>
+
+    {% if  (res, SDO.dateCreated, None) in g %}
+    <div class="dateCreated">
+        Created: <span class="dateCreated" property="schema:dateCreated" title="Date at which this version was last modified">{{ g.value(res, SDO.dateCreated).split("T")[0]}}</span>
+    </div>
+    {% endif %}
+
+    {% if  (res, SDO.dateModified, None) in g %}
+    <div class="dateModified">
+        Modified: <span class="dateModified" property="schema:dateModified" title="Date at which this version was last modified">{{ g.value(res, SDO.dateModified).split("T")[0] }}</span>
+    </div>
+    {% endif %}
+
+</div>
+

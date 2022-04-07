@@ -119,7 +119,7 @@ def get_interface_types(g: Graph, res: Union[URIRef,None], contextgraph: Graph, 
 
 
 
-def serialize_to_html(g: Graph, res: Union[Sequence,URIRef,None], args: AttribDict, contextgraph: Graph, sparql_query: Optional[str] = None) -> dict:
+def serialize_to_html(g: Graph, res: Union[Sequence,URIRef,None], args: AttribDict, contextgraph: Graph, sparql_query: Optional[str] = None, **kwargs) -> dict:
     """Serialize to HTML with RDFa"""
 
     if res and not isinstance(res, (list,tuple)):
@@ -144,7 +144,7 @@ def serialize_to_html(g: Graph, res: Union[Sequence,URIRef,None], args: AttribDi
             template = "page_generic.html"
         index = []
     else:
-        template = "index.html"
+        template = kwargs.get("indextemplate","index.html")
         if isinstance(res, (list,tuple)):
             index = [ (x, g.value(x, SDO.name)) for x in res ]
             res = None
