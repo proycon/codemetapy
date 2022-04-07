@@ -153,7 +153,7 @@ def serialize_to_html(g: Graph, res: Union[Sequence,URIRef,None], args: AttribDi
         else:
             index = get_index(g)
     template = env.get_template(template)
-    return template.render(g=g, res=res, SDO=SDO,CODEMETA=CODEMETA, RDF=RDF,RDFS=RDFS,STYPE=SOFTWARETYPES, REPOSTATUS=REPOSTATUS, SKOS=SKOS, get_triples=get_triples, type_label=type_label, css=args.css, contextgraph=contextgraph, URIRef=URIRef, get_badge=get_badge, now=datetime.now().strftime("%Y-%m-%d %H:%M:%S"), index=index, get_interface_types=get_interface_types,baseuri=args.baseuri,baseurl=args.baseurl, toolstore=args.toolstore, get_last_component=get_last_component, is_resource=is_resource)
+    return template.render(g=g, res=res, SDO=SDO,CODEMETA=CODEMETA, RDF=RDF,RDFS=RDFS,STYPE=SOFTWARETYPES, REPOSTATUS=REPOSTATUS, SKOS=SKOS, get_triples=get_triples, type_label=type_label, css=args.css, contextgraph=contextgraph, URIRef=URIRef, get_badge=get_badge, now=datetime.now().strftime("%Y-%m-%d %H:%M:%S"), index=index, get_interface_types=get_interface_types,baseuri=args.baseuri,baseurl=args.baseurl, toolstore=args.toolstore, get_last_component=get_last_component, is_resource=is_resource, title=kwargs.get('title',args.title))
 
 
 
