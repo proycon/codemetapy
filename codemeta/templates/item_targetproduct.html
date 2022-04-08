@@ -31,9 +31,9 @@
         <ul>
         {% for _,_, value in g.triples((targetres, SDO.url, None)) %}
         {% if (targetres, RDF.type, SDO.WebApplication) in g or (targetres, RDF.type, SDO.WebSite) in g or (targetres, RDF.type, SDO.WebPage) in g or (targetres, RDF.type, STYPE.NotebookApplication) in g %}
-        <li><i class="fa-globe"></i>&nbsp;<a rel="schema:url" class="mainlink" href="{{ value }}" title="For webapplications and webservices, this is whereyou can access the software as a service on the web">{{ value }}</a></li>
+        <li><i class="fa fa-globe"></i>&nbsp;<a rel="schema:url" class="mainlink" href="{{ value }}" title="For webapplications and webservices, this is whereyou can access the software as a service on the web">{{ value }}</a></li>
         {% elif (targetres, RDF.type, SDO.WebAPI) in g %}
-        <li><i class="fa-cog"></i>&nbsp;<a rel="schema:url" href="{{ value }}" title="For webapplications and webservices, this is whereyou can access the software as a service on the web">{{ value }}</a></li>
+        <li><i class="fa fa-cog"></i>&nbsp;<a rel="schema:url" href="{{ value }}" title="For webapplications and webservices, this is whereyou can access the software as a service on the web">{{ value }}</a></li>
         {% endif %}
         {% endfor %}
         </ul>

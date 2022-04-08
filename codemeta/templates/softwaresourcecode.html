@@ -20,7 +20,7 @@
     </div>
     {% elif g.value(sscres, SDO.url) %}
     <div class="go">
-        <i class="fa-home"></i>
+        <i class="fa fa-home"></i>
         <a rel="schema:url" href="{{ g.value(sscres, SDO.url) }}">
             <strong>Go to the software website</strong>
             <tt>{{ g.value(sscres, SDO.url) }}</tt>
@@ -28,7 +28,7 @@
     </div>
     {% elif g.value(sscres, SDO.codeRepository) %}
     <div class="go">
-        <i class="fa-code-branch"></i>
+        <i class="fa fa-code-branch"></i>
         <a rel="schema:url" href="{{ g.value(sscres, SDO.codeRepository) }}">
             <strong>Go to the source repository</strong>
             <tt>{{ g.value(sscres, SDO.codeRepository) }}</tt>
@@ -102,7 +102,7 @@
         <dd class="url">
             <ul>
                 {% for _,_, value in g.triples((sscres, SDO.url, None)) %}
-                <li><i class="fa-home"></i>&nbsp;<a rel="schema:url" href="{{ value }}">{{ value }}</a></li>
+                <li><i class="fa fa-home"></i>&nbsp;<a rel="schema:url" href="{{ value }}">{{ value }}</a></li>
                 {% endfor %}
             </ul>
         </dd>
@@ -110,7 +110,7 @@
 
         {% if g.value(sscres, SDO.codeRepository) %}
         <dt class="codeRepository" title="A version controlled repository where the source code of the software is available">Source code repository</dt>
-        <dd class="codeRepository"><i class="fa-code-branch"></i>&nbsp;<a rel="schema:codeRepository" href="{{ g.value(sscres, SDO.codeRepository) }}">{{ g.value(sscres, SDO.codeRepository) }}</a>
+        <dd class="codeRepository"><i class="fa fa-code-branch"></i>&nbsp;<a rel="schema:codeRepository" href="{{ g.value(sscres, SDO.codeRepository) }}">{{ g.value(sscres, SDO.codeRepository) }}</a>
         {% for img, url, label in get_badge(g, sscres, "stars") %}
         {% include 'badge.html' %}
         {% endfor %}
@@ -129,7 +129,7 @@
         {% endif %}
 
         {% if g.value(sscres, SDO.keywords) %}
-        <dt class="keywords">Keywords <i class="fa-tags"></i></dt>
+        <dt class="keywords">Keywords <i class="fa fa-tags"></i></dt>
         <dd class="keywords">
         <ul>
              {% for label, _ in get_triples(g, sscres, SDO.keywords, abcsort=True) %}
@@ -173,29 +173,29 @@
             <ul>
                 {% if g.value(sscres, CODEMETA.readme) %}
                     {% for _,_, value in g.triples((sscres, CODEMETA.readme, None)) %}
-                        <li><i class="fa-file"></i>&nbsp;<a rel="codemeta:readme" href="{{ value }}">README</span></a></li>
+                        <li><i class="fa fa-file"></i>&nbsp;<a rel="codemeta:readme" href="{{ value }}">README</span></a></li>
                     {% endfor %}
                 {% endif %}
                 {% if g.value(sscres, CODEMETA.buildInstructions) %}
                     {% for _,_, value in g.triples((sscres, CODEMETA.buildInstructions, None)) %}
-                        <li><i class="fa-file"></i>&nbsp;<a rel="codemeta:buildInstructions" href="{{ value }}">Build Instructions</span></a></li>
+                        <li><i class="fa fa-file"></i>&nbsp;<a rel="codemeta:buildInstructions" href="{{ value }}">Build Instructions</span></a></li>
                     {% endfor %}
                 {% endif %}
                 {% if g.value(sscres, SDO.softwareHelp) %}
                 {% for _,_, res2 in g.triples((sscres, SDO.softwareHelp, None)) %}
                     {% if g.value(res2, SDO.name) and g.value(res2, SDO.url) %}
-                    <li about="{{ res2 }}" typeof="{{ g.value(res2, RDF.type) }}"><i class="fa-book"></i>&nbsp;<a rel="schema:url" href="{{ g.value(res2, SDO.url) }}"><span property="schema:name">{{ g.value(res2, SDO.name) }}</span></a></li>
+                    <li about="{{ res2 }}" typeof="{{ g.value(res2, RDF.type) }}"><i class="fa fa-book"></i>&nbsp;<a rel="schema:url" href="{{ g.value(res2, SDO.url) }}"><span property="schema:name">{{ g.value(res2, SDO.name) }}</span></a></li>
                     {% elif g.value(res2, SDO.url) %}
-                    <li about="{{ res2 }}" typeof="{{ g.value(res2, RDF.type) }}"><i class="fa-book"></i>&nbsp;<a rel="schema:url" href="{{ g.value(res2, SDO.url) }}">{{ g.value(res2, SDO.url) }}</a></li>
+                    <li about="{{ res2 }}" typeof="{{ g.value(res2, RDF.type) }}"><i class="fa fa-book"></i>&nbsp;<a rel="schema:url" href="{{ g.value(res2, SDO.url) }}">{{ g.value(res2, SDO.url) }}</a></li>
                     {% endif %}
                 {% endfor %}
                 {% endif %}
                 {% if g.value(sscres, SDO.documentation) %}
                 {% for _,_, res2 in g.triples((sscres, SDO.documentation, None)) %}
                     {% if g.value(res2, SDO.name) and g.value(res2, SDO.url) %}
-                    <li about="{{ res2 }}" typeof="{{ g.value(res2, RDF.type) }}"><i class="fa-book"></i>&nbsp;<a rel="schema:url" href="{{ g.value(res2, SDO.url) }}"><span property="schema:name">{{ g.value(res2, SDO.name) }}</span></a></li>
+                    <li about="{{ res2 }}" typeof="{{ g.value(res2, RDF.type) }}"><i class="fa fa-book"></i>&nbsp;<a rel="schema:url" href="{{ g.value(res2, SDO.url) }}"><span property="schema:name">{{ g.value(res2, SDO.name) }}</span></a></li>
                     {% elif g.value(res2, SDO.url) %}
-                    <li about="{{ res2 }}" typeof="{{ g.value(res2, RDF.type) }}"><i class="fa-book"></i>&nbsp;<a rel="schema:url" href="{{ g.value(res2, SDO.url) }}">{{ g.value(res2, SDO.url) }}</a></li>
+                    <li about="{{ res2 }}" typeof="{{ g.value(res2, RDF.type) }}"><i class="fa fa-book"></i>&nbsp;<a rel="schema:url" href="{{ g.value(res2, SDO.url) }}">{{ g.value(res2, SDO.url) }}</a></li>
                     {% endif %}
                 {% endfor %}
                 {% endif %}

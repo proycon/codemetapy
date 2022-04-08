@@ -50,7 +50,7 @@
 
         {% if (res, SDO.keywords, None) in g %}
         <div class="keywords">
-            <strong><i class="fa-tags"></i> Keywords:</strong> <ul>
+            <strong><i class="fa fa-tags"></i> Keywords:</strong> <ul>
              {% for label, _ in get_triples(g, res, SDO.keywords, abcsort=True) %}
                 <li property="schema:keywords">{{ label }}</li>
              {% endfor %}
@@ -62,11 +62,11 @@
     <td class="links">
         <ul>
         {% if  (res, SDO.codeRepository, None) in g %}
-        <li><i class="fa-code-branch"></i>&nbsp;<a rel="schema:codeRepository" href="{{ g.value(res, SDO.codeRepository) }}" title="Here you can find the source code of this software. This is geared towards technical users who want to install the software themselves.">{{ g.value(res, SDO.codeRepository) }}</a></li>
+        <li><i class="fa fa-code-branch"></i>&nbsp;<a rel="schema:codeRepository" href="{{ g.value(res, SDO.codeRepository) }}" title="Here you can find the source code of this software. This is geared towards technical users who want to install the software themselves.">{{ g.value(res, SDO.codeRepository) }}</a></li>
         {% endif %}
         {% for _,_, value in g.triples((res, SDO.url, None)) %}
         {% if value != g.value(res, SDO.codeRepository) %}
-        <li><i class="fa-home"></i>&nbsp;<a rel="schema:url" href="{{ g.value(res, SDO.url) }}" title="This is the project website associated with this software">{{ g.value(res, SDO.url) }}</a></li>
+        <li><i class="fa fa-home"></i>&nbsp;<a rel="schema:url" href="{{ g.value(res, SDO.url) }}" title="This is the project website associated with this software">{{ g.value(res, SDO.url) }}</a></li>
         {% endif %}
         {% endfor %}
         </ul>

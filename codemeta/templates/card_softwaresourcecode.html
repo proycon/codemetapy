@@ -75,7 +75,7 @@
 
     {% if (res, SDO.applicationCategory, None) in g %}
     <div class="category">
-        <i class="fa-sitemap"></i> <ul>
+        <i class="fa fa-sitemap"></i> <ul>
          {% for label, _ in get_triples(g, res, SDO.applicationCategory, abcsort=True) %}
             <li property="schema:">{{ label }}</li>
          {% endfor %}
@@ -85,7 +85,7 @@
 
     {% if (res, SDO.keywords, None) in g %}
     <div class="keywords">
-        <i class="fa-tags"></i> <ul>
+        <i class="fa fa-tags"></i> <ul>
          {% for label, _ in get_triples(g, res, SDO.keywords, abcsort=True) %}
             <li property="schema:keywords">{{ label }}</li>
          {% endfor %}
@@ -97,11 +97,11 @@
         <ul>
         {% for _,_, value in g.triples((res, SDO.url, None)) %}
         {% if value != g.value(res, SDO.codeRepository) %}
-        <li><i class="fa-home"></i>&nbsp;<a rel="schema:url" href="{{ g.value(res, SDO.url) }}" title="This is the project website associated with this software">Website</a></li>
+        <li><i class="fa fa-home"></i>&nbsp;<a rel="schema:url" href="{{ g.value(res, SDO.url) }}" title="This is the project website associated with this software">Website</a></li>
         {% endif %}
         {% endfor %}
         {% if  (res, SDO.codeRepository, None) in g %}
-        <li><i class="fa-code-branch"></i>&nbsp;<a rel="schema:codeRepository" href="{{ g.value(res, SDO.codeRepository) }}" title="Here you can find the source code of this software. This is geared towards technical users who want to install the software themselves.">Source code</a></li>
+        <li><i class="fa fa-code-branch"></i>&nbsp;<a rel="schema:codeRepository" href="{{ g.value(res, SDO.codeRepository) }}" title="Here you can find the source code of this software. This is geared towards technical users who want to install the software themselves.">Source code</a></li>
         {% endif %}
 
         {% for _,_,targetres in g.triples((res, SDO.targetProduct, None)) %}
@@ -114,7 +114,7 @@
 
                 {% if (targetres, SDO.url, None) in g %}
                 <li class="go">
-                    <i class="fa-globe"></i>
+                    <i class="fa fa-globe"></i>
                     <a rel="schema:url" href="{{ g.value(targetres, SDO.url) }}">
                         <strong>Go to {{ g.value(targetres, SDO.name) }}</strong> <em>({{ type_label(g, targetres) }})</em>
                         <tt>{{ g.value(targetres, SDO.url) }}</tt>
@@ -129,7 +129,7 @@
 
                 {% if (targetres, SDO.url, None) in g %}
                 <li>
-                    <i class="fa-cog"></i>
+                    <i class="fa fa-cog"></i>
                     <a rel="schema:url" href="{{ g.value(targetres, SDO.url) }}">
                         Web API: {{ g.value(targetres, SDO.name) }}
                         <tt>{{ g.value(targetres, SDO.url) }}</tt>
