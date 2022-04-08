@@ -1,0 +1,20 @@
+<div id="header">
+    {% if title %}
+    <h1>{{title}}</h1>
+    {% endif %}
+</div>
+<div id="navbar">
+    <nav>
+        <i class="fa-list"></i> <a href="{{baseurl}}">Cards</a>
+        <i class="fa-table"></i> <a href="{{baseurl}}table/">Table</a>
+        <i class="fa-keyboard"></i> <a href="{{baseurl}}api/">SPARQL</a>
+    </nav>
+    <div id="search">
+        <form method="get" action="{{baseurl}}">
+            <input name="q" title="Your query, multiple conditions can be separated by a semicolon" value="{{q}}" />
+        <button class="search">
+            <svg fill="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M16.3 14.9C17.3 13.6 18 11.9 18 10C18 5.6 14.4 2 10 2C5.6 2 2 5.6 2 10C2 14.4 5.6 18 10 18C11.8 18 13.5 17.4 14.9 16.3L20.6 22L22 20.6L16.3 14.9ZM10 16C6.7 16 4 13.3 4 10C4 6.7 6.7 4 10 4C13.3 4 16 6.7 16 10C16 11.3 15.6 12.5 14.9 13.5C14.5 14 14 14.5 13.5 14.9C12.5 15.6 11.3 16 10 16Z"></path></svg>
+        </button>
+        </form>
+    </div>
+</div>

@@ -10,11 +10,37 @@ div#header {
     background: #000c48;
     color: white;
     text-align: center;
-    border-bottom: white solid 5px;
-    margin-bottom: 5px;
 }
 div#header h1 {
+    margin: 0px;
+    padding: 0px;
+    margin-top: 5px;
+    margin-bottom: 5px;
     color: white;
+}
+div#navbar {
+    margin: 0px;
+    padding: 3px;
+    color: #000c48;
+    background: white;
+    margin-bottom: 3px;
+    vertical-align: middle;
+}
+nav {
+    float: right;
+    text-align: right;
+}
+nav a, nav a:visited {
+    color: #000c48;
+}
+div#navbar div#search button.search {
+    display: inline-block;
+    width: 24px;
+    height: 24px;
+    background: transparent;
+}
+div#navbar div#search input {
+    margin: 0px;
 }
 
 div.leftcolumn {
@@ -179,7 +205,6 @@ div.warning {
     text-align: center;
 }
 div#footer {
-    width: 100%;
     padding: 10px;
     text-align: center;
     font-family: monospace;
@@ -274,7 +299,7 @@ a:hover {
 
 div.card {
     min-width: 320px;
-    max-width: 580px;
+    max-width: 640px;
     border: 1px solid #cbdfe5;
     border-radius: 20px;
     background: #fff;
@@ -317,6 +342,10 @@ div.card ul {
 }
 div.card div.interface li {
     border-radius: 25px;
+}
+div.card div.description {
+    margin-top: 5px;
+    margin-bottom: 5px;
 }
 div.card div.links {
     margin-top: 2px;
