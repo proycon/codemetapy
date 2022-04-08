@@ -312,20 +312,27 @@ div.card {
 div.card h2 {
     color: #000c48;
     margin-bottom: 2px;
+    margin-top: 0px;
 }
 div.card h2 span.version {
     font-size: 60%;
     font-weight: normal;
 }
+div.card div.topbar {
+    display: flex;
+    margin: 0px;
+}
 div.card div.interface {
-    float: left;
-    margin-top: -9%;
+    flex: 50%;
+    display: inline-block;
+    text-align: left;
     font-size: 80%;
     opacity: 0.75;
 }
 div.card div.developmentStatus {
-    float: right;
-    margin-top: -9%;
+    flex: 50%;
+    display: inline-block;
+    text-align: right;
     font-size: 80%;
     opacity: 0.75;
 }

@@ -1,4 +1,26 @@
 <div about="{{ res }}" class="card softwaresourcecode" typeof="schema:SoftwareSourceCode">
+    <div class="topbar">
+        <div class="interface">
+            <ul>
+            {% for label, comment in get_interface_types(g, res, contextgraph,fallback=True) %}
+            {% if label != "Unknown" %}
+            <li{% if comment %} title="{{ comment }}"{% endif %}>{{ label }}</li>
+            {% endif %}
+            {% endfor %}
+            </ul>
+        </div>
+
+        <div class="developmentStatus" property="codemeta:developmentStatus">
+            {% if (res, CODEMETA.developmentStatus, None) in g and g.value(res, CODEMETA.developmentStatus).find("repostatus") != -1 %}
+                {% set repostatus = URIRef(g.value(res, CODEMETA.developmentStatus)) %}
+                {% set repostatus_id = repostatus.split('#')[-1] %}
+                    <a rel="codemeta:developmentStatus" href="{{ g.value(res, CODEMETA.developmentStatus) }}"><img src="https://www.repostatus.org/badges/latest/{{ repostatus_id }}.svg" title="{{ contextgraph.value(repostatus, SKOS.prefLabel) }}: {{ contextgraph.value(repostatus, SKOS.definition) }}" alt="{{ contextgraph.value(repostatus, SKOS.prefLabel) }}: {{ contextgraph.value(repostatus, SKOS.definition) }}"  /></a>
+            {% elif (res, CODEMETA.developmentStatus, None) in g %}
+                {{ g.value(res, CODEMETA.developmentStatus) }}
+            {% endif %}
+        </div>
+    </div>
+
     <h2>
         <span class="name" property="schema:name">
         {% if baseuri and toolstore %}
@@ -21,26 +43,6 @@
             {% endif %}
         </span>
     </h2>
-
-    <div class="interface">
-        <ul>
-        {% for label, comment in get_interface_types(g, res, contextgraph,fallback=True) %}
-        {% if label != "Unknown" %}
-        <li{% if comment %} title="{{ comment }}"{% endif %}>{{ label }}</li>
-        {% endif %}
-        {% endfor %}
-        </ul>
-    </div>
-
-    <div class="developmentStatus" property="codemeta:developmentStatus">
-        {% if (res, CODEMETA.developmentStatus, None) in g and g.value(res, CODEMETA.developmentStatus).find("repostatus") != -1 %}
-            {% set repostatus = URIRef(g.value(res, CODEMETA.developmentStatus)) %}
-            {% set repostatus_id = repostatus.split('#')[-1] %}
-                <a rel="codemeta:developmentStatus" href="{{ g.value(res, CODEMETA.developmentStatus) }}"><img src="https://www.repostatus.org/badges/latest/{{ repostatus_id }}.svg" title="{{ contextgraph.value(repostatus, SKOS.prefLabel) }}: {{ contextgraph.value(repostatus, SKOS.definition) }}" alt="{{ contextgraph.value(repostatus, SKOS.prefLabel) }}: {{ contextgraph.value(repostatus, SKOS.definition) }}"  /></a>
-        {% elif (res, CODEMETA.developmentStatus, None) in g %}
-            {{ g.value(res, CODEMETA.developmentStatus) }}
-        {% endif %}
-    </div>
 
     {% if (res, SDO.author, None) in g %}
     <div class="author">
