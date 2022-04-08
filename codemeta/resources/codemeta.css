@@ -45,7 +45,7 @@ div#navbar div#search input {
 
 div.leftcolumn {
     flex: 60%;
-    padding-right: 10px;
+    padding: 10px;
 }
 
 div.rightcolumn {
