@@ -50,7 +50,7 @@ def parsedependency(s: str):
             version = s[end:begin+1] + " " + s[begin+1:].strip()
     else:
         version = ""
-    return identifier, version
+    return identifier, version.strip("[]() -.,:;")
 
 #pylint: disable=W0621
 def parse_python(g: Graph, res: Union[URIRef, BNode], packagename: str, crosswalk, args: AttribDict) -> Union[str,None]:
