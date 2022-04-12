@@ -629,7 +629,7 @@ def remap_uri(g: Graph, map_uri_from, map_uri_to, args: Optional[AttribDict] = N
     return g
 
 def merge_graphs(g: Graph ,g2: Graph, map_uri_from=None, map_uri_to=None, args: Optional[AttribDict] = None):
-    """Merge two graphs, but taking care to replace certain properties that are known to take a single value, and mapping URIs where needed"""
+    """Merge two graphs (g2 into g), but taking care to replace certain properties that are known to take a single value, and mapping URIs where needed"""
     i = 0
     remapped = 0
     removed = 0

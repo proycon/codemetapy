@@ -2,7 +2,7 @@ import sys
 import json
 from rdflib import Graph, URIRef, BNode, Literal
 from typing import Union, IO
-from codemeta.common import AttribDict, REPOSTATUS, license_to_spdx, SDO, SCHEMA_SOURCE, CODEMETA_SOURCE, CONTEXT, SCHEMA_LOCAL_SOURCE, SCHEMA_SOURCE, CODEMETA_LOCAL_SOURCE, CODEMETA_SOURCE, STYPE_SOURCE, STYPE_LOCAL_SOURCE, init_context, SINGULAR_PROPERTIES, merge_graphs, generate_uri
+from codemeta.common import AttribDict, REPOSTATUS, license_to_spdx, SDO, SCHEMA_SOURCE, CODEMETA_SOURCE, CONTEXT, SCHEMA_LOCAL_SOURCE, SCHEMA_SOURCE, CODEMETA_LOCAL_SOURCE, CODEMETA_SOURCE, STYPE_SOURCE, STYPE_LOCAL_SOURCE, init_context, SINGULAR_PROPERTIES, merge_graphs, generate_uri, bind_graph
 
 
 def rewrite_context(context):
@@ -56,6 +56,8 @@ def inject_uri(data: dict, res: URIRef):
     else:
         raise Exception("JSON-LD file does not describe a single resource (did you mean to use --graph instead?)")
 
+
+
 def parse_jsonld_data(g: Graph, res: Union[BNode, URIRef,None], data: dict, args: AttribDict) -> Union[str,None]:
     #download schemas needed for context
     init_context()
@@ -82,7 +84,19 @@ def parse_jsonld_data(g: Graph, res: Union[BNode, URIRef,None], data: dict, args
     #and parse with rdflib
     g2.parse(data=data, format="json-ld", context=CONTEXT)
 
-    merge_graphs(g,g2, map_uri_from=founduri, map_uri_to=str(res) if res else None, args=args)
+    #give all blank nodes a stub URI (i.e. skolemize) to facilitate merging
+    g3 = Graph()
+    bind_graph(g3)
+    if args.baseuri:
+        authority = args.baseuri
+        if authority[-1] != "/": authority += "/"
+        basepath = "stub/"
+    else:
+        authority = "/"
+        basepath = "stub/"
+    g3 = g2.skolemize(authority=authority, basepath=basepath)
+
+    merge_graphs(g,g3, map_uri_from=founduri, map_uri_to=str(res) if res else None, args=args)
 
     if not founduri and (res, SDO.identifier, None) in g and args.baseuri:
         return generate_uri(g.value(res, SDO.identifier), args.baseuri)
