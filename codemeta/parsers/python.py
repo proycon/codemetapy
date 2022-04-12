@@ -55,7 +55,10 @@ def parsedependency(s: str):
             version = operator + " " + s[versionbegin:].strip()
     else:
         version = ""
-    return identifier, version.strip("[]() -.,:;")
+    if ';' in version:
+        #there may be extra qualifiers after the version which we strip (like ; sys_platform=)
+        version = version.split(";")[0]
+    return identifier, version.strip("[]() -.,:")
 
 #pylint: disable=W0621
 def parse_python(g: Graph, res: Union[URIRef, BNode], packagename: str, crosswalk, args: AttribDict) -> Union[str,None]:
