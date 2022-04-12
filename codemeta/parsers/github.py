@@ -28,6 +28,7 @@ def rate_limit_get(*args, backoff_rate=2, initial_backoff=1, **kwargs):
     response = {}
     if not kwargs: kwargs = {}
     if 'GITHUB_TOKEN' in environ and environ['GITHUB_TOKEN']:
+        if 'headers' not in kwargs: kwargs['headers'] = {}
         kwargs['headers']["Authorization"] = "token " + environ['GITHUB_TOKEN']
         has_token = True
     else:
