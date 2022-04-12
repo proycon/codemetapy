@@ -401,7 +401,7 @@ def add_triple(g: Graph, res: Union[URIRef, BNode],key, value, args: AttribDict,
                 g.add((res, SDO.keywords,Literal(item)))
         else:
             f_add((res, SDO.keywords,Literal(value)))
-    elif key == "operatingSystem" and value.upper() in ("POSIX","UNIX"):
+    elif key == "operatingSystem" and isinstance(value, str) and value.upper() in ("POSIX","UNIX"):
         #decompose into some actual operating systems that are easier to understand (Python packages often use POSIX as a group)
         f_add((res, SDO.operatingSystem, Literal("Linux")))
         f_add((res, SDO.operatingSystem, Literal("BSD")))
