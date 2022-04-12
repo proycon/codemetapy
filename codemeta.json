@@ -1,101 +1,159 @@
 {
     "@context": [
-        "https://doi.org/10.5063/schema/codemeta-2.0",
-        "http://schema.org/",
-        {
-            "entryPoints": {
-                "@reverse": "schema:actionApplication"
-            },
-            "interfaceType": {
-                "@id": "codemeta:interfaceType"
-            },
-            "specification": {
-                "@id": "codemeta:specification",
-                "@type": "@id"
-            },
-            "mediatorApplication": {
-                "@id": "codemeta:mediatorApplication",
-                "@type": "@id"
-            }
-        }
+        "https://raw.githubusercontent.com/codemeta/codemeta/2.0/codemeta.jsonld",
+        "https://raw.githubusercontent.com/schemaorg/schemaorg/main/data/releases/13.0/schemaorgcontext.jsonld",
+        "https://w3id.org/software-types"
     ],
+    "@id": "https://github.com/proycon/codemetapy.git",
     "@type": "SoftwareSourceCode",
+    "applicationCategory": "Software Development",
+    "audience": {
+        "@id": "undefined:audience/science-research",
+        "@type": "Audience",
+        "audienceType": "Science/Research"
+    },
+    "author": {
+        "@id": "undefined:person/maarten-van-gompel",
+        "@type": "Person",
+        "affiliation": {
+            "@id": "undefined:org/knaw-humanities-cluster-clst,-radboud-university",
+            "@type": "Organization",
+            "name": "KNAW Humanities Cluster & CLST, Radboud University"
+        },
+        "email": "proycon@anaproy.nl",
+        "familyName": "van Gompel",
+        "givenName": "Maarten",
+        "position": 1,
+        "url": "https://proycon.anaproy.nl"
+    },
+    "codeRepository": "https://github.com/proycon/codemetapy.git",
+    "contributor": {
+        "@id": "undefined:person/maarten-van-gompel",
+        "@type": "Person",
+        "affiliation": {
+            "@id": "undefined:org/knaw-humanities-cluster-clst,-radboud-university",
+            "@type": "Organization",
+            "name": "KNAW Humanities Cluster & CLST, Radboud University"
+        },
+        "email": "proycon@anaproy.nl",
+        "familyName": "van Gompel",
+        "givenName": "Maarten",
+        "position": 1,
+        "url": "https://proycon.anaproy.nl"
+    },
+    "dateCreated": "2018-04-16T10:54:22Z+0200",
+    "dateModified": "2022-04-12T11:01:28Z+0200",
+    "description": "Generate and manage CodeMeta software metadata",
+    "developmentStatus": "https://www.repostatus.org/#active",
+    "downloadUrl": "https://github.com/proycon/codemetapy/archive/refs/tags/.zip",
     "identifier": "codemetapy",
+    "issueTracker": "https://github.com/proycon/codemetapy/issues",
+    "keywords": [
+        "metadata-extractor",
+        "codemeta",
+        "scientific",
+        "metadata",
+        "software metadata codemeta doap pip pypi distutils admssw"
+    ],
+    "license": [
+        "http://spdx.org/licenses/GPL-2.0-or-later",
+        "http://spdx.org/licenses/GPL-3.0-only"
+    ],
+    "maintainer": {
+        "@id": "undefined:person/maarten-van-gompel",
+        "@type": "Person",
+        "affiliation": {
+            "@id": "undefined:org/knaw-humanities-cluster-clst,-radboud-university",
+            "@type": "Organization",
+            "name": "KNAW Humanities Cluster & CLST, Radboud University"
+        },
+        "email": "proycon@anaproy.nl",
+        "familyName": "van Gompel",
+        "givenName": "Maarten",
+        "position": 1,
+        "url": "https://proycon.anaproy.nl"
+    },
     "name": "CodeMetaPy",
-    "version": "0.4.0",
-    "description": "Generate CodeMeta metadata for Python packages",
-    "license": "GPL, OSI Approved :: GNU General Public License v3 (GPLv3)",
-    "author": [
-        {
-            "@type": "Person",
-            "givenName": "Maarten",
-            "familyName": "van Gompel",
-            "email": "proycon@anaproy.nl"
-        }
+    "operatingSystem": "POSIX",
+    "readme": "https://github.com/proycon/codemetapy/blob//README.rst",
+    "releaseNotes": "https://github.com/proycon/codemetapy/releases/tag/",
+    "runtimePlatform": [
+        "Python 3.7",
+        "Python 3",
+        "Python 3.9",
+        "Python 3.8",
+        "Python 3.10",
+        "Python 3.6"
     ],
     "softwareRequirements": [
         {
+            "@id": "undefined:dependency/requests",
             "@type": "SoftwareApplication",
-            "identifier": "nameparser",
-            "name": "nameparser",
-            "provider": {
-                "@id": "https://pypi.org",
-                "@type": "Organization",
-                "name": "The Python Package Index",
-                "url": "https://pypi.org"
-            },
-            "runtimePlatform": "Python 3.6.4"
+            "identifier": "requests",
+            "name": "requests",
+            "runtimePlatform": "Python 3"
         },
         {
+            "@id": "undefined:dependency/rdflib(-ge-6.1.1)",
             "@type": "SoftwareApplication",
-            "identifier": "pyyaml",
-            "name": "pyyaml",
-            "provider": {
-                "@id": "https://pypi.org",
-                "@type": "Organization",
-                "name": "The Python Package Index",
-                "url": "https://pypi.org"
-            },
-            "runtimePlatform": "Python 3.6.4"
+            "identifier": "rdflib",
+            "name": "rdflib",
+            "runtimePlatform": "Python 3",
+            "version": " (>= 6.1.1)"
         },
         {
+            "@id": "undefined:dependency/importlib-metadata",
             "@type": "SoftwareApplication",
             "identifier": "importlib-metadata",
             "name": "importlib-metadata",
-            "provider": {
-                "@id": "https://pypi.org",
-                "@type": "Organization",
-                "name": "The Python Package Index",
-                "url": "https://pypi.org"
-            },
+            "runtimePlatform": "Python 3"
+        },
+        {
+            "@id": "undefined:dependency/beautifulsoup4",
+            "@type": "SoftwareApplication",
+            "identifier": "BeautifulSoup4",
+            "name": "BeautifulSoup4",
+            "runtimePlatform": "Python 3"
+        },
+        {
+            "@id": "undefined:dependency/jinja2",
+            "@type": "SoftwareApplication",
+            "identifier": "Jinja2",
+            "name": "Jinja2",
+            "runtimePlatform": "Python 3"
+        },
+        {
+            "@id": "undefined:dependency/pyyaml",
+            "@type": "SoftwareApplication",
+            "identifier": "pyyaml",
+            "name": "pyyaml",
+            "runtimePlatform": "Python 3"
+        },
+        {
+            "@id": "undefined:dependency/lxml",
+            "@type": "SoftwareApplication",
+            "identifier": "lxml",
+            "name": "lxml",
+            "runtimePlatform": "Python 3"
+        },
+        {
+            "@id": "undefined:dependency/nameparser",
+            "@type": "SoftwareApplication",
+            "identifier": "nameparser",
+            "name": "nameparser",
             "runtimePlatform": "Python 3"
         }
     ],
-    "audience": [
-        {
-            "@type": "Audience",
-            "audienceType": "Science/Research"
-        }
-    ],
-    "provider": {
-        "@id": "https://pypi.org",
-        "@type": "Organization",
-        "name": "The Python Package Index",
-        "url": "https://pypi.org"
+    "targetProduct": {
+        "@id": "undefined:commandlineapplication/codemetapy",
+        "@type": "CommandLineApplication",
+        "executableName": "codemetapy",
+        "name": "codemetapy",
+        "runtimePlatform": "Python 3"
     },
-    "runtimePlatform": "Python 3",
-    "entryPoints": [
-        {
-            "@type": "EntryPoint",
-            "name": "codemetapy",
-            "urlTemplate": "file:///codemetapy",
-            "interfaceType": "CLI"
-        }
+    "url": [
+        "https://codemeta.github.io/",
+        "https://github.com/proycon/codemetapy.git"
     ],
-    "url": "https://github.com/proycon/codemeta",
-    "developmentStatus": "4 - Beta",
-    "applicationCategory": "Software Development",
-    "programmingLanguage": "Python :: 3, Python 3.4, Python 3.5, Python 3.6, Python 3.7, Python 3.8",
-    "operatingSystem": "POSIX",
-    "keywords": "software metadata codemeta doap pip pypi distutils admssw"
+    "version": "2.0.0"
 }

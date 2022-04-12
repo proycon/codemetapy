@@ -95,7 +95,7 @@ For `schema:license`, full `SPDX <https://spdx.org>_` URIs are used where possib
 Software Types and services
 -----------------------------
 
-Codemetapy (since 0.4.0) implements an extension to codemeta that allows linking the software source code to the actual
+Codemetapy (since 2.0) implements an extension to codemeta that allows linking the software source code to the actual
 instantiation of the software, with explicit regard for the interface type. This is done via the `schema:targetProduct`
 property, which takes as range a `schema:SoftwareApplication`, `schema:WebAPI`, `schema:WebSite` or any of the extra
 types defined in https://github.com/SoftwareUnderstanding/software_types/ . This was proposed in `this issue
@@ -113,7 +113,7 @@ If served HTML, codemetapy will use your `<script>` block using ``application/js
 mentioned above). For other HTML, codemetapy will simply extract some metadata from HTML ``<meta>`` elements. Content
 negotation will be used and the we favour json+ld, json and even yaml and XML over HTML.
 
-(Note: the older Entypoint Extension from codemetapy < 0.4.0 is now deprecated)
+(Note: the older Entypoint Extension from codemetapy < 2.0 is now deprecated)
 
 Graph
 --------------
