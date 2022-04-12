@@ -25,7 +25,7 @@ setup(
     packages=['codemeta', 'codemeta.parsers','codemeta.serializers'],
     long_description=read('README.rst'),
     classifiers=[
-        "Development Status :: 5 - Production",
+        "Development Status :: 5 - Production/Stable",
         "Topic :: Software Development",
         "Programming Language :: Python :: 3.6",
         "Programming Language :: Python :: 3.7",

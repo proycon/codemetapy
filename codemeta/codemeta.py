@@ -340,7 +340,7 @@ def build(**kwargs):
 
     if uri != str(res):
         print(f"Remapping URI: {res} -> {uri}",file=sys.stderr)
-        g = remap_uri(g, str(res), uri)
+        g = remap_uri(g, str(res), uri, args)
         res = URIRef(uri)
 
     #Test and fix conflicts in the graph (and report them)

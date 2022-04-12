@@ -8,7 +8,7 @@ from collections import Counter
 from rdflib import Graph, Namespace, URIRef, BNode, Literal
 from rdflib.namespace import RDF, RDFS, SKOS
 from rdflib.compare import graph_diff
-from typing import Union, IO, Sequence
+from typing import Union, IO, Sequence, Optional
 from collections import OrderedDict
 from nameparser import HumanName
 
@@ -19,9 +19,6 @@ PROGLANG_PYTHON = {
     "version": str(sys.version_info.major) + "." + str(sys.version_info.minor) + "." + str(sys.version_info.micro),
     "url": "https://www.python.org",
 }
-
-#A dummy namespace that will be used if the RDF parser expects a namespace but can't find any
-DUMMY_NS = "http://unknown/"
 
 SDO = Namespace("http://schema.org/")
 
@@ -604,25 +601,28 @@ def getstream(source: str):
     return open(source,'r',encoding='utf-8')
 
 
-def remap_uri(g: Graph, map_uri_from, map_uri_to) -> Graph:
+def remap_uri(g: Graph, map_uri_from, map_uri_to, args: Optional[AttribDict] = None) -> Graph:
     """Remap URIRefs and return a new graph. Only handles subjects and objects."""
     res = URIRef(map_uri_from)
     if (res, None, None) in g or (None,None,res) in g:
         g2 = Graph()
         bind_graph(g2)
         #pylint: disable=W1114 #arguments are not out of order here
-        merge_graphs(g2, g, map_uri_from, map_uri_to)
+        merge_graphs(g2, g, map_uri_from, map_uri_to, args)
         return g2
     #nothing to do, return input as-is
     return g
 
-def merge_graphs(g: Graph ,g2: Graph, map_uri_from=None, map_uri_to=None):
+def merge_graphs(g: Graph ,g2: Graph, map_uri_from=None, map_uri_to=None, args: Optional[AttribDict] = None):
     """Merge two graphs, but taking care to replace certain properties that are known to take a single value, and mapping URIs where needed"""
     i = 0
     remapped = 0
     removed = 0
     both, first, second = graph_diff(g, g2)
     for (s,p,o) in second:
+        s = handle_rel_uri(s, args.baseuri)
+        p = handle_rel_uri(p, args.baseuri)
+        o = handle_rel_uri(o, args.baseuri)
         if map_uri_from and map_uri_to:
             if s == URIRef(map_uri_from):
                 s = URIRef(map_uri_to)
@@ -630,9 +630,6 @@ def merge_graphs(g: Graph ,g2: Graph, map_uri_from=None, map_uri_to=None):
             if o == URIRef(map_uri_from):
                 remapped += 1
                 o = URIRef(map_uri_to)
-        if isinstance(o, URIRef) and str(o).startswith(DUMMY_NS):
-            #remove dummy namespace
-            o = Literal(str(o).replace(DUMMY_NS, ""))
         if p in SINGULAR_PROPERTIES:
             #remove existing triples in the graph
             for (s2,p2,o2) in g.triples((s,p,None)):
@@ -640,11 +637,21 @@ def merge_graphs(g: Graph ,g2: Graph, map_uri_from=None, map_uri_to=None):
                 removed += 1
         g.add((s,p,o))
         i += 1
-    print(f"    Merged {i} triples, removed {removed} superseded values, remapped {remapped} uris",file=sys.stderr)
+    l = len(g2)
+    print(f"    Merged {i} of {l} triples, removed {removed} superseded values, remapped {remapped} uris",file=sys.stderr)
+
+def handle_rel_uri(x, baseuri=None):
+    #handle relative URIs
+    if isinstance(x, URIRef) and str(x).startswith("file:///"):
+        if baseuri:
+            return URIRef(str(x).replace("file:///",  baseuri + ("/" if baseuri[-1] not in ("/","#") else "" )))
+        else:
+            return URIRef(str(x).replace("file:///","/"))
+    return x
 
 
 def generate_uri(identifier: Union[str,None] = None, baseuri: Union[str,None] = None, prefix: str= ""):
-    """Generate an URI"""
+    """Generate an URI (aka IRI)"""
     if not identifier:
         identifier = "N" + "%032x" % random.getrandbits(128)
     else:
@@ -655,7 +662,7 @@ def generate_uri(identifier: Union[str,None] = None, baseuri: Union[str,None] = 
     if prefix and prefix[-1] not in ('/','#'):
         prefix += '/'
     if not baseuri:
-        baseuri = "undefined:"
+        baseuri = "/" #relative URI! (no authority part)
     elif baseuri[-1] not in ('/','#'):
         baseuri += '/'
     return baseuri + prefix + identifier
