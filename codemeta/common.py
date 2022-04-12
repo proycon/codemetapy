@@ -365,10 +365,10 @@ def value_or_uri(value: str, baseuri: Optional[str]) -> str:
     #want a literatal string instead. Allows for values like developmentStatus: "active"
     if baseuri and value.startswith(baseuri):
         #misinterpreted as a local URI
-        return value[len(baseuri):]
+        return value.split("/")[-1]
     elif value.startswith("/"):
         #misinterpreted as a relative URI
-        return value[1:]
+        return value.split("/")[-1]
     return value
 
 
@@ -637,7 +637,7 @@ def merge_graphs(g: Graph ,g2: Graph, map_uri_from=None, map_uri_to=None, args: 
     for (s,p,o) in second:
         s = handle_rel_uri(s, args.baseuri)
         p = handle_rel_uri(p, args.baseuri)
-        o = handle_rel_uri(o, args.baseuri)
+        o = handle_rel_uri(o, args.baseuri, prop=p)
         if map_uri_from and map_uri_to:
             if s == URIRef(map_uri_from):
                 s = URIRef(map_uri_to)
@@ -655,14 +655,41 @@ def merge_graphs(g: Graph ,g2: Graph, map_uri_from=None, map_uri_to=None, args: 
     l = len(g2)
     print(f"    Merged {i} of {l} triples, removed {removed} superseded values, remapped {remapped} uris",file=sys.stderr)
 
-def handle_rel_uri(x, baseuri: Optional[str] =None):
-    #handle relative URIs
-    if isinstance(x, URIRef) and str(x).startswith("file:///"):
-        if baseuri:
-            return URIRef(str(x).replace("file:///",  baseuri + ("/" if baseuri[-1] not in ("/","#") else "" )))
+def handle_rel_uri(value, baseuri: Optional[str] =None, prop = None):
+    """Handle relative URIs (lacking a scheme and authority part).
+       Also handles some properties that are sometimes given literal values
+       rather than URIs (in violation of the codemeta specification)."""
+
+    #if prop is set, then value is the object
+
+    if isinstance(value, URIRef) and str(value).startswith("file:///"):
+        if prop == CODEMETA.developmentStatus:
+            #map to repostatus
+            value = value_or_uri(value.replace("file://",""), baseuri)
+            if value.strip().lower() in REPOSTATUS_MAP.values():
+                return getattr(REPOSTATUS, value.strip().lower())
+            elif value.strip().lower() in REPOSTATUS_MAP:
+                #map to repostatus vocabulary
+                repostatus = REPOSTATUS_MAP[value.strip().lower()]
+                return getattr(REPOSTATUS, repostatus)
+            else:
+                #This is not a URI but a string literal
+                return Literal(value)
+        elif prop == SDO.license:
+            #map to spdx
+            value = value_or_uri(str(value).replace("file://",""), baseuri)
+            value = license_to_spdx(value)
+            if value.find('spdx') != -1:
+                return URIRef(value)
+            else:
+                return Literal(value)
         else:
-            return URIRef(str(x).replace("file:///","/"))
-    return x
+            #this is the normal case where we strip and map the file:// prefix rdflib assigns to make relative URIs absolute
+            if baseuri:
+                return URIRef(str(value).replace("file:///",  baseuri + ("/" if baseuri[-1] not in ("/","#") else "" )))
+            else:
+                return URIRef(str(value).replace("file:///","/"))
+    return value
 
 
 def generate_uri(identifier: Union[str,None] = None, baseuri: Union[str,None] = None, prefix: str= ""):
