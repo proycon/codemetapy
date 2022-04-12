@@ -26,11 +26,15 @@ github_crosswalk_table = {
 def rate_limit_get(*args, backoff_rate=2, initial_backoff=1, **kwargs):
     rate_limited = True
     response = {}
+    if not kwargs: kwargs = {}
+    if 'GITHUB_TOKEN' in environ and environ['GITHUB_TOKEN']:
+        kwargs['headers']["Authorization"] = "token " + environ['GITHUB_TOKEN']
+        has_token = True
+    else:
+        has_token = False
     while rate_limited:
         response = requests.get(*args, **kwargs)
         data = response
-        if 'GITHUB_TOKEN' in environ and environ['GITHUB_TOKEN']:
-            data.headers["Authorization"] = "token " + environ['GITHUB_TOKEN']
         rate_limit_remaining = data.headers["x-ratelimit-remaining"]
         epochtime = int(data.headers["x-ratelimit-reset"])
         date_reset = datetime.fromtimestamp(epochtime)
@@ -38,10 +42,10 @@ def rate_limit_get(*args, backoff_rate=2, initial_backoff=1, **kwargs):
         response = response.json()
         if 'message' in response and 'API rate limit exceeded' in response['message']:
             rate_limited = True
-            print(f"Github API: rate limited. Backing off for {initial_backoff} seconds", file=sys.stderr)
+            print(f"Github API: rate limited. Backing off for {initial_backoff} seconds (has_token={has_token})", file=sys.stderr)
             sys.stderr.flush()
             if initial_backoff > 120:
-                raise Exception("Github API timed out because of rate limiting, giving up...")
+                raise Exception("Github API timed out because of rate limiting, giving up... (has_token={has_token})")
             time.sleep(initial_backoff)
 
             # increase the backoff for next time
