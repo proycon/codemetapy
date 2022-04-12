@@ -42,12 +42,17 @@ def parsedependency(s: str):
     else:
         return s, ""
 
-    begin = max( s.find(">") , s.find("=")  )
-    if begin != -1:
-        if s[end:begin] in ("=","=="):
-            version = s[begin+1:].strip()
+    versionbegin = -1
+    for i, c in enumerate(s[end:]):
+        if c not in ('>','=',' '):
+            versionbegin = end + i
+            break
+    if versionbegin != -1:
+        operator = s[end:versionbegin].strip()
+        if operator in ("=","=="):
+            version = s[versionbegin:].strip()
         else:
-            version = s[end:begin+1] + " " + s[begin+1:].strip()
+            version = operator + " " + s[versionbegin:].strip()
     else:
         version = ""
     return identifier, version.strip("[]() -.,:;")
