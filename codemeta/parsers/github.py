@@ -38,7 +38,7 @@ def rate_limit_get(*args, backoff_rate=2, initial_backoff=1, **kwargs):
         rate_limit_remaining = data.headers["x-ratelimit-remaining"]
         epochtime = int(data.headers["x-ratelimit-reset"])
         date_reset = datetime.fromtimestamp(epochtime)
-        print("Remaining GitHub API requests: " + rate_limit_remaining + " ### Next rate limit reset at: " + str(date_reset) + " (has_token={has_token})")
+        print("Remaining GitHub API requests: " + rate_limit_remaining + " ### Next rate limit reset at: " + str(date_reset) + f" (has_token={has_token})")
         response = response.json()
         if 'message' in response and 'API rate limit exceeded' in response['message']:
             rate_limited = True
