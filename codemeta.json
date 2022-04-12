@@ -48,14 +48,14 @@
     "identifier": "codemetapy",
     "issueTracker": "https://github.com/proycon/codemetapy/issues",
     "keywords": [
-        "metadata-extractor",
-        "codemeta",
         "metadata",
         "scientific",
-        "schema.org",
+        "metadata-extractor",
+        "codemeta",
         "rdf",
-        "linked data",
-        "software metadata"
+        "software metadata",
+        "schema.org",
+        "linked data"
     ],
     "license": [
         "http://spdx.org/licenses/GPL-3.0-only",
@@ -77,39 +77,32 @@
     },
     "name": "CodeMetaPy",
     "operatingSystem": [
-        "macOS",
+        "Linux",
         "BSD",
-        "Linux"
+        "macOS"
     ],
     "readme": "https://github.com/proycon/codemetapy/blob//README.rst",
     "runtimePlatform": [
-        "Python 3.8",
-        "Python 3.7",
-        "Python 3",
-        "Python 3.10",
         "Python 3.6",
-        "Python 3.9"
+        "Python 3.8",
+        "Python 3.9",
+        "Python 3",
+        "Python 3.7",
+        "Python 3.10"
     ],
     "softwareRequirements": [
+        {
+            "@id": "/dependency/nameparser",
+            "@type": "SoftwareApplication",
+            "identifier": "nameparser",
+            "name": "nameparser",
+            "runtimePlatform": "Python 3"
+        },
         {
             "@id": "/dependency/pyyaml",
             "@type": "SoftwareApplication",
             "identifier": "pyyaml",
             "name": "pyyaml",
-            "runtimePlatform": "Python 3"
-        },
-        {
-            "@id": "/dependency/requests",
-            "@type": "SoftwareApplication",
-            "identifier": "requests",
-            "name": "requests",
-            "runtimePlatform": "Python 3"
-        },
-        {
-            "@id": "/dependency/importlib-metadata",
-            "@type": "SoftwareApplication",
-            "identifier": "importlib-metadata",
-            "name": "importlib-metadata",
             "runtimePlatform": "Python 3"
         },
         {
@@ -120,10 +113,10 @@
             "runtimePlatform": "Python 3"
         },
         {
-            "@id": "/dependency/lxml",
+            "@id": "/dependency/importlib-metadata",
             "@type": "SoftwareApplication",
-            "identifier": "lxml",
-            "name": "lxml",
+            "identifier": "importlib-metadata",
+            "name": "importlib-metadata",
             "runtimePlatform": "Python 3"
         },
         {
@@ -134,19 +127,26 @@
             "runtimePlatform": "Python 3"
         },
         {
+            "@id": "/dependency/requests",
+            "@type": "SoftwareApplication",
+            "identifier": "requests",
+            "name": "requests",
+            "runtimePlatform": "Python 3"
+        },
+        {
+            "@id": "/dependency/lxml",
+            "@type": "SoftwareApplication",
+            "identifier": "lxml",
+            "name": "lxml",
+            "runtimePlatform": "Python 3"
+        },
+        {
             "@id": "/dependency/rdflib-ge-6.1.1",
             "@type": "SoftwareApplication",
             "identifier": "rdflib",
             "name": "rdflib",
             "runtimePlatform": "Python 3",
             "version": ">= 6.1.1"
-        },
-        {
-            "@id": "/dependency/nameparser",
-            "@type": "SoftwareApplication",
-            "identifier": "nameparser",
-            "name": "nameparser",
-            "runtimePlatform": "Python 3"
         }
     ],
     "targetProduct": {

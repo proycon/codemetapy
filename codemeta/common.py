@@ -359,6 +359,19 @@ def getregistry(identifier, registry):
     raise KeyError(identifier)
 
 
+def value_or_uri(value: str, baseuri: Optional[str]) -> str:
+    #some values formally take a URI but may also be given a literal string,
+    #if we interpreted the URI locally then this is an indication we
+    #want a literatal string instead. Allows for values like developmentStatus: "active"
+    if baseuri and value.startswith(baseuri):
+        #misinterpreted as a local URI
+        return value[len(baseuri):]
+    elif value.startswith("/"):
+        #misinterpreted as a relative URI
+        return value[1:]
+    return value
+
+
 def add_triple(g: Graph, res: Union[URIRef, BNode],key, value, args: AttribDict, replace=False) -> bool:
     """Maps a key/value pair to an actual triple"""
 
@@ -367,6 +380,7 @@ def add_triple(g: Graph, res: Union[URIRef, BNode],key, value, args: AttribDict,
     else:
         f_add = g.add
     if key == "developmentStatus":
+        value = value_or_uri(value, args.baseuri)
         if value.strip().lower() in REPOSTATUS_MAP.values():
             f_add((res, CODEMETA.developmentStatus, getattr(REPOSTATUS, value.strip().lower()) ))
         elif value.strip().lower() in REPOSTATUS_MAP:
@@ -379,6 +393,7 @@ def add_triple(g: Graph, res: Union[URIRef, BNode],key, value, args: AttribDict,
         else:
             f_add((res, CODEMETA.developmentStatus, Literal(value)))
     elif key == "license":
+        value = value_or_uri(value, args.baseuri)
         value = license_to_spdx(value)
         if value.find('spdx') != -1:
             f_add((res, SDO.license, URIRef(value)))
@@ -640,7 +655,7 @@ def merge_graphs(g: Graph ,g2: Graph, map_uri_from=None, map_uri_to=None, args: 
     l = len(g2)
     print(f"    Merged {i} of {l} triples, removed {removed} superseded values, remapped {remapped} uris",file=sys.stderr)
 
-def handle_rel_uri(x, baseuri=None):
+def handle_rel_uri(x, baseuri: Optional[str] =None):
     #handle relative URIs
     if isinstance(x, URIRef) and str(x).startswith("file:///"):
         if baseuri:
