@@ -97,7 +97,22 @@ def parse_web(g: Graph, res: Union[URIRef, BNode], url, args: AttribDict) -> Ite
                 targetres = res
             if name:
                 g.add((targetres, SDO.name, Literal(name)))
-            g.add((targetres, RDF.type, SDO.WebApplication))
+
+            targetrestype = SDO.WebApplication
+            for e in (soup.find("head"), soup.find("html")):
+                itemtype = e.get("itemtype")
+                if itemtype in ("https://schema.org/WebApplication", "http://schema.org/WebApplication"):
+                    targetrestype = SDO.WebApplication
+                elif itemtype in ("https://schema.org/WebPage", "http://schema.org/WebPage"):
+                    targetrestype = SDO.WebPage
+                elif itemtype in ("https://schema.org/WebSite", "http://schema.org/WebSite"):
+                    targetrestype = SDO.WebSite
+                elif itemtype in ("https://schema.org/WebAPI", "http://schema.org/WebAPI"):
+                    targetrestype = SDO.WebAPI
+                if itemtype:
+                    break
+
+            g.add((targetres, RDF.type, targetrestype))
             g.add((targetres, SDO.url, Literal(get_meta(soup, "og:url", "url", default=url))))
 
             v = get_meta(soup, "schema:description", "og:description", "twitter:description", "description")
