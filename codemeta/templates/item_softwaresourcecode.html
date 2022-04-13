@@ -81,6 +81,10 @@
         {% else  %}
             <span class="negative" title="No development status was provided nor could be extracted automatically">unknown</span>
         {% endif %}
+
+        {% if (res, CODEMETAPY.errors, None) in g and int(g.value(res, CODEMETAPY.errors)) > 0 %}
+        <br/><span class="negative" title="There were problems harvesting this metadata, please inspect the log"><i class="fa fa-triangle-exclamation"></i> {{ g.value(res, CODEMETAPY.errors) }}</span>
+        {% endif %}
     </td>
     <td class="maintainer">
         <ul>
