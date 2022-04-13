@@ -25,10 +25,13 @@ def detect_type(data):
 
 def get_meta(soup, *keys, default=""):
     for key in keys:
-        for value in  soup.find_all("meta", property=key):
+        for value in  soup.find("head").find_all("meta", itemprop=key):
             if value.get('content'):
                 return value.get('content')
-        for value in soup.find_all("meta", {"name": key }):
+        for value in  soup.find("head").find_all("meta", property=key):
+            if value.get('content'):
+                return value.get('content')
+        for value in soup.find("head").find_all("meta", {"name": key }):
             if value.get('content'):
                 return value.get('content')
     return default
