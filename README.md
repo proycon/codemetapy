@@ -91,9 +91,9 @@ possible For `schema:license`, full [SPDX](https://spdx.org) URIs are used where
 Codemetapy (since 2.0) implements an extension to codemeta that allows
 linking the software source code to the actual instantiation of the
 software, with explicit regard for the interface type. This is done via
-the [schema:targetProduct]{.title-ref} property, which takes as range a
-[schema:SoftwareApplication]{.title-ref}, [schema:WebAPI]{.title-ref},
-[schema:WebSite]{.title-ref} or any of the extra types defined in
+the `schema:targetProduct` property, which takes as range a
+`schema:SoftwareApplication`, `schema:WebAPI`,
+`schema:WebSite` or any of the extra types defined in
 <https://github.com/SoftwareUnderstanding/software_types/> . This was
 proposed in [this issue](https://github.com/codemeta/codemeta/issues/271)
 
@@ -102,8 +102,8 @@ This extension is enabled by default and can be disabled by setting the
 
 When you pass codemetapy a URL it will assume this is where the software
 is run as a service, and attempt to extract metadata from the site and
-encode is via [targetProduct]{.title-ref}. For example, here we read an
-existing [codemeta.json]{.title-ref} and extend it with some place where
+encode is via `targetProduct`. For example, here we read an
+existing `codemeta.json` and extend it with some place where
 it is instantiated as a service:
 
 `$ codemetapy codemeta.json https://example.org/`
