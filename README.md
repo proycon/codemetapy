@@ -55,9 +55,9 @@ or use the `-O` parameter:
 `$ codemetapy -O codemeta.json somepackage`
 
 If you are in the current working directory of any python project and
-there is a `setup.py`, then you can simply call `codemetapy` without
+there is a `setup.py`or `pyproject.toml`, then you can simply call `codemetapy` without
 arguments to output codemeta for the project. Codemetapy will
-automatically run `python setup.py egg_info` and parse it's output to
+automatically run `python setup.py egg_info` if needed and parse it's output to
 facilitate this:
 
 `$ codemetapy`
