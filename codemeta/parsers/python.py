@@ -11,7 +11,7 @@ from rdflib import Graph, URIRef, BNode, Literal
 from rdflib.namespace import RDF
 from codemeta.common import AttribDict, add_triple, CODEMETA, SOFTWARETYPES, add_authors, SDO, COMMON_SOURCEREPOS, generate_uri, get_last_component
 from codemeta.crosswalk import readcrosswalk, CWKey
-
+import pyproject_parser
 
 
 def splitdependencies(s: str):
@@ -61,12 +61,18 @@ def parsedependency(s: str):
     return identifier, version.strip("[]() -.,:")
 
 #pylint: disable=W0621
-def parse_python(g: Graph, res: Union[URIRef, BNode], packagename: str, crosswalk, args: AttribDict) -> Union[str,None]:
-    """Parses python package metadata and converts it to codemeta"""
+def parse_pyproject(g: Graph, res: Union[URIRef, BNode], packagename: str, crosswalk, args: AttribDict) -> Union[str,None]:
+    """Parses pyproject.toml and converts it to metadata"""
     prefuri = None
     if crosswalk is None:
         _, crosswalk = readcrosswalk((CWKey.PYPI,))
-    authorindex = []
+
+#pylint: disable=W0621
+def parse_python(g: Graph, res: Union[URIRef, BNode], packagename: str, crosswalk, args: AttribDict) -> Union[str,None]:
+    """Parses python package metadata (setuptools) and converts it to codemeta"""
+    prefuri = None
+    if crosswalk is None:
+        _, crosswalk = readcrosswalk((CWKey.PYPI,))
     if args.exactplatformversion:
         g.add((res, SDO.runtimePlatform, Literal("Python " + str(sys.version_info.major) + "." + str(sys.version_info.minor) + "." + str(sys.version_info.micro))))
     else:
@@ -75,7 +81,7 @@ def parse_python(g: Graph, res: Union[URIRef, BNode], packagename: str, crosswal
         pkg = importlib_metadata.distribution(packagename)
     except importlib_metadata.PackageNotFoundError:
         #fallback if package is not installed but in local directory:
-        context = importlib.metadata.DistributionFinder.Context(name=packagename,path=".")
+        context = importlib_metadata.DistributionFinder.Context(name=packagename,path=".")
         try:
             pkg = next(importlib_metadata.MetadataPathFinder().find_distributions(context))
         except StopIteration:
@@ -120,27 +126,9 @@ def parse_python(g: Graph, res: Union[URIRef, BNode], packagename: str, crosswal
 
     if pkg.requires:
         for value in pkg.requires:
-            for dependency in splitdependencies(value):
-                dependency, depversion = parsedependency(dependency.strip())
-                print(f"Found dependency {dependency} {depversion}",file=sys.stderr)
-                depres = URIRef(generate_uri(dependency+depversion.replace(' ',''),args.baseuri,"dependency")) #version number is deliberately in ID here!
-                g.add((depres, RDF.type, SDO.SoftwareApplication))
-                g.add((depres, SDO.identifier, Literal(dependency)))
-                g.add((depres, SDO.name, Literal(dependency)))
-                if args.exactplatformversion:
-                    g.add((depres, SDO.runtimePlatform, Literal("Python " + str(sys.version_info.major) + "." + str(sys.version_info.minor) + "." + str(sys.version_info.micro))))
-                else:
-                    g.add((depres, SDO.runtimePlatform, Literal("Python 3")))
-                if depversion:
-                    g.add((depres, SDO.version, Literal(depversion)))
-                g.add((res, CODEMETA.softwareRequirements, depres))
+            add_dependency(g, res, value, args)
 
-    #ensure 'identifier' is always set
-    name = g.value(res, SDO.name)
-    if name and (res, SDO.identifier, None) not in g:
-        g.set((res, SDO.identifier, Literal(name.lower())))
-    if args.baseuri:
-        prefuri = args.baseuri + name.lower()
+    prefuri = test_and_set_identifier(g, res, prefuri, args)
 
     if args.with_stypes:
         found = False
@@ -153,38 +141,78 @@ def parse_python(g: Graph, res: Union[URIRef, BNode], packagename: str, crosswal
                 continue
             if rawentrypoint.value:
                 module_name = rawentrypoint.value.strip().split(':')[0]
-                try:
-                    module = importlib.import_module(module_name)
-                    description = module.__doc__
-                except:
-                    description = ""
+                add_entrypoint(g, res, rawentrypoint.name, module_name, interfacetype, args)
             else:
-                description = ""
-            targetproduct = URIRef(generate_uri(rawentrypoint.name, baseuri=args.baseuri,prefix=get_last_component(str(interfacetype)).lower()))
-            g.add((targetproduct, RDF.type, interfacetype))
-            g.add((targetproduct, SDO.name, Literal(rawentrypoint.name)))
-            g.add((targetproduct, SOFTWARETYPES.executableName, Literal(rawentrypoint.name)))
-            if args.exactplatformversion:
-                g.add((targetproduct, SDO.runtimePlatform, Literal("Python " + str(sys.version_info.major) + "." + str(sys.version_info.minor) + "." + str(sys.version_info.micro))))
-            else:
-                g.add((targetproduct, SDO.runtimePlatform, Literal("Python 3")))
-            g.add((res, SDO.targetProduct, targetproduct))
+                add_entrypoint(g, res, rawentrypoint.name, "", interfacetype, args)
             found = True
 
-        islibrary = False
-        isweb = False
-        for (_,_, cat) in g.triples((res, SDO.applicationCategory,None)):
-            islibrary = islibrary or cat.lower().find("libraries") != -1
-            isweb = isweb or cat.lower().find("internet") != -1 or cat.lower().find("web") != -1 or cat.lower().find("www") != -1
+        test_and_set_library(g, res, packagename, found, args)
 
-        if (not found and not isweb) or islibrary:
-            targetproduct = URIRef(generate_uri(packagename, baseuri=args.baseuri,prefix="softwarelibrary"))
-            g.add((targetproduct, RDF.type, SOFTWARETYPES.SoftwareLibrary))
-            g.add((targetproduct, SDO.name, Literal(packagename)))
-            g.add((targetproduct, SOFTWARETYPES.executableName, Literal(re.sub(r"[-_.]+", "-", packagename).lower()))) #see https://python.github.io/peps/pep-0503/
-            if args.exactplatformversion:
-                g.add((targetproduct, SDO.runtimePlatform, Literal("Python " + str(sys.version_info.major) + "." + str(sys.version_info.minor) + "." + str(sys.version_info.micro))))
-            else:
-                g.add((targetproduct, SDO.runtimePlatform, Literal("Python 3")))
+    return prefuri
 
+
+#pylint: disable=W0621
+def add_dependency(g: Graph, res: Union[URIRef, BNode], value: str, args: AttribDict):
+    for dependency in splitdependencies(value):
+        dependency, depversion = parsedependency(dependency.strip())
+        print(f"Found dependency {dependency} {depversion}",file=sys.stderr)
+        depres = URIRef(generate_uri(dependency+depversion.replace(' ',''),args.baseuri,"dependency")) #version number is deliberately in ID here!
+        g.add((depres, RDF.type, SDO.SoftwareApplication))
+        g.add((depres, SDO.identifier, Literal(dependency)))
+        g.add((depres, SDO.name, Literal(dependency)))
+        if args.exactplatformversion:
+            g.add((depres, SDO.runtimePlatform, Literal("Python " + str(sys.version_info.major) + "." + str(sys.version_info.minor) + "." + str(sys.version_info.micro))))
+        else:
+            g.add((depres, SDO.runtimePlatform, Literal("Python 3")))
+        if depversion:
+            g.add((depres, SDO.version, Literal(depversion)))
+        g.add((res, CODEMETA.softwareRequirements, depres))
+
+def add_entrypoint(g: Graph, res: Union[URIRef, BNode], name: str, module_name: str, interfacetype: Union[BNode,URIRef], args: AttribDict):
+    """Translate an entrypoint to a targetProduct"""
+    description = None
+    if module_name:
+        try:
+            module = importlib.import_module(module_name)
+            description = module.__doc__
+        except:
+            pass
+    targetproduct = URIRef(generate_uri(name, baseuri=args.baseuri,prefix=get_last_component(str(interfacetype)).lower()))
+    g.add((targetproduct, RDF.type, interfacetype))
+    g.add((targetproduct, SDO.name, Literal(name)))
+    if description:
+        g.add((targetproduct, SDO.description, Literal(description)))
+    g.add((targetproduct, SOFTWARETYPES.executableName, Literal(name)))
+    if args.exactplatformversion:
+        g.add((targetproduct, SDO.runtimePlatform, Literal("Python " + str(sys.version_info.major) + "." + str(sys.version_info.minor) + "." + str(sys.version_info.micro))))
+    else:
+        g.add((targetproduct, SDO.runtimePlatform, Literal("Python 3")))
+    g.add((res, SDO.targetProduct, targetproduct))
+
+
+def test_and_set_library(g: Graph, res: Union[URIRef, BNode], packagename: str, found_entrypoints: bool, args: AttribDict):
+    """Is this resource a software library? Set the necessary targetProduct if so"""
+    islibrary = False
+    isweb = False
+    for (_,_, cat) in g.triples((res, SDO.applicationCategory,None)):
+        islibrary = islibrary or cat.lower().find("libraries") != -1
+        isweb = isweb or cat.lower().find("internet") != -1 or cat.lower().find("web") != -1 or cat.lower().find("www") != -1
+
+    if (not found_entrypoints and not isweb) or islibrary:
+        targetproduct = URIRef(generate_uri(packagename, baseuri=args.baseuri,prefix="softwarelibrary"))
+        g.add((targetproduct, RDF.type, SOFTWARETYPES.SoftwareLibrary))
+        g.add((targetproduct, SDO.name, Literal(packagename)))
+        g.add((targetproduct, SOFTWARETYPES.executableName, Literal(re.sub(r"[-_.]+", "-", packagename).lower()))) #see https://python.github.io/peps/pep-0503/
+        if args.exactplatformversion:
+            g.add((targetproduct, SDO.runtimePlatform, Literal("Python " + str(sys.version_info.major) + "." + str(sys.version_info.minor) + "." + str(sys.version_info.micro))))
+        else:
+            g.add((targetproduct, SDO.runtimePlatform, Literal("Python 3")))
+
+def test_and_set_identifier(g: Graph, res: Union[URIRef, BNode], prefuri: Union[str,None], args: AttribDict) -> Union[str,None]:
+    """ensure 'identifier' is always set"""
+    name = g.value(res, SDO.name)
+    if name and (res, SDO.identifier, None) not in g:
+        g.set((res, SDO.identifier, Literal(name.lower())))
+    if args.baseuri:
+        prefuri = args.baseuri + name.lower()
     return prefuri

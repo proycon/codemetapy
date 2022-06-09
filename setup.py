@@ -15,7 +15,7 @@ def read(fname):
 
 setup(
     name = "CodeMetaPy",
-    version = "2.0.1",
+    version = "2.1.0",
     author = "Maarten van Gompel",
     author_email = "proycon@anaproy.nl",
     description = ("Generate and manage CodeMeta software metadata"),
@@ -40,7 +40,7 @@ setup(
     zip_safe=False,
     include_package_data=True,
     package_data = { 'codemeta': ['schema/crosswalk.csv', 'schema/codemeta.jsonld', 'templates/*.html','resources/*.css', 'resources/fa-*' ] },
-    install_requires=[ 'nameparser','importlib_metadata','BeautifulSoup4', 'rdflib >= 6.1.1','requests','lxml','pyyaml','Jinja2'],
+    install_requires=[ 'nameparser','importlib_metadata','BeautifulSoup4', 'rdflib >= 6.1.1','requests','lxml','pyyaml','Jinja2','pyproject_parser'],
     entry_points = {    'console_scripts': [ 'codemetapy = codemeta.codemeta:main' ] },
     cmdclass=cmdclass
 )
