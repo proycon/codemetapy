@@ -1,4 +1,5 @@
 import sys
+import os
 import importlib
 import re
 from typing import Union, IO
@@ -11,7 +12,7 @@ from rdflib import Graph, URIRef, BNode, Literal
 from rdflib.namespace import RDF
 from codemeta.common import AttribDict, add_triple, CODEMETA, SOFTWARETYPES, add_authors, SDO, COMMON_SOURCEREPOS, generate_uri, get_last_component
 from codemeta.crosswalk import readcrosswalk, CWKey
-import pyproject_parser
+import pep517.meta
 
 
 def splitdependencies(s: str):
@@ -61,15 +62,12 @@ def parsedependency(s: str):
     return identifier, version.strip("[]() -.,:")
 
 #pylint: disable=W0621
-def parse_pyproject(g: Graph, res: Union[URIRef, BNode], packagename: str, crosswalk, args: AttribDict) -> Union[str,None]:
-    """Parses pyproject.toml and converts it to metadata"""
-    prefuri = None
-    if crosswalk is None:
-        _, crosswalk = readcrosswalk((CWKey.PYPI,))
-
-#pylint: disable=W0621
 def parse_python(g: Graph, res: Union[URIRef, BNode], packagename: str, crosswalk, args: AttribDict) -> Union[str,None]:
-    """Parses python package metadata (setuptools) and converts it to codemeta"""
+    """Parses python package metadata and converts it to codemeta
+
+    Parameters:
+    * `packagename` - Either 1) a name of a package that is installed or available in the current working directory, or 2) path to a pyproject.toml file 
+    """
     prefuri = None
     if crosswalk is None:
         _, crosswalk = readcrosswalk((CWKey.PYPI,))
@@ -77,17 +75,29 @@ def parse_python(g: Graph, res: Union[URIRef, BNode], packagename: str, crosswal
         g.add((res, SDO.runtimePlatform, Literal("Python " + str(sys.version_info.major) + "." + str(sys.version_info.minor) + "." + str(sys.version_info.micro))))
     else:
         g.add((res, SDO.runtimePlatform, Literal("Python 3")))
-    try:
-        pkg = importlib_metadata.distribution(packagename)
-    except importlib_metadata.PackageNotFoundError:
-        #fallback if package is not installed but in local directory:
-        context = importlib_metadata.DistributionFinder.Context(name=packagename,path=".")
+
+    if os.path.basename(packagename) == "pyproject.toml":
+        print(f"Loading metadata from {packagename} via PEP517",file=sys.stderr) #pylint: disable=W0212
         try:
-            pkg = next(importlib_metadata.MetadataPathFinder().find_distributions(context))
-        except StopIteration:
-            print(f"No such python package: {packagename}",file=sys.stderr)
+            pkg = pep517.meta.load(os.path.dirname(packagename))
+        except:
+            print(f"Failed to process {packagename} via PEP517",file=sys.stderr)
             sys.exit(4)
-    print(f"Found metadata in {pkg._path}",file=sys.stderr) #pylint: disable=W0212
+        packagename = pkg.name
+    else:
+        try:
+            pkg = importlib_metadata.distribution(packagename)
+        except importlib_metadata.PackageNotFoundError:
+            #fallback if package is not installed but in local directory:
+            context = importlib_metadata.DistributionFinder.Context(name=packagename,path=".")
+            try:
+                pkg = next(importlib_metadata.MetadataPathFinder().find_distributions(context))
+            except StopIteration:
+                print(f"No such python package: {packagename}",file=sys.stderr)
+                sys.exit(4)
+
+    if isinstance(pkg._path, str):
+        print(f"Found metadata in {pkg._path}",file=sys.stderr) #pylint: disable=W0212
     for key, value in pkg.metadata.items():
         if key == "Classifier":
             fields = [ x.strip() for x in value.strip().split('::') ]
@@ -112,6 +122,19 @@ def parse_python(g: Graph, res: Union[URIRef, BNode], packagename: str, crosswal
                 add_authors(g, res, value, single_author=args.single_author, mail=pkg.metadata.get("Author-email",""), baseuri=args.baseuri)
             elif key == "Author-email":
                 continue #already handled by the above
+            if key == "Project-URL":
+                if ',' in value:
+                    label, url = value.split(",",1) #according to spec
+                    label = label.strip()
+                    url = url.strip()
+                    if label.lower() == "repository":
+                        add_triple(g, res, "codeRepository", url, args)
+                    elif label.lower() in ("bug tracker","issue tracker"):
+                        add_triple(g, res, "issueTracker", url, args)
+                    elif label.lower() in ("website","homepage","home","project site", "project website","webpage"): #no idea what occurs in the wild
+                        add_triple(g, res, "url", url, args)
+                else:
+                    add_triple(g, res, "url", value, args) #input probably not according to spec
             elif key.lower() in crosswalk[CWKey.PYPI]:
                 add_triple(g, res, crosswalk[CWKey.PYPI][key.lower()], value, args)
                 if crosswalk[CWKey.PYPI][key.lower()] == "url":
@@ -149,7 +172,6 @@ def parse_python(g: Graph, res: Union[URIRef, BNode], packagename: str, crosswal
         test_and_set_library(g, res, packagename, found, args)
 
     return prefuri
-
 
 #pylint: disable=W0621
 def add_dependency(g: Graph, res: Union[URIRef, BNode], value: str, args: AttribDict):

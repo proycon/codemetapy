@@ -200,6 +200,8 @@ def build(**kwargs):
                     inputtypes.append("web")
                 elif inputsource.endswith("package.json"):
                     inputtypes.append("nodejs")
+                elif inputsource.endswith("pyproject.toml"):
+                    inputtypes.append("python")
                 elif inputsource.endswith("pom.xml"):
                     inputtypes.append("java")
                 elif inputsource.lower().endswith(".json") or inputsource.lower().endswith(".jsonld"):
@@ -227,6 +229,9 @@ def build(**kwargs):
                 break
             if not inputsources:
                 raise Exception("Could not generate egg_info (is python3 pointing to the right interpreter?)")
+        elif os.path.exists('pyproject.toml'):
+            print("No input files specified, but found python project (pyproject.toml) in current dir, using that...",file=sys.stderr)
+            inputsources = [("pyproject.toml","python")]
         else:
             raise Exception("No input files specified (use - for stdin)")
 
@@ -286,7 +291,7 @@ def build(**kwargs):
                 print(f"(no metadata found at remote URL)",file=sys.stderr)
         elif inputtype == "python":
             print(f"Obtaining python package metadata for: {source}",file=sys.stderr)
-            #source is a name of a package
+            #source is a name of a package or path to a pyproject.toml file
             prefuri = codemeta.parsers.python.parse_python(g, res, source, crosswalk, args)
         elif inputtype == "debian":
             print(f"Parsing debian package from {source}",file=sys.stderr)
