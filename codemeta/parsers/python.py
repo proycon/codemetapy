@@ -131,7 +131,7 @@ def parse_python(g: Graph, res: Union[URIRef, BNode], packagename: str, crosswal
                         add_triple(g, res, "codeRepository", url, args)
                     elif label.lower() in ("bug tracker","issue tracker"):
                         add_triple(g, res, "issueTracker", url, args)
-                    elif label.lower() in ("website","homepage","home","project site", "project website","webpage"): #no idea what occurs in the wild
+                    else:
                         add_triple(g, res, "url", url, args)
                 else:
                     add_triple(g, res, "url", value, args) #input probably not according to spec
