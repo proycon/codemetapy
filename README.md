@@ -1,6 +1,6 @@
 [![Project Status: Active -- The project has reached a stable, usable state and is being actively developed.](https://www.repostatus.org/badges/latest/active.svg)](https://www.repostatus.org/#active)
 [![Latest release in the Python Package Index](https://img.shields.io/pypi/v/codemetapy)](https://pypi.org/project/codemetapy/)
-
+ 
 # Codemetapy
 
 Codemetapy is a command-line tool to work with the [codemeta ](https://codemeta.github.io) software metadata standard.
