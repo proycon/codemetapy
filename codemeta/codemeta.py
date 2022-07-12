@@ -197,6 +197,8 @@ def build(**kwargs):
             for inputsource in inputfiles[len(inputtypes):]:
                 if inputsource.lower().startswith("https://api.github.com/repos/") or inputsource.lower().startswith("https://github.com/") or inputsource.lower().startswith("git@github.com"):
                     inputtypes.append("github")
+                if inputsource.lower().startswith("https://gitlab.com/api/v4/") or inputsource.lower().startswith("https://gitlab.com/") or inputsource.lower().startswith("git@gitlab.com"):
+                    inputtypes.append("gitlab")
                 elif inputsource.lower().startswith("http"):
                     inputtypes.append("web")
                 elif inputsource.endswith("package.json"):

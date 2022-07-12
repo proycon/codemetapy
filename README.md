@@ -23,6 +23,7 @@ existing metadata specifications:
 * NodeJS packages (`package.json`)
 * Debian package (`apt show` output)
 * Github API (when passed a github URL)
+* GitLab API (when passed a GitLab URL)
 * Web sites/services (see the section on software types and service below):
     * Simple metadata from HTML `<meta>` elements.
     * Script blocks using `application/json+ld`
@@ -132,6 +133,14 @@ but this allows only limited anonymous requests before you hit a limit.
 To allow more requests, please set the environment variable
 `$GITHUB_TOKEN` to a [personal access
 token](https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/creating-a-personal-access-token).
+
+## GitLab API
+
+Codemetapy can make use of the GitLab API to query metdata from GitLab,
+but this allows only limited anonymous requests before you hit a limit.
+To allow more requests, please set the environment variable
+`$GITLAB_TOKEN` to a [personal access
+token](https://docs.gitlab.com/ee/user/profile/personal_access_tokens.html).
 
 ## Integration in setup.py
 
