@@ -67,16 +67,19 @@ def get_index(g: Graph, restype=SDO.SoftwareSourceCode):
 def is_resource(res) -> bool:
     return isinstance(res, (URIRef,BNode))
 
-def parse_github_url(s):
+def parse_git_url(s):
     if not s: return None
     if s.endswith(".git"): s = s[:-4]
     if s.startswith("https://github.com/"):
         owner, repo = s.replace("https://github.com/","").split("/")
         return owner, repo
+    if s.startswith("https://gitlab.com/"):
+        owner, repo = s.replace("https://gitlab.com/","").split("/")
+        return owner, repo
     return None, None
 
 def get_badge(g: Graph, res: Union[URIRef,None], key):
-    owner, repo = parse_github_url(g.value(res, SDO.codeRepository))
+    owner, repo = parse_git_url(g.value(res, SDO.codeRepository))
     if owner and repo:
         #github badges
         if key == "stars":
