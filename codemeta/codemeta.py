@@ -35,6 +35,7 @@ import codemeta.parsers.nodejs
 import codemeta.parsers.java
 import codemeta.parsers.web
 import codemeta.parsers.github
+import codemeta.parsers.gitlab
 import codemeta.parsers.authors
 from codemeta.serializers.jsonld import serialize_to_jsonld
 from codemeta.serializers.html import serialize_to_html
@@ -315,6 +316,13 @@ def build(**kwargs):
             if source.endswith(".git"): source = source[:-4]
             print(f"Querying GitHub API for {source}",file=sys.stderr)
             prefuri = codemeta.parsers.github.parse_github(g, res, source, args)
+        elif inputtype == "gitlab":
+            source = source.replace("https://gitlab.com/api/v4/projects/","")
+            source = source.replace("https://gitlab.com/","")
+            source = source.replace("git@gitlab.com:","")
+            if source.endswith(".git"): source = source[:-4]
+            print(f"Querying GitLab API for {source}",file=sys.stderr)
+            prefuri = codemeta.parsers.gitlab.parse_gitlab(g, res, source, args)
         elif inputtype in ('authors', 'contributors','maintainers'):
             print(f"Extracting {inputtype} from {source}",file=sys.stderr)
             if inputtype == 'authors':
