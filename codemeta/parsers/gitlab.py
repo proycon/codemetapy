@@ -16,6 +16,7 @@ gitlab_crosswalk_table = {
     SDO.dateModified: "last_activity_at",
     SDO.description: "description",
     SDO.name: "name",
+    SDO.WebPage: "web_url"
 }
 
 # the same as requests.get(args).json(), but protects against rate limiting
@@ -58,11 +59,12 @@ def parse_gitlab(g: Graph, res: Union[URIRef, BNode], source, args: AttribDict) 
     """Query and parse from the gitlab API"""
     # https://docs.gitlab.com/ee/api/projects.html    GET /projects/:id
     try:
-        repo_father_path, repo = source.strip("/").split("/")
+        split_arr = source.strip("/").split("/")
+        repo_father_path = split_arr[len(split_arr) -2]
+        repo = split_arr[len(split_arr) -1]
     except:
         raise ValueError("GitLab API sources must follow repo_father_path/repo syntax")
     
-    #TODO check args still needed
     repo_base_uri=source.strip("/")
     # Substring that need to be replaced
     str_to_replace = f"{repo_father_path}/{repo}"
@@ -94,19 +96,23 @@ def parse_gitlab(g: Graph, res: Union[URIRef, BNode], source, args: AttribDict) 
     owner_id_str=""
     owner_name=""
     user_url=""
+    public_mail=""
     #https://docs.gitlab.com/ee/api/users.html
     #namespace kind kind can be just group or user
-    if 'owner' in response:
+
+    if 'namespace' in response and response['namespace']['kind'] == 'user':
+        owner_id_str=str(response['namespace']['id'])
+        owner_api_url = f"{repo_base_uri}/api/v4/users/" + owner_id_str
+        owner_name=response['namespace']['name']
+        user_url=response['namespace']['web_url']
+    elif 'owner' in response:
         owner_id_str=str(response['owner']['id'])
         owner_api_url = f"{repo_base_uri}/api/v4/users/" + owner_id_str
         response_owner = rate_limit_get(owner_api_url)
         owner_name=response_owner['owner']['name']
         user_url=response_owner['owner']['web_url']
-    elif 'namespace' in response and response['namespace']['kind'] == 'user':
-        owner_id_str=str(response['namespace']['id'])
-        owner_api_url = f"{repo_base_uri}/api/v4/users/" + owner_id_str
-        owner_name=response['namespace']['name']
-        user_url=response['namespace']['web_url']
+        if response_owner.get('public_email'):
+            public_mail = response_owner.get('public_email')
     else:  return repo_url
     firstname, lastname = parse_human_name(owner_name)
     owner_res = URIRef(user_url)
@@ -114,8 +120,8 @@ def parse_gitlab(g: Graph, res: Union[URIRef, BNode], source, args: AttribDict) 
     g.add((owner_res, SDO.givenName, Literal(firstname)))
     g.add((owner_res, SDO.familyName, Literal(lastname)))
     g.add((owner_res, SDO.url, Literal(user_url)))
-    if response_owner.get('public_email'):
-        g.add((owner_res, SDO.email, Literal(response_owner.get('public_email'))))
+    if public_mail != "":
+        g.add((owner_res, SDO.email, Literal(public_mail)))
     #Creator considerer as author
     response_creator_url_field=user_url
     response_creator_name=owner_name
@@ -125,7 +131,7 @@ def parse_gitlab(g: Graph, res: Union[URIRef, BNode], source, args: AttribDict) 
         creator_api_url = f"{repo_base_uri}/api/v4/users/" +  creator_id_str
         response_creator = rate_limit_get(creator_api_url)
         response_creator_url_field=response_creator['web_url']
-    g.add((URIRef(response_creator_url_field), SDO.author, response_creator_name))
+    #Object X must be an rdflib term:  g.add((URIRef(response_creator_url_field), SDO.author, response_creator_name))
     #g.add((res, SDO.maintainer, owner_res))
     #if response_owner.get('work_information'): is like company?
     return repo_url
