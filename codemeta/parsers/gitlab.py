@@ -61,10 +61,18 @@ def parse_gitlab(g: Graph, res: Union[URIRef, BNode], source, args: AttribDict) 
         repo_father_path, repo = source.strip("/").split("/")
     except:
         raise ValueError("GitLab API sources must follow repo_father_path/repo syntax")
+    
+    #TODO check args still needed
+    repo_base_uri=source.strip("/")
+    # Substring that need to be replaced
+    str_to_replace = f"{repo_father_path}/{repo}"
+    # Replacement substring
+    replacement_str=''
+    # Replace last occurrences of substring 
+    repo_base_uri = replacement_str.join(repo_base_uri.rsplit(str_to_replace, 1))
 
-    repo_api_url = f"https://gitlab.com/api/v4/projects/{repo_father_path}%2F{repo}"
-    repo_url = f"https://gitlab.com/{repo_father_path}/{repo}"
-
+    repo_url = source.strip("/")  
+    repo_api_url = f"{repo_base_uri}/api/v4/projects/{repo_father_path}%2F{repo}"
     response = rate_limit_get(repo_api_url)
 
     for prop, gitlab_key in gitlab_crosswalk_table.items():
@@ -78,33 +86,46 @@ def parse_gitlab(g: Graph, res: Union[URIRef, BNode], source, args: AttribDict) 
             g.add((res, SDO.keywords, Literal(topic)))
     if response.get("homepage"):
         g.add((res, SDO.url, Literal(response['homepage'])))
+    elif response.get("web_url"):
+        g.add((res, SDO.url, Literal(response['web_url'])))
     if response.get('open_issues_count', False) > 0:
         g.add((res, CODEMETA.issueTracker, Literal(response['_links']['issues'])))
-        
+    
+    owner_id_str=""
+    owner_name=""
+    user_url=""
     #https://docs.gitlab.com/ee/api/users.html
+    #namespace kind kind can be just group or user
     if 'owner' in response:
-        owner_api_url = "https://gitlab.com/api/v4/users/" + str(response['owner']['id'])
+        owner_id_str=str(response['owner']['id'])
+        owner_api_url = f"{repo_base_uri}/api/v4/users/" + owner_id_str
         response_owner = rate_limit_get(owner_api_url)
-        #owner_type not exists for gitlab (just user)
-        if  response_owner.get('owner'):
-            firstname, lastname = parse_human_name(response_owner['owner']['name'])
-            #owner_res = URIRef(generate_uri(firstname + "-" + lastname, args.baseuri, prefix="person"))
-            g.add((owner_api_url, RDF.type, SDO.Person))
-            g.add((owner_api_url, SDO.givenName, Literal(firstname)))
-            g.add((owner_api_url, SDO.familyName, Literal(lastname)))
-            #creator_api_url = "https://gitlab.com/api/v4/users/" + str(response['creator_id']) + GET + g.add((resFROM get creator_api_url , SDO.author, fullNameFromcreator_api_url))
-            #g.add((res, SDO.maintainer, owner_res))
-            #if response_owner.get('work_information'): is like company 
-                #affil_res = URIRef(generate_uri(response_owner.get('company'), args.baseuri, prefix="org"))
-                #g.add((affil_res, RDF.type, SDO.Organization))
-                #g.add((affil_res, SDO.name, Literal(response_owner['company'])))
-                #g.add((owner_res, SDO.affiliation, affil_res))
-        #if response_owner.get('organization'):
-        #    g.add((owner_res, SDO.name, Literal(response_owner.get('organization'))))
-        #    g.add((res, SDO.producer, null))
-            if response_owner.get('public_email'):
-                g.add((owner_api_url, SDO.email, Literal(response_owner.get('public_email'))))
-            if response_owner.get('web_url'):
-                g.add((owner_api_url, SDO.url, Literal(response_owner.get('website_url'))))
-
+        owner_name=response_owner['owner']['name']
+        user_url=response_owner['owner']['web_url']
+    elif 'namespace' in response and response['namespace']['kind'] == 'user':
+        owner_id_str=str(response['namespace']['id'])
+        owner_api_url = f"{repo_base_uri}/api/v4/users/" + owner_id_str
+        owner_name=response['namespace']['name']
+        user_url=response['namespace']['web_url']
+    else:  return repo_url
+    firstname, lastname = parse_human_name(owner_name)
+    owner_res = URIRef(user_url)
+    g.add((owner_res, RDF.type, SDO.Person))
+    g.add((owner_res, SDO.givenName, Literal(firstname)))
+    g.add((owner_res, SDO.familyName, Literal(lastname)))
+    g.add((owner_res, SDO.url, Literal(user_url)))
+    if response_owner.get('public_email'):
+        g.add((owner_res, SDO.email, Literal(response_owner.get('public_email'))))
+    #Creator considerer as author
+    response_creator_url_field=user_url
+    response_creator_name=owner_name
+    if 'creator_id' in response:
+     creator_id_str=str(response['creator_id'])
+     if(creator_id_str != owner_id_str):
+        creator_api_url = f"{repo_base_uri}/api/v4/users/" +  creator_id_str
+        response_creator = rate_limit_get(creator_api_url)
+        response_creator_url_field=response_creator['web_url']
+    g.add((URIRef(response_creator_url_field), SDO.author, response_creator_name))
+    #g.add((res, SDO.maintainer, owner_res))
+    #if response_owner.get('work_information'): is like company?
     return repo_url

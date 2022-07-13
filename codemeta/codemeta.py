@@ -8,7 +8,7 @@ can be extended for other input types too."""
 # CLST, Radboud University Nijmegen
 # & KNAW Humanities Cluster
 # GPL v3
-
+import re
 import sys
 import argparse
 import json
@@ -195,6 +195,7 @@ def build(**kwargs):
             print(f"Passed {len(inputfiles)} files/sources but specified {len(inputtypes)} input types! Automatically guessing types...",  file=sys.stderr)
             guess = True
             for inputsource in inputfiles[len(inputtypes):]:
+                #TODO more flexibility here about the gitlab/github repo base uri 
                 if inputsource.lower().startswith("https://api.github.com/repos/") or inputsource.lower().startswith("https://github.com/") or inputsource.lower().startswith("git@github.com"):
                     inputtypes.append("github")
                 if inputsource.lower().startswith("https://gitlab.com/api/v4/") or inputsource.lower().startswith("https://gitlab.com/") or inputsource.lower().startswith("git@gitlab.com"):
@@ -319,9 +320,8 @@ def build(**kwargs):
             print(f"Querying GitHub API for {source}",file=sys.stderr)
             prefuri = codemeta.parsers.github.parse_github(g, res, source, args)
         elif inputtype == "gitlab":
-            source = source.replace("https://gitlab.com/api/v4/projects/","")
-            source = source.replace("https://gitlab.com/","")
-            source = source.replace("git@gitlab.com:","")
+            #e.g. transform git@gitlab.com/X in https://gitlab.com/X
+            re.sub(r'git@(.*):', r'https://\1/', source)
             if source.endswith(".git"): source = source[:-4]
             print(f"Querying GitLab API for {source}",file=sys.stderr)
             prefuri = codemeta.parsers.gitlab.parse_gitlab(g, res, source, args)
