@@ -16,7 +16,7 @@ gitlab_crosswalk_table = {
     SDO.dateModified: "last_activity_at",
     SDO.description: "description",
     SDO.name: "name",
-    SDO.WebPage: "web_url"
+    SDO.url: "web_url"
 }
 
 # the same as requests.get(args).json(), but protects against rate limiting
