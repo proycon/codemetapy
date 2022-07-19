@@ -13,7 +13,6 @@ from codemeta.parsers.jsonld import parse_jsonld_data
 
 
 def parse(g: Graph, res: Union[URIRef, BNode], source: str, args: AttribDict) -> Union[URIRef,BNode,None]:
-    repo_kind = "gitlab"
     source=source.strip("/")
     cleaned_url= source
     prefix=""
@@ -22,24 +21,32 @@ def parse(g: Graph, res: Union[URIRef, BNode], source: str, args: AttribDict) ->
      prefix="https://"
     else:
      raise ValueError(source + " source url format not recognized!!")
+ 
 
-    suffix=cleaned_url.replace(prefix + git_address,'')[1:].replace('/', '%2F')
-    gitlab_repo_api_url = f"{prefix}{git_address}/api/v4/projects/{suffix}"
-    if("github.com" in source):
-     response=_rate_limit_get(source.replace(f"{prefix}{git_address}",f"{prefix}api.github.com/repos/"), "github")
-    elif("gitlab.com" in source):
+    github_suffix=cleaned_url.replace(prefix + git_address,'')[1:]
+    gitlab_suffix=github_suffix.replace('/', '%2F')
+    gitlab_repo_api_url = f"{prefix}{git_address}/api/v4/projects/{gitlab_suffix}"
+    repo_kind = ""
+    if("github.com/" in source):
+     response=_rate_limit_get(source.replace(f"{cleaned_url}",f"{prefix}api.github.com/repos/"), "github")
+     repo_kind = "github"
+    elif("gitlab.com/" in source):
      response=_rate_limit_get(gitlab_repo_api_url, "gitlab")
+     repo_kind = "gitlab"
     else:
       #Proprietary repos
       response=_rate_limit_get(gitlab_repo_api_url, "gitlab")
-      if(response.status_code == 404):
-       response=_rate_limit_get(source.replace(f"{prefix}{git_address}",f"{prefix}{git_address}/api/v3/repos/"), "github")
-
+      if(response.status_code > 400 and response.status_code < 500):
+       #if fails try with github type
+       response=_rate_limit_get(source.replace(f"{cleaned_url}",f"{prefix}{git_address}/api/v3/repos/"), "github")
+       if(response): repo_kind = "github" 
+       else: repo_kind = ""
+      else: repo_kind = "gitlab"
     if(repo_kind == "gitlab"):
-      return _parse_gitlab(response, g,res,source, args)  
-    else:
-      return _parse_github(response, g,res,source, args)
-    
+       _parse_gitlab(response, g,res,f"{prefix}{git_address}", args)  
+    elif(repo_kind == "gitlab"):
+       _parse_github(response, g,res,f"{prefix}{git_address}", args)
+    return cleaned_url
 
 github_crosswalk_table = {
     SDO.codeRepository: "html_url",
@@ -88,15 +95,14 @@ def _rate_limit_get(url:str, repo_kind:str,  backoff_rate=2, initial_backoff=1, 
             rate_limited = False
     return response
 
-def _parse_github(response, g: Graph, res: Union[URIRef, BNode], source, args: AttribDict) -> Union[URIRef,BNode,None]:
+def _parse_github(response, g: Graph, res: Union[URIRef, BNode], source: str, args: AttribDict):
     """Query and parse from the github API"""
-    try:
-        owner, repo = source.split("/")
-    except:
-        raise ValueError("Github API sources must follow owner/repo syntax")
-    #TODO handle proprietary github handling like in gitlab
-    repo_api_url = f"https://api.github.com/repos/{owner}/{repo}"
-    repo_url = f"https://github.com/{owner}/{repo}"
+    users_api_url=f"{source}/api/v3/users/"
+    if("github.com/" in source):
+     users_api_url=source.replace("www.github.com/", "api.github.com/").replace("github.com/", "api.github.com/") + "/users/"
+    
+    owner=response['owner']['login']
+    #repo = response['name']
     for prop, github_key in github_crosswalk_table.items():
         if github_key in response:
             g.add((res, prop, Literal(response[github_key])))
@@ -111,11 +117,11 @@ def _parse_github(response, g: Graph, res: Union[URIRef, BNode], source, args: A
     if response.get("homepage"):
         g.add((res, SDO.url, Literal(response['homepage'])))
 
-    if response.get('has_issues', False):
-        g.add((res, CODEMETA.issueTracker, Literal(f"https://github.com/{owner}/{repo}/issues")))
+    if response.get('has_issues', False) and response.get("html_url"):
+        g.add((res, CODEMETA.issueTracker, Literal(response['html_url'] + "/issues")))
 
     if 'owner' in response:
-        owner_api_url = f"https://api.github.com/users/{owner}"
+        owner_api_url = f"{users_api_url}/{owner}"
         response = _rate_limit_get(owner_api_url, "github")
         owner_type = response.get("type","").lower()
         owner_res = None
@@ -142,7 +148,6 @@ def _parse_github(response, g: Graph, res: Union[URIRef, BNode], source, args: A
             if response.get('blog'):
                 g.add((owner_res, SDO.url, Literal(response.get('blog'))))
 
-    return repo_url
 
 gitlab_crosswalk_table = {
     SDO.codeRepository: "web_url",
@@ -152,18 +157,9 @@ gitlab_crosswalk_table = {
     SDO.name: "name",
     SDO.url: "web_url"
 }
-def _parse_gitlab(response, g: Graph, res: Union[URIRef, BNode], source, args: AttribDict) -> Union[URIRef,BNode,None]:
+def _parse_gitlab(response, g: Graph, res: Union[URIRef, BNode], source, args: AttribDict):
     """Query and parse from the gitlab API"""
-    cleaned_url= source
-    prefix=""
-    if(source.startswith("https://")):
-     git_address = cleaned_url.replace('https://','').split('/')[0];
-     prefix="https://"
-    else:
-     raise ValueError(source + " source url format not recognized!!")
-
-    suffix=cleaned_url.replace(prefix + git_address,'')[1:].replace('/', '%2F')
-    repo_api_url = f"{prefix}{git_address}/api/v4/projects/{suffix}"
+    users_api_url = f"{source}/api/v4/users/"
     #Processing start
     for prop, gitlab_key in gitlab_crosswalk_table.items():
         if gitlab_key in response:
@@ -189,18 +185,18 @@ def _parse_gitlab(response, g: Graph, res: Union[URIRef, BNode], source, args: A
     public_mail=""
     if 'namespace' in response and response['namespace']['kind'] == 'user':
         owner_id_str=str(response['namespace']['id'])
-        owner_api_url = f"{prefix}{git_address}/api/v4/users/" + owner_id_str
+        owner_api_url = users_api_url + owner_id_str
         owner_name=response['namespace']['name']
         user_url=response['namespace']['web_url']
     elif 'owner' in response:
         owner_id_str=str(response['owner']['id'])
-        owner_api_url = f"{prefix}{git_address}/api/v4/users/" + owner_id_str
+        owner_api_url = users_api_url + owner_id_str
         response_owner = _rate_limit_get(owner_api_url, "gitlab")
         owner_name=response_owner['owner']['name']
         user_url=response_owner['owner']['web_url']
         if response_owner.get('public_email'):
             public_mail = response_owner.get('public_email')
-    else:  return cleaned_url
+    else:  return
     firstname, lastname = parse_human_name(owner_name)
     owner_res = URIRef(user_url)
     g.add((owner_res, RDF.type, SDO.Person))
@@ -215,10 +211,9 @@ def _parse_gitlab(response, g: Graph, res: Union[URIRef, BNode], source, args: A
     if 'creator_id' in response:
      creator_id_str=str(response['creator_id'])
      if(creator_id_str != owner_id_str):
-        creator_api_url = f"{prefix}{git_address}/api/v4/users/" +  creator_id_str
+        creator_api_url = users_api_url +  creator_id_str
         response_creator = _rate_limit_get(creator_api_url, "gitlab")
         response_creator_url_field=response_creator['web_url']
     #Object X must be an rdflib term:  g.add((URIRef(response_creator_url_field), SDO.author, response_creator_name))
     #g.add((res, SDO.maintainer, owner_res))
     #if response_owner.get('work_information'): is like company?
-    return cleaned_url
