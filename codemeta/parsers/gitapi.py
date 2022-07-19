@@ -10,7 +10,7 @@ from rdflib.namespace import RDF
 from codemeta.common import AttribDict, SDO, CODEMETA, license_to_spdx, parse_human_name, generate_uri
 from codemeta.parsers.jsonld import parse_jsonld_data
 
-
+repo_type_cache = {}
 
 def parse(g: Graph, res: Union[URIRef, BNode], source: str, args: AttribDict) -> Union[URIRef,BNode,None]:
     source=source.strip("/")
@@ -22,7 +22,6 @@ def parse(g: Graph, res: Union[URIRef, BNode], source: str, args: AttribDict) ->
     else:
      raise ValueError(source + " source url format not recognized!!")
  
-
     github_suffix=cleaned_url.replace(prefix + git_address,'')[1:]
     gitlab_suffix=github_suffix.replace('/', '%2F')
     gitlab_repo_api_url = f"{prefix}{git_address}/api/v4/projects/{gitlab_suffix}"
@@ -34,14 +33,19 @@ def parse(g: Graph, res: Union[URIRef, BNode], source: str, args: AttribDict) ->
      response=_rate_limit_get(gitlab_repo_api_url, "gitlab")
      repo_kind = "gitlab"
     else:
-      #Proprietary repos
-      response=_rate_limit_get(gitlab_repo_api_url, "gitlab")
-      if(response.status_code > 400 and response.status_code < 500):
-       #if fails try with github type
-       response=_rate_limit_get(source.replace(f"{cleaned_url}",f"{prefix}{git_address}/api/v3/repos/"), "github")
-       if(response): repo_kind = "github" 
-       else: repo_kind = ""
-      else: repo_kind = "gitlab"
+      if(repo_type_cache[cleaned_url] is None):
+        #Proprietary repos
+        response=_rate_limit_get(gitlab_repo_api_url, "gitlab")
+        if(response.status_code > 400 and response.status_code < 500):
+         #if fails try with github type
+         response=_rate_limit_get(source.replace(f"{cleaned_url}",f"{prefix}{git_address}/api/v3/repos/"), "github")
+         if(response): repo_kind = "github" 
+        else: 
+         repo_kind = "gitlab"
+      else:
+        repo_kind = repo_type_cache[cleaned_url]
+    #Populate the cache even when there is a 4xx failure
+    repo_type_cache[cleaned_url] = repo_kind
     if(repo_kind == "gitlab"):
        _parse_gitlab(response, g,res,f"{prefix}{git_address}", args)  
     elif(repo_kind == "gitlab"):
