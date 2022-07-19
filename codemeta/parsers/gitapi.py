@@ -44,9 +44,9 @@ def parse(g: Graph, res: Union[URIRef, BNode], source: str, args: AttribDict) ->
         else: 
          repo_kind = "gitlab"
       else:
-        repo_kind = repo_type_cache[cleaned_url]
+        repo_kind = repo_type_cache[f"{prefix}{git_address}/"]
     #Populate the cache even when there is a 4xx failure
-    repo_type_cache[cleaned_url] = repo_kind
+    repo_type_cache[f"{prefix}{git_address}/"] = repo_kind
     if(repo_kind == "gitlab"):
        _parse_gitlab(response, g,res,f"{prefix}{git_address}", args)  
     elif(repo_kind == "gitlab"):
