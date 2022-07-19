@@ -34,8 +34,7 @@ import codemeta.parsers.jsonld
 import codemeta.parsers.nodejs
 import codemeta.parsers.java
 import codemeta.parsers.web
-import codemeta.parsers.github
-import codemeta.parsers.gitlab
+import codemeta.parsers.gitapi
 import codemeta.parsers.authors
 from codemeta.serializers.jsonld import serialize_to_jsonld
 from codemeta.serializers.html import serialize_to_html
@@ -195,11 +194,8 @@ def build(**kwargs):
             print(f"Passed {len(inputfiles)} files/sources but specified {len(inputtypes)} input types! Automatically guessing types...",  file=sys.stderr)
             guess = True
             for inputsource in inputfiles[len(inputtypes):]:
-                #TODO more flexibility here about the gitlab/github repo base uri detection
-                if inputsource.lower().startswith("https://api.github.com/repos/") or inputsource.lower().startswith("https://github.com/") or inputsource.lower().startswith("git@github.com"):
-                    inputtypes.append("github")
-                elif inputsource.lower().startswith("https://gitlab.com/") or inputsource.lower().startswith("git@gitlab.com"):
-                    inputtypes.append("gitlab")
+                if inputsource.lower().endswith("setup.py"):
+                    inputtypes.append("python")
                 elif inputsource.lower().startswith("http"):
                     inputtypes.append("web")
                 elif inputsource.endswith("package.json"):
@@ -217,8 +213,8 @@ def build(**kwargs):
                 elif inputsource.upper().endswith("MAINTAINERS"):
                     inputtypes.append("maintainers")
                 else:
-                    #assume python
-                    inputtypes.append("python")
+                    #assume gitapi
+                    inputtypes.append("gitapi")
         inputsources = list(zip(inputfiles, inputtypes))
         if guess:
             print(f"Detected input types: {inputsources}",file=sys.stderr)
@@ -312,19 +308,15 @@ def build(**kwargs):
         elif inputtype == "json":
             print(f"Parsing json-ld file from {source}",file=sys.stderr)
             prefuri = codemeta.parsers.jsonld.parse_jsonld(g, res, getstream(source), args)
-        elif inputtype == "github":
+        elif inputtype == "gitapi":
             source = source.replace("https://api.github.com/repos/","")
             source = source.replace("https://github.com/","")
             source = source.replace("git@github.com:","")
-            if source.endswith(".git"): source = source[:-4]
-            print(f"Querying GitHub API for {source}",file=sys.stderr)
-            prefuri = codemeta.parsers.github.parse_github(g, res, source, args)
-        elif inputtype == "gitlab":
             #e.g. transform git@gitlab.com/X in https://gitlab.com/X
             re.sub(r'git@(.*):', r'https://\1/', source)
             if source.endswith(".git"): source = source[:-4]
-            print(f"Querying GitLab API for {source}",file=sys.stderr)
-            prefuri = codemeta.parsers.gitlab.parse_gitlab(g, res, source, args)
+            print(f"Querying GitAPI parser for {source}",file=sys.stderr)
+            prefuri = codemeta.parsers.gitapi.parse(g, res, source, args)
         elif inputtype in ('authors', 'contributors','maintainers'):
             print(f"Extracting {inputtype} from {source}",file=sys.stderr)
             if inputtype == 'authors':
