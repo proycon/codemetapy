@@ -27,27 +27,26 @@ def rate_limit_get(*args, backoff_rate=2, initial_backoff=1, **kwargs):
     if not kwargs: kwargs = {}
     if 'GITLAB_TOKEN' in environ and environ['GITLAB_TOKEN']:
         if 'headers' not in kwargs: kwargs['headers'] = {}
-        kwargs['headers']["Authorization"] = "token " + environ['GITLAB_TOKEN']
+        kwargs['headers']["PRIVATE-TOKEN"] = environ['GITLAB_TOKEN']
         has_token = True
     else:
         has_token = False
     while rate_limited:
         response = requests.get(*args, **kwargs)
         data = response
-        rate_limit_remaining = data.headers["RateLimit-Remaining"]
-        epochtime = int(data.headers["RateLimit-Reset"])
-        date_reset = datetime.fromtimestamp(epochtime)
-        print("Remaining GitLab API requests: " + rate_limit_remaining + " ### Next rate limit reset at: " + str(date_reset) + f" (has_token={has_token})")
         response = response.json()
         #OR http return code is 429
         if 'message' in response and 'Retry later' in response['message']:
+            rate_limit_remaining = data.headers["RateLimit-Remaining"]
+            epochtime = int(data.headers["RateLimit-Reset"])
+            date_reset = datetime.fromtimestamp(epochtime)
+            print("Remaining GitLab API requests: " + rate_limit_remaining + " ### Next rate limit reset at: " + str(date_reset) + f" (has_token={has_token})")
             rate_limited = True
             print(f"GitLab API: rate limited. Backing off for {initial_backoff} seconds (has_token={has_token})", file=sys.stderr)
             sys.stderr.flush()
             if initial_backoff > 120:
                 raise Exception("GitLab API timed out because of rate limiting, giving up... (has_token={has_token})")
             time.sleep(initial_backoff)
-
             # increase the backoff for next time
             initial_backoff *= backoff_rate
         else:
