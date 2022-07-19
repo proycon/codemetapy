@@ -10,6 +10,7 @@ from rdflib.namespace import RDF
 from codemeta.common import AttribDict, SDO, CODEMETA, license_to_spdx, parse_human_name, generate_uri
 from codemeta.parsers.jsonld import parse_jsonld_data
 
+GITAPI_REPO_BLACKLIST=["https://codeberg.org/","http://codeberg.org", "https://git.sr.ht/", "https://bitbucket.com/"]
 repo_type_cache = {}
 
 def parse(g: Graph, res: Union[URIRef, BNode], source: str, args: AttribDict) -> Union[URIRef,BNode,None]:
@@ -32,7 +33,7 @@ def parse(g: Graph, res: Union[URIRef, BNode], source: str, args: AttribDict) ->
     elif("gitlab.com/" in source):
      response=_rate_limit_get(gitlab_repo_api_url, "gitlab")
      repo_kind = "gitlab"
-    else:
+    elif f"{prefix}{git_address}/" not in GITAPI_REPO_BLACKLIST:
       if(repo_type_cache[cleaned_url] is None):
         #Proprietary repos
         response=_rate_limit_get(gitlab_repo_api_url, "gitlab")
