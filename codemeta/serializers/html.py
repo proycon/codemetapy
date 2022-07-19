@@ -72,15 +72,15 @@ def parse_git_url(s):
     if s.endswith(".git"): s = s[:-4]
     if s.startswith("https://github.com/"):
         owner, repo = s.replace("https://github.com/","").split("/")
-        return owner, repo
+        return owner, repo, "github"
     if s.startswith("https://gitlab.com/"):
         owner, repo = s.replace("https://gitlab.com/","").split("/")
-        return owner, repo
+        return owner, repo, "gitlab"
     return None, None
 
 def get_badge(g: Graph, res: Union[URIRef,None], key):
-    owner, repo = parse_git_url(g.value(res, SDO.codeRepository))
-    if owner and repo:
+    owner, repo, kind = parse_git_url(g.value(res, SDO.codeRepository))
+    if owner and repo and kind == "github":
         #github badges
         if key == "stars":
             yield f"https://img.shields.io/github/stars/{owner}/{repo}.svg?style=flat&color=5c7297", None, "Stars are an indicator of the popularity of this project on GitHub"
@@ -90,6 +90,7 @@ def get_badge(g: Graph, res: Union[URIRef,None], key):
         elif key == "lastcommits":
             yield f"https://img.shields.io/github/last-commit/{owner}/{repo}.svg?style=flat&color=5c7297", None, "Last commit (main branch). Gives an indication of project development activity and rough indication of how up-to-date the latest release is."
             yield f"https://img.shields.io/github/commits-since/{owner}/{repo}/latest.svg?style=flat&color=5c7297&sort=semver", None, "Number of commits since the last release. Gives an indication of project development activity and rough indication of how up-to-date the latest release is."
+        #TODO implement logic for gitlab badges (default ones seems coverage and pipeline status)
 
 def type_label(g: Graph, res: Union[URIRef,None]):
     label = g.value(res, RDF.type)
