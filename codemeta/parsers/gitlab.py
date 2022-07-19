@@ -56,26 +56,18 @@ def rate_limit_get(*args, backoff_rate=2, initial_backoff=1, **kwargs):
 
 def parse_gitlab(g: Graph, res: Union[URIRef, BNode], source, args: AttribDict) -> Union[URIRef,BNode,None]:
     """Query and parse from the gitlab API"""
-    # https://docs.gitlab.com/ee/api/projects.html    GET /projects/:id
-    try:
-        split_arr = source.strip("/").split("/")
-        repo_father_path = split_arr[len(split_arr) -2]
-        repo = split_arr[len(split_arr) -1]
-    except:
-        raise ValueError("GitLab API sources must follow repo_father_path/repo syntax")
-    
-    repo_base_uri=source.strip("/")
-    # Substring that need to be replaced
-    str_to_replace = f"{repo_father_path}/{repo}"
-    # Replacement substring
-    replacement_str=''
-    # Replace last occurrences of substring 
-    repo_base_uri = replacement_str.join(repo_base_uri.rsplit(str_to_replace, 1))
+    cleaned_url= source.strip("/")
+    prefix=""
+    if(source.startswith("https://")):
+     git_address = cleaned_url.replace('https://','').split('/')[0];
+     prefix="https://"
+    else:
+     raise ValueError(source + " source url format not recognized!!")
 
-    repo_url = source.strip("/")  
-    repo_api_url = f"{repo_base_uri}/api/v4/projects/{repo_father_path}%2F{repo}"
+    suffix=cleaned_url.replace(prefix + git_address,'')[1:].replace('/', '%2F')
+    repo_api_url = f"{prefix}{git_address}/api/v4/projects/{suffix}"
     response = rate_limit_get(repo_api_url)
-
+    #Processing start
     for prop, gitlab_key in gitlab_crosswalk_table.items():
         if gitlab_key in response:
             g.add((res, prop, Literal(response[gitlab_key])))
@@ -91,28 +83,27 @@ def parse_gitlab(g: Graph, res: Union[URIRef, BNode], source, args: AttribDict) 
         g.add((res, SDO.url, Literal(response['web_url'])))
     if response.get('open_issues_count', False) > 0:
         g.add((res, CODEMETA.issueTracker, Literal(response['_links']['issues'])))
-    
+
+    #https://docs.gitlab.com/ee/api/users.html
+    #namespace kind kind can be just group or user
     owner_id_str=""
     owner_name=""
     user_url=""
     public_mail=""
-    #https://docs.gitlab.com/ee/api/users.html
-    #namespace kind kind can be just group or user
-
     if 'namespace' in response and response['namespace']['kind'] == 'user':
         owner_id_str=str(response['namespace']['id'])
-        owner_api_url = f"{repo_base_uri}/api/v4/users/" + owner_id_str
+        owner_api_url = f"{prefix}{git_address}/api/v4/users/" + owner_id_str
         owner_name=response['namespace']['name']
         user_url=response['namespace']['web_url']
     elif 'owner' in response:
         owner_id_str=str(response['owner']['id'])
-        owner_api_url = f"{repo_base_uri}/api/v4/users/" + owner_id_str
+        owner_api_url = f"{prefix}{git_address}/api/v4/users/" + owner_id_str
         response_owner = rate_limit_get(owner_api_url)
         owner_name=response_owner['owner']['name']
         user_url=response_owner['owner']['web_url']
         if response_owner.get('public_email'):
             public_mail = response_owner.get('public_email')
-    else:  return repo_url
+    else:  return cleaned_url
     firstname, lastname = parse_human_name(owner_name)
     owner_res = URIRef(user_url)
     g.add((owner_res, RDF.type, SDO.Person))
@@ -121,16 +112,16 @@ def parse_gitlab(g: Graph, res: Union[URIRef, BNode], source, args: AttribDict) 
     g.add((owner_res, SDO.url, Literal(user_url)))
     if public_mail != "":
         g.add((owner_res, SDO.email, Literal(public_mail)))
-    #Creator considerer as author
+    #Creator considered as author
     response_creator_url_field=user_url
     response_creator_name=owner_name
     if 'creator_id' in response:
      creator_id_str=str(response['creator_id'])
      if(creator_id_str != owner_id_str):
-        creator_api_url = f"{repo_base_uri}/api/v4/users/" +  creator_id_str
+        creator_api_url = f"{prefix}{git_address}/api/v4/users/" +  creator_id_str
         response_creator = rate_limit_get(creator_api_url)
         response_creator_url_field=response_creator['web_url']
     #Object X must be an rdflib term:  g.add((URIRef(response_creator_url_field), SDO.author, response_creator_name))
     #g.add((res, SDO.maintainer, owner_res))
     #if response_owner.get('work_information'): is like company?
-    return repo_url
+    return cleaned_url
