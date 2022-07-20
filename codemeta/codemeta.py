@@ -196,8 +196,6 @@ def build(**kwargs):
             for inputsource in inputfiles[len(inputtypes):]:
                 if inputsource.lower().endswith("setup.py"):
                     inputtypes.append("python")
-                elif inputsource.lower().startswith("http"):
-                    inputtypes.append("web")
                 elif inputsource.endswith("package.json"):
                     inputtypes.append("nodejs")
                 elif inputsource.endswith("pyproject.toml"):
@@ -213,7 +211,7 @@ def build(**kwargs):
                 elif inputsource.upper().endswith("MAINTAINERS"):
                     inputtypes.append("maintainers")
                 else:
-                    #assume gitapi
+                    #assume web/gitapi
                     inputtypes.append("web/gitapi")
         inputsources = list(zip(inputfiles, inputtypes))
         if guess:
