@@ -301,16 +301,17 @@ def build(**kwargs):
             #source = source.replace("https://github.com/","")
             #source = source.replace("git@github.com:","")
             #e.g. transform git@gitlab.com/X in https://gitlab.com/X
+            repo_kind=("")
             try:
                 re.sub(r'git@(.*):', r'https://\1/', source)
                 if source.endswith(".git"): source = source[:-4]
                 print(f"Querying GitAPI parser for {source}",file=sys.stderr)
-                prefuri = codemeta.parsers.gitapi.parse(g, res, source, args)
+                prefuri = codemeta.parsers.gitapi.parse(repo_kind, g, res, source, args)
             except:
                 #Faultback on web page metadata retrieve
-                print(f"Obtaining metadata from remote URL {source}",file=sys.stderr)
+                print(f"Faultback: Obtaining metadata from remote URL {source}",file=sys.stderr)
                 found = False
-                for targetres in codemeta.parsers.web.parse_web(g, res, source, args):
+                for targetres in codemeta.parsers.web.parse_web(repo_kind, g, res, source, args):
                     if targetres and args.with_stypes:
                         found = True
                         print(f"Adding service (targetProduct) {source}",file=sys.stderr)

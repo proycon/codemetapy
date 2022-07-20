@@ -14,7 +14,7 @@ GITAPI_REPO_BLACKLIST=["https://codeberg.org/","http://codeberg.org", "https://g
 #it shall be persistent because each new yaml a new invoke of codemetapy is performed and so memory reset
 repo_type_cache = {}
 
-def parse(g: Graph, res: Union[URIRef, BNode], source: str, args: AttribDict) -> Union[URIRef,BNode,None]:
+def parse(repo_kind:tuple, g: Graph, res: Union[URIRef, BNode], source: str, args: AttribDict) -> Union[URIRef,BNode,None]:
     source=source.strip("/")
     cleaned_url= source
     prefix=""
@@ -27,30 +27,30 @@ def parse(g: Graph, res: Union[URIRef, BNode], source: str, args: AttribDict) ->
     github_suffix=cleaned_url.replace(prefix + git_address,'')[1:]
     gitlab_suffix=github_suffix.replace('/', '%2F')
     gitlab_repo_api_url = f"{prefix}{git_address}/api/v4/projects/{gitlab_suffix}"
-    repo_kind = ""
+    repo_kind = ("")
     if("github.com/" in source):
-     response=_rate_limit_get(source.replace(f"{cleaned_url}",f"{prefix}api.github.com/repos/"), "github")
-     repo_kind = "github"
+     response=rate_limit_get(source.replace(f"{cleaned_url}",f"{prefix}api.github.com/repos/"), "github")
+     repo_kind = ("github")
     elif("gitlab.com/" in source):
-     response=_rate_limit_get(gitlab_repo_api_url, "gitlab")
-     repo_kind = "gitlab"
+     response=rate_limit_get(gitlab_repo_api_url, "gitlab")
+     repo_kind = ("gitlab")
     elif f"{prefix}{git_address}/" not in GITAPI_REPO_BLACKLIST:
       if(repo_type_cache[cleaned_url] is None):
         #Proprietary repos
-        response=_rate_limit_get(gitlab_repo_api_url, "gitlab")
+        response=rate_limit_get(gitlab_repo_api_url, "gitlab")
         if(response.status_code >= 400 and response.status_code < 500):
          #if fails try with github type
-         response=_rate_limit_get(source.replace(f"{cleaned_url}",f"{prefix}{git_address}/api/v3/repos/"), "github")
-         if(response): repo_kind = "github" 
+         response=rate_limit_get(source.replace(f"{cleaned_url}",f"{prefix}{git_address}/api/v3/repos/"), "github")
+         if(response): repo_kind =( "github") 
         else: 
-         repo_kind = "gitlab"
+         repo_kind = ("gitlab")
       else:
-        repo_kind = repo_type_cache[f"{prefix}{git_address}/"]
+        repo_kind = (repo_type_cache[f"{prefix}{git_address}/"])
     #Populate the cache even when there is a 4xx failure
-    repo_type_cache[f"{prefix}{git_address}/"] = repo_kind
-    if(repo_kind == "gitlab"):
+    repo_type_cache[f"{prefix}{git_address}/"] = repo_kind[0]
+    if(repo_kind == ("gitlab")):
        _parse_gitlab(response, g,res,f"{prefix}{git_address}", args)  
-    elif(repo_kind == "gitlab"):
+    elif(repo_kind == ("gitlab")):
        _parse_github(response, g,res,f"{prefix}{git_address}", args)
     return cleaned_url
 
@@ -66,16 +66,16 @@ github_crosswalk_table = {
 
 # the same as requests.get(args).json(), but protects against rate limiting
 # Adapted from source: https://github.com/KnowledgeCaptureAndDiscovery/somef (MIT licensed)
-def _rate_limit_get(url:str, repo_kind:str,  backoff_rate=2, initial_backoff=1, **kwargs): 
+def rate_limit_get(url:str, repo_kind:tuple,  backoff_rate=2, initial_backoff=1, **kwargs): 
     rate_limited = True
     response = {}
     has_token=False
     if not kwargs: kwargs = {}
-    if repo_kind == "github" and 'GITHUB_TOKEN' in environ and environ['GITHUB_TOKEN']:
+    if repo_kind == ("github") and 'GITHUB_TOKEN' in environ and environ['GITHUB_TOKEN']:
         if 'headers' not in kwargs: kwargs['headers'] = {}
         kwargs['headers']["Authorization"] = "token " + environ['GITHUB_TOKEN']
         has_token = True
-    elif repo_kind == "gitlab" and 'GITLAB_TOKEN' in environ and environ['GITLAB_TOKEN']:
+    elif repo_kind == ("gitlab") and 'GITLAB_TOKEN' in environ and environ['GITLAB_TOKEN']:
         if 'headers' not in kwargs: kwargs['headers'] = {}
         kwargs['headers']["PRIVATE-TOKEN"] = environ['GITLAB_TOKEN']
         has_token = True
@@ -83,17 +83,17 @@ def _rate_limit_get(url:str, repo_kind:str,  backoff_rate=2, initial_backoff=1, 
     while rate_limited:
         response = requests.get(url, **kwargs)
         data = response
-        rate_limit_remaining = data.headers["RateLimit-Remaining" if repo_kind == "gitlab" else "x-ratelimit-remaining"]
-        epochtime = int(data.headers["RateLimit-Reset" if repo_kind == "gitlab" else  "x-ratelimit-reset"])
+        rate_limit_remaining = data.headers["RateLimit-Remaining" if repo_kind == ("gitlab") else "x-ratelimit-remaining"]
+        epochtime = int(data.headers["RateLimit-Reset" if repo_kind == ("gitlab") else  "x-ratelimit-reset"])
         date_reset = datetime.fromtimestamp(epochtime)
-        print(f"Remaining {repo_kind} API requests: " + rate_limit_remaining + " ### Next rate limit reset at: " + str(date_reset) + f" (has_token={has_token})")
+        print(f"Remaining {repo_kind[0]} API requests: " + rate_limit_remaining + " ### Next rate limit reset at: " + str(date_reset) + f" (has_token={has_token})")
         response = response.json()
         if 'message' in response and 'API rate limit exceeded' in response['message']:
             rate_limited = True
-            print(f"{repo_kind} API: rate limited. Backing off for {initial_backoff} seconds (has_token={has_token})", file=sys.stderr)
+            print(f"{repo_kind[0]} API: rate limited. Backing off for {initial_backoff} seconds (has_token={has_token})", file=sys.stderr)
             sys.stderr.flush()
             if initial_backoff > 120:
-                raise Exception(f"{repo_kind} API timed out because of rate limiting, giving up... (has_token={has_token})")
+                raise Exception(f"{repo_kind[0]} API timed out because of rate limiting, giving up... (has_token={has_token})")
             time.sleep(initial_backoff)
             # increase the backoff for next time
             initial_backoff *= backoff_rate
