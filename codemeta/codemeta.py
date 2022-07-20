@@ -214,7 +214,7 @@ def build(**kwargs):
                     inputtypes.append("maintainers")
                 else:
                     #assume gitapi
-                    inputtypes.append("gitapi")
+                    inputtypes.append("web/gitapi")
         inputsources = list(zip(inputfiles, inputtypes))
         if guess:
             print(f"Detected input types: {inputsources}",file=sys.stderr)
@@ -277,19 +277,9 @@ def build(**kwargs):
     l = len(inputsources)
     for i, (source, inputtype) in enumerate(inputsources):
         print(f"Processing source #{i+1} of {l}",file=sys.stderr)
-
         prefuri = None #preferred URI returned by the parsing method
-        if inputtype == "web":
-            print(f"Obtaining metadata from remote URL {source}",file=sys.stderr)
-            found = False
-            for targetres in codemeta.parsers.web.parse_web(g, res, source, args):
-                if targetres and args.with_stypes:
-                    found = True
-                    print(f"Adding service (targetProduct) {source}",file=sys.stderr)
-                    g.add((res, SDO.targetProduct, targetres))
-            if not found:
-                print(f"(no metadata found at remote URL)",file=sys.stderr)
-        elif inputtype == "python":
+          
+        if inputtype == "python":
             print(f"Obtaining python package metadata for: {source}",file=sys.stderr)
             #source is a name of a package or path to a pyproject.toml file
             prefuri = codemeta.parsers.python.parse_python(g, res, source, crosswalk, args)
@@ -308,15 +298,27 @@ def build(**kwargs):
         elif inputtype == "json":
             print(f"Parsing json-ld file from {source}",file=sys.stderr)
             prefuri = codemeta.parsers.jsonld.parse_jsonld(g, res, getstream(source), args)
-        elif inputtype == "gitapi":
+        elif inputtype == "web/gitapi":
             #source = source.replace("https://api.github.com/repos/","")
             #source = source.replace("https://github.com/","")
             #source = source.replace("git@github.com:","")
             #e.g. transform git@gitlab.com/X in https://gitlab.com/X
-            re.sub(r'git@(.*):', r'https://\1/', source)
-            if source.endswith(".git"): source = source[:-4]
-            print(f"Querying GitAPI parser for {source}",file=sys.stderr)
-            prefuri = codemeta.parsers.gitapi.parse(g, res, source, args)
+            try:
+                re.sub(r'git@(.*):', r'https://\1/', source)
+                if source.endswith(".git"): source = source[:-4]
+                print(f"Querying GitAPI parser for {source}",file=sys.stderr)
+                prefuri = codemeta.parsers.gitapi.parse(g, res, source, args)
+            except:
+                #Faultback on web page metadata retrieve
+                print(f"Obtaining metadata from remote URL {source}",file=sys.stderr)
+                found = False
+                for targetres in codemeta.parsers.web.parse_web(g, res, source, args):
+                    if targetres and args.with_stypes:
+                        found = True
+                        print(f"Adding service (targetProduct) {source}",file=sys.stderr)
+                        g.add((res, SDO.targetProduct, targetres))
+                if not found:
+                    print(f"(no metadata found at remote URL)",file=sys.stderr)
         elif inputtype in ('authors', 'contributors','maintainers'):
             print(f"Extracting {inputtype} from {source}",file=sys.stderr)
             if inputtype == 'authors':
