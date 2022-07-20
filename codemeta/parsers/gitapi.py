@@ -35,7 +35,7 @@ def parse(repo_kind:tuple, g: Graph, res: Union[URIRef, BNode], source: str, arg
      response=rate_limit_get(gitlab_repo_api_url, "gitlab")
      repo_kind = ("gitlab")
     elif f"{prefix}{git_address}/" not in GITAPI_REPO_BLACKLIST:
-      if(repo_type_cache[cleaned_url] is None):
+      if(f"{prefix}{git_address}/" not in repo_type_cache):
         #Proprietary repos
         response=rate_limit_get(gitlab_repo_api_url, "gitlab")
         if(response.status_code >= 400 and response.status_code < 500):
@@ -79,8 +79,9 @@ def rate_limit_get(url:str, repo_kind:tuple,  rate_limited: bool=True, backoff_r
         kwargs['headers']["PRIVATE-TOKEN"] = environ['GITLAB_TOKEN']
         has_token = True
     response = requests.get(url, **kwargs)
-    data = response  
-    while rate_limited:
+    data = response
+    rate_limited_response = (True if (data.headers["RateLimit-Remaining"] or data.headers["x-ratelimit-remaining"]) else False)
+    while rate_limited and rate_limited_response:
         rate_limit_remaining = data.headers["RateLimit-Remaining" if repo_kind == ("gitlab") else "x-ratelimit-remaining"]
         epochtime = int(data.headers["RateLimit-Reset" if repo_kind == ("gitlab") else  "x-ratelimit-reset"])
         date_reset = datetime.fromtimestamp(epochtime)
