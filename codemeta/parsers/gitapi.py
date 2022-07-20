@@ -105,6 +105,7 @@ def rate_limit_get(url:str, repo_kind:tuple,  rate_limited: bool=True, backoff_r
 
 def _parse_github(response, g: Graph, res: Union[URIRef, BNode], source: str, args: AttribDict):
     """Query and parse from the github API"""
+    response = response.json()
     users_api_url=f"{source}/api/v3/users/"
     if("github.com/" in source):
      users_api_url=source.replace("www.github.com/", "api.github.com/").replace("github.com/", "api.github.com/") + "/users/"
@@ -167,6 +168,7 @@ gitlab_crosswalk_table = {
 }
 def _parse_gitlab(response, g: Graph, res: Union[URIRef, BNode], source, args: AttribDict):
     """Query and parse from the gitlab API"""
+    response = response.json()
     users_api_url = f"{source}/api/v4/users/"
     #Processing start
     for prop, gitlab_key in gitlab_crosswalk_table.items():
