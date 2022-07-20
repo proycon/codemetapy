@@ -18,7 +18,7 @@ def parse(g: Graph, res: Union[URIRef, BNode], source: str, args: AttribDict) ->
     cleaned_url= source
     prefix=""
     if(source.startswith("https://")):
-     git_address = cleaned_url.replace('https://','').split('/')[0];
+     git_address = cleaned_url.replace('https://','').split('/')[0]
      prefix="https://"
     else:
      raise ValueError(source + " source url format not recognized!!")

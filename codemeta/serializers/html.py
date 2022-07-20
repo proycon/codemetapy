@@ -67,29 +67,34 @@ def get_index(g: Graph, restype=SDO.SoftwareSourceCode):
 def is_resource(res) -> bool:
     return isinstance(res, (URIRef,BNode))
 
-def parse_git_url(s):
+def _parse_git_url(s):
     if not s: return None
     if s.endswith(".git"): s = s[:-4]
     if s.startswith("https://github.com/"):
-        owner, repo = s.replace("https://github.com/","").split("/")
-        return owner, repo, "github"
+        return "github"
     if s.startswith("https://gitlab.com/"):
-        owner, repo = s.replace("https://gitlab.com/","").split("/")
-        return owner, repo, "gitlab"
-    return None, None
+        return "gitlab"
+    return None
 
 def get_badge(g: Graph, res: Union[URIRef,None], key):
-    owner, repo, kind = parse_git_url(g.value(res, SDO.codeRepository))
-    if owner and repo and kind == "github":
+    repo_kind = _parse_git_url(g.value(res, SDO.codeRepository))
+    source=g.value(res, SDO.codeRepository).strip("/")
+    cleaned_url= source
+    prefix=""
+    if(source.startswith("https://")):
+     git_address = cleaned_url.replace('https://','').split('/')[0]
+     prefix="https://"
+     github_suffix=cleaned_url.replace(prefix + git_address,'')[1:]
+     if repo_kind == "github":
         #github badges
         if key == "stars":
-            yield f"https://img.shields.io/github/stars/{owner}/{repo}.svg?style=flat&color=5c7297", None, "Stars are an indicator of the popularity of this project on GitHub"
+            yield f"https://img.shields.io/github/stars/{github_suffix}.svg?style=flat&color=5c7297", None, "Stars are an indicator of the popularity of this project on GitHub"
         elif key == "issues":
-            yield f"https://img.shields.io/github/issues/{owner}/{repo}.svg?style=flat&color=5c7297", None, "The number of open issues on the issue tracker"
-            yield f"https://img.shields.io/github/issues-closed/{owner}/{repo}.svg?style=flat&color=5c7297", None, "The number of closes issues on the issue tracker"
+            yield f"https://img.shields.io/github/issues/{github_suffix}.svg?style=flat&color=5c7297", None, "The number of open issues on the issue tracker"
+            yield f"https://img.shields.io/github/issues-closed/{github_suffix}.svg?style=flat&color=5c7297", None, "The number of closes issues on the issue tracker"
         elif key == "lastcommits":
-            yield f"https://img.shields.io/github/last-commit/{owner}/{repo}.svg?style=flat&color=5c7297", None, "Last commit (main branch). Gives an indication of project development activity and rough indication of how up-to-date the latest release is."
-            yield f"https://img.shields.io/github/commits-since/{owner}/{repo}/latest.svg?style=flat&color=5c7297&sort=semver", None, "Number of commits since the last release. Gives an indication of project development activity and rough indication of how up-to-date the latest release is."
+            yield f"https://img.shields.io/github/last-commit/{github_suffix}.svg?style=flat&color=5c7297", None, "Last commit (main branch). Gives an indication of project development activity and rough indication of how up-to-date the latest release is."
+            yield f"https://img.shields.io/github/commits-since/{github_suffix}/latest.svg?style=flat&color=5c7297&sort=semver", None, "Number of commits since the last release. Gives an indication of project development activity and rough indication of how up-to-date the latest release is."
         #TODO implement logic for gitlab badges (default ones seems coverage and pipeline status)
 
 def type_label(g: Graph, res: Union[URIRef,None]):
