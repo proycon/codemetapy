@@ -62,7 +62,7 @@ def parse_clam(soup):
 
 
 def parse_web(repo_kind: tuple, g: Graph, res: Union[URIRef, BNode], url, args: AttribDict) -> Iterator[Union[URIRef,BNode,None]]:
-    r = rate_limit_get(url, repo_kind, headers={ "Accept": "application/json+ld;q=1.0,application/json;q=0.9,application/x-yaml;q=0.8,application/xml;q=0.7;text/html;q=0.6;text/plain;q=0.1" } )
+    r = rate_limit_get(url, repo_kind, False, headers={ "Accept": "application/json+ld;q=1.0,application/json;q=0.9,application/x-yaml;q=0.8,application/xml;q=0.7;text/html;q=0.6;text/plain;q=0.1" } )
     r.raise_for_status()
     contenttype = r.headers.get('content-type').split(';')[0].strip()
     print(f"    Service replied with content-type {contenttype}",file=sys.stderr)

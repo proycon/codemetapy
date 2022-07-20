@@ -66,8 +66,7 @@ github_crosswalk_table = {
 
 # the same as requests.get(args).json(), but protects against rate limiting
 # Adapted from source: https://github.com/KnowledgeCaptureAndDiscovery/somef (MIT licensed)
-def rate_limit_get(url:str, repo_kind:tuple,  backoff_rate=2, initial_backoff=1, **kwargs): 
-    rate_limited = True
+def rate_limit_get(url:str, repo_kind:tuple,  rate_limited: bool=True, backoff_rate=2, initial_backoff=1, **kwargs): 
     response = {}
     has_token=False
     if not kwargs: kwargs = {}
@@ -79,10 +78,9 @@ def rate_limit_get(url:str, repo_kind:tuple,  backoff_rate=2, initial_backoff=1,
         if 'headers' not in kwargs: kwargs['headers'] = {}
         kwargs['headers']["PRIVATE-TOKEN"] = environ['GITLAB_TOKEN']
         has_token = True
-    
+    response = requests.get(url, **kwargs)
+    data = response  
     while rate_limited:
-        response = requests.get(url, **kwargs)
-        data = response
         rate_limit_remaining = data.headers["RateLimit-Remaining" if repo_kind == ("gitlab") else "x-ratelimit-remaining"]
         epochtime = int(data.headers["RateLimit-Reset" if repo_kind == ("gitlab") else  "x-ratelimit-reset"])
         date_reset = datetime.fromtimestamp(epochtime)
@@ -97,6 +95,8 @@ def rate_limit_get(url:str, repo_kind:tuple,  backoff_rate=2, initial_backoff=1,
             time.sleep(initial_backoff)
             # increase the backoff for next time
             initial_backoff *= backoff_rate
+            response = requests.get(url, **kwargs)
+            data = response 
         else:
             rate_limited = False
     return response
