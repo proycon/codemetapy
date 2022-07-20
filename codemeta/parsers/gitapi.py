@@ -80,7 +80,8 @@ def rate_limit_get(url:str, repo_kind:tuple,  rate_limited: bool=True, backoff_r
         has_token = True
     response = requests.get(url, **kwargs)
     data = response
-    rate_limited_response = (True if (data.headers["RateLimit-Remaining"] or data.headers["x-ratelimit-remaining"]) else False)
+    rate_limited_response = False
+    if ('message' in response and 'API rate limit exceeded' in response['message']): rate_limited_response = True
     while rate_limited and rate_limited_response:
         rate_limit_remaining = data.headers["RateLimit-Remaining" if repo_kind == ("gitlab") else "x-ratelimit-remaining"]
         epochtime = int(data.headers["RateLimit-Reset" if repo_kind == ("gitlab") else  "x-ratelimit-reset"])
@@ -129,7 +130,7 @@ def _parse_github(response, g: Graph, res: Union[URIRef, BNode], source: str, ar
 
     if 'owner' in response:
         owner_api_url = f"{users_api_url}/{owner}"
-        response = _rate_limit_get(owner_api_url, "github")
+        response = rate_limit_get(owner_api_url, "github")
         owner_type = response.get("type","").lower()
         owner_res = None
         if owner_type == "user" and response.get('name'):
@@ -198,7 +199,7 @@ def _parse_gitlab(response, g: Graph, res: Union[URIRef, BNode], source, args: A
     elif 'owner' in response:
         owner_id_str=str(response['owner']['id'])
         owner_api_url = users_api_url + owner_id_str
-        response_owner = _rate_limit_get(owner_api_url, "gitlab")
+        response_owner = rate_limit_get(owner_api_url, "gitlab")
         owner_name=response_owner['owner']['name']
         user_url=response_owner['owner']['web_url']
         if response_owner.get('public_email'):
@@ -219,7 +220,7 @@ def _parse_gitlab(response, g: Graph, res: Union[URIRef, BNode], source, args: A
      creator_id_str=str(response['creator_id'])
      if(creator_id_str != owner_id_str):
         creator_api_url = users_api_url +  creator_id_str
-        response_creator = _rate_limit_get(creator_api_url, "gitlab")
+        response_creator = rate_limit_get(creator_api_url, "gitlab")
         response_creator_url_field=response_creator['web_url']
     #Object X must be an rdflib term:  g.add((URIRef(response_creator_url_field), SDO.author, response_creator_name))
     #g.add((res, SDO.maintainer, owner_res))
