@@ -38,7 +38,7 @@ def parse(g: Graph, res: Union[URIRef, BNode], source: str, args: AttribDict) ->
       if(repo_type_cache[cleaned_url] is None):
         #Proprietary repos
         response=_rate_limit_get(gitlab_repo_api_url, "gitlab")
-        if(response.status_code > 400 and response.status_code < 500):
+        if(response.status_code >= 400 and response.status_code < 500):
          #if fails try with github type
          response=_rate_limit_get(source.replace(f"{cleaned_url}",f"{prefix}{git_address}/api/v3/repos/"), "github")
          if(response): repo_kind = "github" 
