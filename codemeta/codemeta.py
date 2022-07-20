@@ -18,7 +18,7 @@ import random
 from collections import OrderedDict, defaultdict
 from typing import Union, IO, Optional, Sequence
 import copy
-import distutils.cmd #note: will be removed in python 3.12!
+import distutils.cmd #note: will be removed in python 3.12! TODO constraint <= 3.11 in apk/apt-get in Dockerfile
 #pylint: disable=C0413
 
 from rdflib import Graph, BNode, URIRef

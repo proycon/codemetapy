@@ -11,6 +11,7 @@ from codemeta.common import AttribDict, SDO, CODEMETA, license_to_spdx, parse_hu
 from codemeta.parsers.jsonld import parse_jsonld_data
 
 GITAPI_REPO_BLACKLIST=["https://codeberg.org/","http://codeberg.org", "https://git.sr.ht/", "https://bitbucket.com/"]
+#it shall be persistent because each new yaml a new invoke of codemetapy is performed and so memory reset
 repo_type_cache = {}
 
 def parse(g: Graph, res: Union[URIRef, BNode], source: str, args: AttribDict) -> Union[URIRef,BNode,None]:
