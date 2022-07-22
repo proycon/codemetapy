@@ -188,7 +188,7 @@ def _parse_gitlab(response, g: Graph, res: Union[URIRef, BNode], source, args: A
         g.add((res, CODEMETA.issueTracker, Literal(response['_links']['issues'])))
 
     #https://docs.gitlab.com/ee/api/users.html
-    #namespace kind kind can be just group or user
+    #namespace kind can be just group or user
     owner_id_str=""
     owner_name=""
     user_url=""

@@ -90,6 +90,7 @@ def get_badge(g: Graph, res: Union[URIRef,None], key):
         if key == "stars":
             yield f"https://img.shields.io/github/stars/{github_suffix}.svg?style=flat&color=5c7297", None, "Stars are an indicator of the popularity of this project on GitHub"
         elif key == "issues":
+            #https://shields.io/category/issue-tracking
             yield f"https://img.shields.io/github/issues/{github_suffix}.svg?style=flat&color=5c7297", None, "The number of open issues on the issue tracker"
             yield f"https://img.shields.io/github/issues-closed/{github_suffix}.svg?style=flat&color=5c7297", None, "The number of closes issues on the issue tracker"
         elif key == "lastcommits":
