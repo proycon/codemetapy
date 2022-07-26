@@ -27,13 +27,13 @@ def parse(repo_kind:tuple, g: Graph, res: Union[URIRef, BNode], source: str, arg
     github_suffix=cleaned_url.replace(prefix + git_address,'')[1:]
     gitlab_suffix=github_suffix.replace('/', '%2F')
     gitlab_repo_api_url = f"{prefix}{git_address}/api/v4/projects/{gitlab_suffix}"
-    repo_kind = ("")
+    repo_kind = ("",)
     if("github.com/" in source):
      response=rate_limit_get(source.replace(f"{cleaned_url}",f"{prefix}api.github.com/repos/"), "github")
-     repo_kind = ("github")
+     repo_kind = ("github",)
     elif("gitlab.com/" in source):
      response=rate_limit_get(gitlab_repo_api_url, "gitlab")
-     repo_kind = ("gitlab")
+     repo_kind = ("gitlab",)
     elif f"{prefix}{git_address}/" not in GITAPI_REPO_BLACKLIST:
       if(f"{prefix}{git_address}/" not in repo_type_cache):
         #Proprietary repos
@@ -41,16 +41,16 @@ def parse(repo_kind:tuple, g: Graph, res: Union[URIRef, BNode], source: str, arg
         if(response.status_code >= 400 and response.status_code < 500):
          #if fails try with github type
          response=rate_limit_get(source.replace(f"{cleaned_url}",f"{prefix}{git_address}/api/v3/repos/"), "github")
-         if(response): repo_kind =( "github") 
+         if(response): repo_kind =("github",) 
         else: 
-         repo_kind = ("gitlab")
+         repo_kind = ("gitlab",)
       else:
         repo_kind = (repo_type_cache[f"{prefix}{git_address}/"])
     #Populate the cache even when there is a 4xx failure
     repo_type_cache[f"{prefix}{git_address}/"] = repo_kind[0]
-    if(repo_kind == ("gitlab")):
+    if(repo_kind == ("gitlab",)):
        _parse_gitlab(response, g,res,f"{prefix}{git_address}", args)  
-    elif(repo_kind == ("gitlab")):
+    elif(repo_kind == ("gitlab",)):
        _parse_github(response, g,res,f"{prefix}{git_address}", args)
     return cleaned_url
 
@@ -70,11 +70,11 @@ def rate_limit_get(url:str, repo_kind:tuple,  rate_limited: bool=True, backoff_r
     response = {}
     has_token=False
     if not kwargs: kwargs = {}
-    if repo_kind == ("github") and 'GITHUB_TOKEN' in environ and environ['GITHUB_TOKEN']:
+    if repo_kind == ("github",) and 'GITHUB_TOKEN' in environ and environ['GITHUB_TOKEN']:
         if 'headers' not in kwargs: kwargs['headers'] = {}
         kwargs['headers']["Authorization"] = "token " + environ['GITHUB_TOKEN']
         has_token = True
-    elif repo_kind == ("gitlab") and 'GITLAB_TOKEN' in environ and environ['GITLAB_TOKEN']:
+    elif repo_kind == ("gitlab",) and 'GITLAB_TOKEN' in environ and environ['GITLAB_TOKEN']:
         if 'headers' not in kwargs: kwargs['headers'] = {}
         kwargs['headers']["PRIVATE-TOKEN"] = environ['GITLAB_TOKEN']
         has_token = True
@@ -83,8 +83,8 @@ def rate_limit_get(url:str, repo_kind:tuple,  rate_limited: bool=True, backoff_r
     rate_limited_response = False
     if ('message' in response and 'API rate limit exceeded' in response['message']): rate_limited_response = True
     while rate_limited and rate_limited_response:
-        rate_limit_remaining = data.headers["RateLimit-Remaining" if repo_kind == ("gitlab") else "x-ratelimit-remaining"]
-        epochtime = int(data.headers["RateLimit-Reset" if repo_kind == ("gitlab") else  "x-ratelimit-reset"])
+        rate_limit_remaining = data.headers["RateLimit-Remaining" if repo_kind == ("gitlab",) else "x-ratelimit-remaining"]
+        epochtime = int(data.headers["RateLimit-Reset" if repo_kind == ("gitlab",) else  "x-ratelimit-reset"])
         date_reset = datetime.fromtimestamp(epochtime)
         print(f"Remaining {repo_kind[0]} API requests: " + rate_limit_remaining + " ### Next rate limit reset at: " + str(date_reset) + f" (has_token={has_token})")
         response = response.json()

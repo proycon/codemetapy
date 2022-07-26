@@ -301,7 +301,7 @@ def build(**kwargs):
             #source = source.replace("https://github.com/","")
             #source = source.replace("git@github.com:","")
             #e.g. transform git@gitlab.com/X in https://gitlab.com/X
-            repo_kind=("")
+            repo_kind=("",)
             try:
                 re.sub(r'git@(.*):', r'https://\1/', source)
                 if source.endswith(".git"): source = source[:-4]
