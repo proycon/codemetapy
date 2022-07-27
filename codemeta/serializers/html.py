@@ -1,6 +1,7 @@
 import sys
 import os.path
 from datetime import datetime
+import codemeta.parsers.gitapi
 from rdflib import Graph, URIRef, BNode, Literal
 from rdflib.namespace import RDF, SKOS, RDFS
 from typing import Union, IO, Optional, Sequence
@@ -84,19 +85,34 @@ def get_badge(g: Graph, res: Union[URIRef,None], key):
     if(source.startswith("https://")):
      git_address = cleaned_url.replace('https://','').split('/')[0]
      prefix="https://"
-     github_suffix=cleaned_url.replace(prefix + git_address,'')[1:]
+     git_suffix=cleaned_url.replace(prefix + git_address,'')[1:]
      if repo_kind == "github":
         #github badges
         if key == "stars":
-            yield f"https://img.shields.io/github/stars/{github_suffix}.svg?style=flat&color=5c7297", None, "Stars are an indicator of the popularity of this project on GitHub"
+            yield f"https://img.shields.io/github/stars/{git_suffix}.svg?style=flat&color=5c7297", None, "Stars are an indicator of the popularity of this project on GitHub"
         elif key == "issues":
             #https://shields.io/category/issue-tracking
-            yield f"https://img.shields.io/github/issues/{github_suffix}.svg?style=flat&color=5c7297", None, "The number of open issues on the issue tracker"
-            yield f"https://img.shields.io/github/issues-closed/{github_suffix}.svg?style=flat&color=5c7297", None, "The number of closes issues on the issue tracker"
+            yield f"https://img.shields.io/github/issues/{git_suffix}.svg?style=flat&color=5c7297", None, "The number of open issues on the issue tracker"
+            yield f"https://img.shields.io/github/issues-closed/{git_suffix}.svg?style=flat&color=5c7297", None, "The number of closes issues on the issue tracker"
         elif key == "lastcommits":
-            yield f"https://img.shields.io/github/last-commit/{github_suffix}.svg?style=flat&color=5c7297", None, "Last commit (main branch). Gives an indication of project development activity and rough indication of how up-to-date the latest release is."
-            yield f"https://img.shields.io/github/commits-since/{github_suffix}/latest.svg?style=flat&color=5c7297&sort=semver", None, "Number of commits since the last release. Gives an indication of project development activity and rough indication of how up-to-date the latest release is."
-        #TODO implement logic for gitlab badges (default ones seems coverage and pipeline status)
+            yield f"https://img.shields.io/github/last-commit/{git_suffix}.svg?style=flat&color=5c7297", None, "Last commit (main branch). Gives an indication of project development activity and rough indication of how up-to-date the latest release is."
+            yield f"https://img.shields.io/github/commits-since/{git_suffix}/latest.svg?style=flat&color=5c7297&sort=semver", None, "Number of commits since the last release. Gives an indication of project development activity and rough indication of how up-to-date the latest release is."
+     elif repo_kind == "gitlab":
+     # https://docs.gitlab.com/ee/api/project_badges.html
+        if key == "lastcommits":
+            #append all found badges at the end
+            encoded_git_suffix=git_suffix.replace('/', '%2F')
+            response = codemeta.parsers.gitapi.rate_limit_get(f"{prefix}{git_address}/api/v4/projects/{encoded_git_suffix}/badges", "gitlab")
+            if(response):
+                response = response.json()
+                for badge in response:
+                   if badge['kind'] == 'project': 
+                    #or rendered_image_url field?
+                    image_url=badge['image_url'] 
+                    name=badge['name']
+                    yield f"{image_url}", f"{name}", f"{name}"  
+     
+
 
 def type_label(g: Graph, res: Union[URIRef,None]):
     label = g.value(res, RDF.type)
