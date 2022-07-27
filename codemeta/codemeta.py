@@ -60,7 +60,7 @@ class CodeMetaCommand(distutils.cmd.Command):
         ('with-stypes','t','Generate software types using targetProduct (custom extension not part of the official codemeta/schema.org specification yet)'),
         ('dry-run','n','Write to stdout instead of codemeta.json')
     ]
-
+    repo_kind=("",)
     def initialize_options(self):
         self.with_entrypoints = False
         self.dry_run = False
@@ -130,7 +130,7 @@ def main():
         print(output)
 
 
-def serialize(g: Graph, res: Union[Sequence,URIRef,BNode,None], args: AttribDict, contextgraph: Union[Graph,None] = None, sparql_query: Optional[str] = None, **kwargs) -> Graph:
+def serialize(repo_kind: tuple, g: Graph, res: Union[Sequence,URIRef,BNode,None], args: AttribDict, contextgraph: Union[Graph,None] = None, sparql_query: Optional[str] = None, **kwargs) -> Graph:
     if args.output == "json":
         if sparql_query: res = [ x[0]  for x in query(g, sparql_query) ]
         doc = serialize_to_jsonld(g, res)
@@ -148,7 +148,7 @@ def serialize(g: Graph, res: Union[Sequence,URIRef,BNode,None], args: AttribDict
         else:
             return doc
     elif args.output == "html":
-        doc = serialize_to_html(g, res, args, contextgraph, sparql_query, **kwargs) #note: sparql query is applied in serialization function if needed
+        doc = serialize_to_html(repo_kind, g, res, args, contextgraph, sparql_query, **kwargs) #note: sparql query is applied in serialization function if needed
         if args.outputfile and args.outputfile != "-":
             with open(args.outputfile,'w',encoding='utf-8') as fp:
                 fp.write(doc)
@@ -178,7 +178,7 @@ def read(**kwargs):
     else:
         res = None
 
-    return serialize(g, res, args, contextgraph)
+    return serialize(CodeMetaCommand.repo_kind, g, res, args, contextgraph)
 
 
 def build(**kwargs):
@@ -301,17 +301,16 @@ def build(**kwargs):
             #source = source.replace("https://github.com/","")
             #source = source.replace("git@github.com:","")
             #e.g. transform git@gitlab.com/X in https://gitlab.com/X
-            repo_kind=("",)
             try:
                 re.sub(r'git@(.*):', r'https://\1/', source)
                 if source.endswith(".git"): source = source[:-4]
                 print(f"Querying GitAPI parser for {source}",file=sys.stderr)
-                prefuri = codemeta.parsers.gitapi.parse(repo_kind, g, res, source, args)
+                prefuri = codemeta.parsers.gitapi.parse(CodeMetaCommand.repo_kind, g, res, source, args)
             except:
                 #Faultback on web page metadata retrieve
                 print(f"Faultback: Obtaining metadata from remote URL {source}",file=sys.stderr)
                 found = False
-                for targetres in codemeta.parsers.web.parse_web(repo_kind, g, res, source, args):
+                for targetres in codemeta.parsers.web.parse_web(CodeMetaCommand.repo_kind, g, res, source, args):
                     if targetres and args.with_stypes:
                         found = True
                         print(f"Adding service (targetProduct) {source}",file=sys.stderr)
@@ -354,7 +353,7 @@ def build(**kwargs):
     #Test and fix conflicts in the graph (and report them)
     reconcile(g, res, args)
 
-    return serialize(g, res, args, contextgraph)
+    return serialize(CodeMetaCommand.repo_kind, g, res, args, contextgraph)
 
 
 

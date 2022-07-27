@@ -14,7 +14,7 @@ GITAPI_REPO_BLACKLIST=["https://codeberg.org/","http://codeberg.org", "https://g
 #it shall be persistent because each new yaml a new invoke of codemetapy is performed and so memory reset
 repo_type_cache = {}
 
-def parse(repo_kind:tuple, g: Graph, res: Union[URIRef, BNode], source: str, args: AttribDict) -> Union[URIRef,BNode,None]:
+def parse(repo_kind:tuple, g: Graph, res: Union[URIRef, BNode], source: str, args: AttribDict):
     source=source.strip("/")
     cleaned_url= source
     prefix=""

@@ -68,17 +68,8 @@ def get_index(g: Graph, restype=SDO.SoftwareSourceCode):
 def is_resource(res) -> bool:
     return isinstance(res, (URIRef,BNode))
 
-def _parse_git_url(s):
-    if not s: return None
-    if s.endswith(".git"): s = s[:-4]
-    if s.startswith("https://github.com/"):
-        return "github"
-    if s.startswith("https://gitlab.com/"):
-        return "gitlab"
-    return None
 
-def get_badge(g: Graph, res: Union[URIRef,None], key):
-    repo_kind = _parse_git_url(g.value(res, SDO.codeRepository))
+def get_badge(repo_kind: tuple, g: Graph, res: Union[URIRef,None], key):
     source=g.value(res, SDO.codeRepository).strip("/")
     cleaned_url= source
     prefix=""
@@ -86,7 +77,7 @@ def get_badge(g: Graph, res: Union[URIRef,None], key):
      git_address = cleaned_url.replace('https://','').split('/')[0]
      prefix="https://"
      git_suffix=cleaned_url.replace(prefix + git_address,'')[1:]
-     if repo_kind == "github":
+     if "github" in repo_kind:
         #github badges
         if key == "stars":
             yield f"https://img.shields.io/github/stars/{git_suffix}.svg?style=flat&color=5c7297", None, "Stars are an indicator of the popularity of this project on GitHub"
@@ -97,7 +88,7 @@ def get_badge(g: Graph, res: Union[URIRef,None], key):
         elif key == "lastcommits":
             yield f"https://img.shields.io/github/last-commit/{git_suffix}.svg?style=flat&color=5c7297", None, "Last commit (main branch). Gives an indication of project development activity and rough indication of how up-to-date the latest release is."
             yield f"https://img.shields.io/github/commits-since/{git_suffix}/latest.svg?style=flat&color=5c7297&sort=semver", None, "Number of commits since the last release. Gives an indication of project development activity and rough indication of how up-to-date the latest release is."
-     elif repo_kind == "gitlab":
+     elif "gitlab" in repo_kind:
      # https://docs.gitlab.com/ee/api/project_badges.html
         if key == "lastcommits":
             #append all found badges at the end
@@ -145,9 +136,8 @@ def get_interface_types(g: Graph, res: Union[URIRef,None], contextgraph: Graph, 
 
 
 
-def serialize_to_html(g: Graph, res: Union[Sequence,URIRef,None], args: AttribDict, contextgraph: Graph, sparql_query: Optional[str] = None, **kwargs) -> dict:
+def serialize_to_html(repo_kind: tuple, g: Graph, res: Union[Sequence,URIRef,None], args: AttribDict, contextgraph: Graph, sparql_query: Optional[str] = None, **kwargs) -> dict:
     """Serialize to HTML with RDFa"""
-
     if res and not isinstance(res, (list,tuple)):
         #Get the subgraph that focusses on this specific resource
         g = get_subgraph(g, [res])
@@ -179,7 +169,7 @@ def serialize_to_html(g: Graph, res: Union[Sequence,URIRef,None], args: AttribDi
         else:
             index = get_index(g)
     template = env.get_template(template)
-    return template.render(g=g, res=res, SDO=SDO,CODEMETA=CODEMETA, CODEMETAPY=CODEMETAPY, RDF=RDF,RDFS=RDFS,STYPE=SOFTWARETYPES, REPOSTATUS=REPOSTATUS, SKOS=SKOS, get_triples=get_triples, type_label=type_label, css=args.css, contextgraph=contextgraph, URIRef=URIRef, get_badge=get_badge, now=datetime.now().strftime("%Y-%m-%d %H:%M:%S"), index=index, get_interface_types=get_interface_types,baseuri=args.baseuri,baseurl=args.baseurl, toolstore=args.toolstore, get_last_component=get_last_component, is_resource=is_resource, int=int, **kwargs)
+    return template.render(repo_kind=repo_kind, res=res, SDO=SDO,CODEMETA=CODEMETA, CODEMETAPY=CODEMETAPY, RDF=RDF,RDFS=RDFS,STYPE=SOFTWARETYPES, REPOSTATUS=REPOSTATUS, SKOS=SKOS, get_triples=get_triples, type_label=type_label, css=args.css, contextgraph=contextgraph, URIRef=URIRef, get_badge=get_badge, now=datetime.now().strftime("%Y-%m-%d %H:%M:%S"), index=index, get_interface_types=get_interface_types,baseuri=args.baseuri,baseurl=args.baseurl, toolstore=args.toolstore, get_last_component=get_last_component, is_resource=is_resource, int=int, **kwargs)
 
 
 

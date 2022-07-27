@@ -121,7 +121,7 @@
         {% if g.value(sscres, SDO.codeRepository) %}
         <dt class="codeRepository" title="A version controlled repository where the source code of the software is available">Source code repository</dt>
         <dd class="codeRepository"><i class="fa fa-code-branch"></i>&nbsp;<a rel="schema:codeRepository" href="{{ g.value(sscres, SDO.codeRepository) }}">{{ g.value(sscres, SDO.codeRepository) }}</a>
-        {% for img, url, label in get_badge(g, sscres, "stars") %}
+        {% for img, url, label in get_badge(repo_kind, g, sscres, "stars") %}
         {% include 'badge.html' %}
         {% endfor %}
         </dd>
@@ -170,7 +170,7 @@
         {% if g.value(sscres, CODEMETA.issueTracker) %}
         <dt class="issueTracker" title="A bug-reporting and feature tracking system for this software">Issue Tracker (Support)</dt>
         <dd class="issueTracker"><a rel="schema:issueTracker" href="{{ g.value(sscres, CODEMETA.issueTracker) }}">{{ g.value(sscres, CODEMETA.issueTracker) }}</a>
-        {% for img, url, label in get_badge(g, sscres, "issues") %}
+        {% for img, url, label in get_badge(repo_kind, g, sscres, "issues") %}
         {% include 'badge.html' %}
         {% endfor %}
         </dd>
@@ -419,7 +419,7 @@
         <dd class="dateModified">
             {{ g.value(sscres, SDO.dateModified).replace("T"," ").replace("Z"," ")  }}
 
-            {% for img, url, label in get_badge(g, sscres, "lastcommits") %}
+            {% for img, url, label in get_badge(repo_kind, g, sscres, "lastcommits") %}
             {% include 'badge.html' %}
             {% endfor %}
         </dd>
