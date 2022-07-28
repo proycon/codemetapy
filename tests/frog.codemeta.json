@@ -1,0 +1,305 @@
+{
+    "@context": [
+        "https://doi.org/10.5063/schema/codemeta-2.0",
+        "http://schema.org",
+        "https://w3id.org/software-types"
+    ],
+    "@type": "SoftwareSourceCode",
+    "identifier": "frog",
+    "name": "Frog",
+    "version": "0.26",
+    "description": "Frog is an integration of memory-based natural language processing (NLP) modules developed for Dutch. It performs automatic linguistic enrichment such as part of speech tagging, lemmatisation, named entity recognition, shallow parsing, dependency parsing and morphological analysis. All NLP modules are based on TiMBL.",
+    "license": "https://spdx.org/licenses/GPL-3.0-only",
+	"url": "https://languagemachines.github.io/frog",
+    "producer": {
+        "@id": "https://huc.knaw.nl",
+        "@type": "Organization",
+        "name": "KNAW Humanities Cluster",
+        "url": "https://huc.knaw.nl",
+        "parentOrganization": {
+            "@id": "https://knaw.nl",
+            "@type": "Organization",
+            "name": "KNAW",
+            "url": "https://knaw.nl",
+            "location": {
+                "@type": "Place",
+                "name": "Amsterdam"
+            }
+        }
+    },
+    "author": [
+		{
+			"@type": "Person",
+			"givenName": "Ko",
+			"familyName": "van der Sloot",
+			"email": "ko.vandersloot@let.ru.nl",
+			"affiliation": { 
+                "@id": "https://www.ru.nl/clst", 
+                "@type": "Organization",
+                "name": "Centre for Language and Speech Technology",
+                "url": "https://www.ru.nl/clst",
+                "parentOrganization": {
+                    "@id": "https://www.ru.nl/cls",
+                    "@type": "Organization",
+                    "name": "Centre for Language Studies",
+                    "url": "https://www.ru.nl/cls",
+                    "parentOrganization": {
+                        "@id": "https://www.ru.nl",
+                        "name": "Radboud University",
+                        "@type": "Organization",
+                        "url": "https://www.ru.nl",
+                        "location": {
+                            "@type": "Place",
+                            "name": "Nijmegen"
+                        }
+                    }
+                }
+            },
+            "position": 1
+		},
+		{
+			"@id": "https://orcid.org/0000-0003-2493-656X",
+			"@type": "Person",
+			"givenName": "Antal",
+			"familyName": "van den Bosch",
+			"email": "antal.vandenbosch@let.ru.nl",
+            "position": 2
+		},
+		{
+			"@id": "https://orcid.org/0000-0002-1046-0006",
+			"@type": "Person",
+			"givenName": "Maarten",
+			"familyName": "van Gompel",
+			"email": "proycon@anaproy.nl",
+			"affiliation": [
+                { "@id": "https://huc.knaw.nl" },
+                { "@id": "https://www.ru.nl/clst" }
+            ],
+            "position": 3
+		}
+	],
+	"sourceOrganization": { "@id": "https://www.ru.nl/clst" },
+	"programmingLanguage": {
+		"@type": "ComputerLanguage",
+		"identifier": "c++",
+		"name": "C++"
+	},
+    "operatingSystem": [ "Linux", "BSD", "macOS" ],
+	"codeRepository": "https://github.com/LanguageMachines/frog",
+    "softwareRequirements": [
+        {
+			"@type": "SoftwareApplication",
+			"identifier": "icu",
+			"name": "icu"
+		},
+        {
+			"@type": "SoftwareApplication",
+			"identifier": "libxml2",
+			"name": "libxml2"
+		},
+        {
+			"@type": "SoftwareApplication",
+			"identifier": "ticcutils",
+			"name": "ticcutils"
+		},
+        {
+			"@type": "SoftwareApplication",
+			"identifier": "timbl",
+			"name": "timbl"
+		},
+        {
+			"@type": "SoftwareApplication",
+			"identifier": "libfolia",
+			"name": "libfolia"
+		},
+        {
+			"@type": "SoftwareApplication",
+			"identifier": "mbt",
+			"name": "mbt"
+		},
+        {
+			"@type": "SoftwareApplication",
+			"identifier": "ucto",
+			"name": "ucto"
+		}
+	],
+	"funder": [
+		{
+			"@type": "Organization",
+			"name": "CLARIN-NL"
+		},
+		{
+			"@type": "Organization",
+			"name": "CLARIAH",
+			"url": "https://www.clariah.nl"
+		}
+	],
+	"readme": "https://github.com/LanguageMachines/frog/blob/master/README.md",
+    "softwareHelp": [
+        {
+            "@id": "https://frognlp.readthedocs.io",
+            "@type": "WebSite",
+            "name": "Introduction — frog  documentation",
+            "url": "https://frognlp.readthedocs.io"
+        }
+    ],
+	"issueTracker": "https://github.com/LanguageMachines/frog/issues",
+	"contIntegration": "https://travis-ci.org/LanguageMachines/frog",
+	"releaseNotes": "https://github.com/LanguageMachines/frog/releases",
+	"developmentStatus": "https://www.repostatus.org/#active",
+	"keywords":  [ "nlp", "natural language processing", "pos", "lemma", "ner", "parser", "tagger", "part-of-speech tagging", "lemmatisation", "dependency parsing", "shallow parsing", "dutch" ],
+    "referencePublication": [
+		{
+			"@type": "TechArticle",
+			"name": "Frog: A Natural Language Processing Suite for Dutch",
+			"author": [ "Iris Hendrickx", "Antal van den Bosch", "Maarten van Gompel", "Ko van der Sloot", "Walter Daelemans" ],
+			"pageStart": "99",
+			"pageEnd": 114,
+			"isPartOf": {
+				"@type": "PublicationIssue",
+				"datePublished": "2016",
+				"name": "CLST Technical Report",
+				"issue": "16-02",
+				"location": "Nijmegen, the Netherlands"
+			},
+			"url": "https://github.com/LanguageMachines/frog/raw/master/docs/frogmanual.pdf"
+		},
+		{
+			"@type": "ScholarlyArticle",
+			"name": "An efficient memory-based morphosyntactic tagger and parser for Dutch",
+			"author": [ "Antal van den Bosch", "Bertjan Busser", "Sander Canisius", "Walter Daelemans" ],
+			"pageStart": "99",
+			"pageEnd": 114,
+			"isPartOf": {
+				"@type": "PublicationIssue",
+				"datePublished": "2007",
+				"name": "Selected Papers of the 17th Computational Linguistics in the Netherlands Meeting",
+				"location": "Leuven, Belgium"
+			},
+			"url": "https://www.clinjournal.org/CLIN_proceedings/XVII/vandenbosch.pdf"
+		}
+	],
+    "dateCreated": "2011-03-31T12:35:01Z+0000",
+    "dateModified": "2022-07-21T13:17:06Z+0200",
+    "targetProduct": [
+        {
+            "@type": "SoftwareLibrary",
+            "executableName": "libfrog",
+            "name": "libfrog",
+            "runtimePlatform": [ "Linux", "BSD", "macOS" ],
+            "description": "Frog Library with API for C++"
+        },
+        {
+            "@type": "CommandLineApplication",
+            "executableName": "frog",
+            "name": "frog",
+            "runtimePlatform": [ "Linux", "BSD", "macOS" ],
+            "description": "Command-line interface to the full NLP suite",
+            "consumesData": [ 
+                {
+                    "@type": "TextDigitalDocument",
+                    "encodingFormat": "text/plain",
+                    "inLanguage": {
+                        "@id": "https://iso639-3.sil.org/code/nld",
+                        "@type": "Language",
+                        "name": "Dutch",
+                        "identifier": "nld"
+                    }
+                },
+                {
+                    "@type": "TextDigitalDocument",
+                    "encodingFormat": "application/folia+xml",
+                    "inLanguage": {
+                        "@id": "https://iso639-3.sil.org/code/nld",
+                        "@type": "Language",
+                        "name": "Dutch",
+                        "identifier": "nld"
+                    }
+                }
+            ],
+            "producesData": [ 
+                {
+                    "@type": "TextDigitalDocument",
+                    "encodingFormat": "text/plain",
+                    "inLanguage": {
+                        "@id": "https://iso639-3.sil.org/code/nld",
+                        "@type": "Language",
+                        "name": "Dutch",
+                        "identifier": "nld"
+                    }
+                },
+                {
+                    "@type": "TextDigitalDocument",
+                    "encodingFormat": "application/folia+xml",
+                    "inLanguage": {
+                        "@id": "https://iso639-3.sil.org/code/nld",
+                        "@type": "Language",
+                        "name": "Dutch",
+                        "identifier": "nld"
+                    }
+                }
+            ]
+        },
+        {
+            "@type": "CommandLineApplication",
+            "executableName": "mbma",
+            "runtimePlatform": [ "Linux", "BSD", "macOS" ],
+            "name": "mbma",
+            "description": "Memory-based Morphological Analysis (standalone)",
+            "consumesData": [ 
+                {
+                    "@type": "TextDigitalDocument",
+                    "encodingFormat": "text/plain",
+                    "inLanguage": { "@id": "https://iso639-3.sil.org/code/nld" }
+                }
+            ],
+            "producesData": [ 
+                {
+                    "@type": "TextDigitalDocument",
+                    "encodingFormat": "text/plain",
+                    "inLanguage": { "@id": "https://iso639-3.sil.org/code/nld" }
+                }
+            ]
+        },
+        {
+            "@type": "CommandLineApplication",
+            "executableName": "mblem",
+            "name": "mblem",
+            "description": "Memory-based Lemmatiser (standalone)",
+            "consumesData": [ 
+                {
+                    "@type": "TextDigitalDocument",
+                    "encodingFormat": "text/plain",
+                    "inLanguage": { "@id": "https://iso639-3.sil.org/code/nld" }
+                }
+            ],
+            "producesData": [ 
+                {
+                    "@type": "TextDigitalDocument",
+                    "encodingFormat": "text/plain",
+                    "inLanguage": { "@id": "https://iso639-3.sil.org/code/nld" }
+                }
+            ]
+        },
+        {
+            "@type": "CommandLineApplication",
+            "executableName": "ner",
+            "name": "ner",
+            "description": "Named Entity Recogniser (standalone)",
+            "consumesData": [ 
+                {
+                    "@type": "TextDigitalDocument",
+                    "encodingFormat": "text/plain",
+                    "inLanguage": { "@id": "https://iso639-3.sil.org/code/nld" }
+                }
+            ],
+            "producesData": [ 
+                {
+                    "@type": "TextDigitalDocument",
+                    "encodingFormat": "text/plain",
+                    "inLanguage": { "@id": "https://iso639-3.sil.org/code/nld" }
+                }
+            ]
+        }
+    ]
+}
