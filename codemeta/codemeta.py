@@ -16,7 +16,7 @@ import os.path
 import glob
 import random
 from collections import OrderedDict, defaultdict
-from typing import Union, IO, Optional, Sequence
+from typing import Union, IO, Optional, Sequence, Tuple
 import copy
 import distutils.cmd #note: will be removed in python 3.12!
 #pylint: disable=C0413
@@ -122,10 +122,12 @@ def main():
 
     if args.graph:
         #join multiple inputs into a larger graph
-        output = read(**args.__dict__)
+        g, res, args, contextgraph = read(**args.__dict__)
+        output = serialize(g, res, args, contextgraph)
     else:
         #normal behaviour
-        output = build(**args.__dict__)
+        g, res, args, contextgraph = build(**args.__dict__)
+        output = serialize(g, res, args, contextgraph)
     if output:
         print(output)
 
@@ -157,8 +159,8 @@ def serialize(g: Graph, res: Union[Sequence,URIRef,BNode,None], args: AttribDict
     else:
         raise Exception("No such output type: ", args.output)
 
-def read(**kwargs):
-    """Read multiple resources together in a graph, and either output it all or output a selection"""
+def read(**kwargs) -> Tuple[Graph, Union[URIRef,None], AttribDict, Graph]:
+    """Read multiple resources together in a codemeta graph, and either output it all or output a selection"""
 
     args = AttribDict(kwargs)
 
@@ -178,11 +180,11 @@ def read(**kwargs):
     else:
         res = None
 
-    return serialize(g, res, args, contextgraph)
+    return (g, res, args, contextgraph)
 
 
-def build(**kwargs):
-    """Build a codemeta file"""
+def build(**kwargs) -> Tuple[Graph, URIRef, AttribDict, Graph]:
+    """Build a codemeta graph for a single resource"""
     args = AttribDict(kwargs)
 
     inputsources = []
@@ -351,7 +353,8 @@ def build(**kwargs):
     #Test and fix conflicts in the graph (and report them)
     reconcile(g, res, args)
 
-    return serialize(g, res, args, contextgraph)
+    return (g,res,args, contextgraph)
+
 
 
 
