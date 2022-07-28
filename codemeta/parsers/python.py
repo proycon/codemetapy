@@ -122,7 +122,7 @@ def parse_python(g: Graph, res: Union[URIRef, BNode], packagename: str, crosswal
                 add_authors(g, res, value, single_author=args.single_author, mail=pkg.metadata.get("Author-email",""), baseuri=args.baseuri)
             elif key == "Author-email":
                 continue #already handled by the above
-            if key == "Project-URL":
+            elif key == "Project-URL":
                 if ',' in value:
                     label, url = value.split(",",1) #according to spec
                     label = label.strip()
