@@ -238,7 +238,7 @@ INTERFACE_CLUES_DEPS = {
 SINGULAR_PROPERTIES = ( SDO.name, SDO.version, SDO.description, CODEMETA.developmentStatus, SDO.dateCreated, SDO.dateModified, SDO.position )
 
 #properties that should prefer URIRef rather than Literal **if and only if** the value is a URI
-PREFER_URIREF_PROPERTIES = (SDO.license, SDO.codeRepository, CODEMETA.issueTracker, CODEMETA.contIntegration, CODEMETA.readme, CODEMETA.releaseNotes, SDO.softwareHelp)
+PREFER_URIREF_PROPERTIES = (SDO.url, SDO.license, SDO.codeRepository, CODEMETA.issueTracker, CODEMETA.contIntegration, CODEMETA.readme, CODEMETA.releaseNotes, SDO.softwareHelp)
 
 def init_context(no_cache=False):
     sources = ( (CODEMETA_LOCAL_SOURCE, CODEMETA_SOURCE), (SCHEMA_LOCAL_SOURCE, SCHEMA_SOURCE), (STYPE_LOCAL_SOURCE, STYPE_SOURCE), (REPOSTATUS_LOCAL_SOURCE, REPOSTATUS_SOURCE) )
@@ -557,7 +557,6 @@ def reconcile(g: Graph, res: URIRef, args: AttribDict):
     for prop in PREFER_URIREF_PROPERTIES:
         for _,_,obj in g.triples((res, prop, None)):
             if obj and isinstance(obj, Literal) and str(obj).startswith("http"):
-                print(f"{HEAD} automatically converting {str(prop)} from Literal to URIRef",file=sys.stderr)
                 g.set((res, prop, URIRef(str(obj))))
                 g.remove((res,prop,obj))
 
@@ -566,8 +565,6 @@ def reconcile(g: Graph, res: URIRef, args: AttribDict):
         #see if we can extract some clues from the keywords or the description
         #and add a targetproduct (with only a type)
         guess_interfacetype(g,res, args)
-
-    print(f"{HEAD} completed",file=sys.stderr)
 
 
 def guess_interfacetype(g: Graph, res: Union[URIRef,BNode], args: AttribDict) -> Union[URIRef,None]:
