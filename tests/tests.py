@@ -1,13 +1,14 @@
 #!/usr/bin/env python3
 
 import sys
+import os
 import unittest
 from rdflib import Graph, BNode, URIRef, Literal
 from rdflib.namespace import RDF
 from codemeta.common import CODEMETA, SDO
 from codemeta.codemeta import build
 
-class BuildTest_InputTypeJson(unittest.TestCase):
+class BuildTest_Json(unittest.TestCase):
     """Build codemeta.json from existing codemeta.json (basically a parse, validation/reconciliation and reserialisation)"""
 
     def setUp(self):
@@ -24,7 +25,8 @@ class BuildTest_InputTypeJson(unittest.TestCase):
         """Testing some basic identifying properties"""
         self.assertIn( (self.res, SDO.identifier, Literal("frog")), self.g)
         self.assertIn( (self.res, SDO.name, Literal("Frog")), self.g)
-        self.assertIn( (self.res, SDO.name, None), self.g)
+        self.assertIn( (self.res, SDO.description, None), self.g) #doesn't test actual value
+        self.assertIn( (self.res, SDO.version, Literal("0.26")), self.g)
 
     def test003_urlref(self):
         """Testing some common URL References"""
@@ -70,6 +72,53 @@ class BuildTest_InputTypeJson(unittest.TestCase):
         self.assertIn( (URIRef("https://orcid.org/0000-0002-1046-0006"), SDO.familyName, Literal("van Gompel")), self.g, "Testing specific author's familyName")
         self.assertIn( (URIRef("https://orcid.org/0000-0002-1046-0006"), SDO.email, Literal("proycon@anaproy.nl")), self.g, "Testing specific author's email")
         self.assertIn( (URIRef("https://orcid.org/0000-0002-1046-0006"), SDO.position, Literal(3)), self.g, "Testing specific author's position")
+
+
+class BuildTest_SetupPy(unittest.TestCase):
+
+    def setUp(self):
+        #relies on automatically guessing the type based on the directory we are inputsources
+        os.chdir("fusus")
+        self.g, self.res, self.args, self.contextgraph = build()
+        os.chdir("..")
+
+    def test001_sanity(self):
+        """Testing whether a the basics were converted accurately, tests some basic properties"""
+        self.assertIsInstance( self.g, Graph )
+        self.assertIsInstance( self.res, URIRef)
+        self.assertIn( (self.res, RDF.type, SDO.SoftwareSourceCode), self.g)
+
+    def test002_basics(self):
+        """Testing some basic identifying properties"""
+        self.assertIn( (self.res, SDO.identifier, Literal("fusus")), self.g)
+        self.assertIn( (self.res, SDO.name, Literal("fusus")), self.g)
+        self.assertIn( (self.res, SDO.description, None), self.g) #doesn't test actual value
+        self.assertIn( (self.res, SDO.version, Literal("0.0.2")), self.g)
+
+    def test003_urlref(self):
+        """Testing some common URL References"""
+        self.assertIn( (self.res, SDO.codeRepository, URIRef("https://github.com/among/fusus")), self.g)
+        self.assertIn( (self.res, SDO.license, URIRef("http://spdx.org/licenses/MIT")), self.g)
+        self.assertIn( (self.res, SDO.url, URIRef("https://github.com/among/fusus")), self.g)
+
+    def test004_codemeta_urlref(self):
+        """Testing some codemeta URL References"""
+        self.assertIn( (self.res, CODEMETA.developmentStatus, URIRef("https://www.repostatus.org/#wip")), self.g)
+
+    def test006_keywords(self):
+        """Testing keywords property (not exhausively)"""
+        self.assertIn( (self.res, SDO.keywords, Literal("arabic")), self.g)
+        self.assertIn( (self.res, SDO.keywords, Literal("islam")), self.g)
+
+    def test008_authors(self):
+        """Testing authors (not exhaustively)"""
+        authors = [ x[2] for x in self.g.triples((self.res, SDO.author, None)) ]
+        self.assertEqual(len(authors), 2, "Testing number of authors")
+        for x in authors:
+            self.assertIn( (x, RDF.type, SDO.Person), self.g, "Testing if author is a schema:Person")
+            self.assertIn( (x, SDO.givenName, None), self.g, "Testing if author has a givenName") #not testing actual value
+            self.assertIn( (x, SDO.familyName, None), self.g, "Testing if author has a familyName") #not testing actual value
+
 
 
 if __name__ == '__main__':

@@ -397,7 +397,7 @@ def add_triple(g: Graph, res: Union[URIRef, BNode],key, value, args: AttribDict,
             f_add((res, CODEMETA.developmentStatus, getattr(REPOSTATUS, repostatus) ))
         else:
             f_add((res, CODEMETA.developmentStatus, Literal(value)))
-    elif key == "license":
+    elif key == "license" and value != "UNKNOWN": #python distutils has a tendency to assign 'UNKNOWN', we don't use this value
         value = value_or_uri(value, args.baseuri)
         value = license_to_spdx(value)
         if value.find('spdx') != -1:
