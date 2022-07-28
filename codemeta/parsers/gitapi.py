@@ -4,7 +4,7 @@ import time
 from os import environ
 from datetime import datetime
 from io import StringIO
-from typing import Union, IO
+from typing import Union, IO, Optional, Tuple
 from rdflib import Graph, URIRef, BNode, Literal
 from rdflib.namespace import RDF
 from codemeta.common import AttribDict, SDO, CODEMETA, license_to_spdx, parse_human_name, generate_uri
@@ -14,45 +14,59 @@ GITAPI_REPO_BLACKLIST=["https://codeberg.org/","http://codeberg.org", "https://g
 #it shall be persistent because each new yaml a new invoke of codemetapy is performed and so memory reset
 repo_type_cache = {}
 
-def parse(repo_kind:tuple, g: Graph, res: Union[URIRef, BNode], source: str, args: AttribDict):
+def _parse_source(source:str) -> Tuple[str,str,str]:
     source=source.strip("/")
     cleaned_url= source
-    prefix=""
-    if(source.startswith("https://")):
-     git_address = cleaned_url.replace('https://','').split('/')[0]
-     prefix="https://"
+    scheme=""
+    if source.startswith("https://"):
+        host = cleaned_url.replace('https://','').split('/')[0]
+        scheme="https://"
     else:
-     raise ValueError(source + " source url format not recognized!!")
+        raise ValueError(source + " source url format not recognized!!")
+    return cleaned_url, scheme, host
  
-    github_suffix=cleaned_url.replace(prefix + git_address,'')[1:]
-    gitlab_suffix=github_suffix.replace('/', '%2F')
-    gitlab_repo_api_url = f"{prefix}{git_address}/api/v4/projects/{gitlab_suffix}"
-    repo_kind = ("",)
-    if("github.com/" in source):
-     response=rate_limit_get(source.replace(f"{cleaned_url}",f"{prefix}api.github.com/repos/"), "github")
-     repo_kind = ("github",)
-    elif("gitlab.com/" in source):
-     response=rate_limit_get(gitlab_repo_api_url, "gitlab")
-     repo_kind = ("gitlab",)
-    elif f"{prefix}{git_address}/" not in GITAPI_REPO_BLACKLIST:
-      if(f"{prefix}{git_address}/" not in repo_type_cache):
-        #Proprietary repos
-        response=rate_limit_get(gitlab_repo_api_url, "gitlab")
-        if(response.status_code >= 400 and response.status_code < 500):
-         #if fails try with github type
-         response=rate_limit_get(source.replace(f"{cleaned_url}",f"{prefix}{git_address}/api/v3/repos/"), "github")
-         if(response): repo_kind =("github",) 
-        else: 
-         repo_kind = ("gitlab",)
-      else:
-        repo_kind = (repo_type_cache[f"{prefix}{git_address}/"])
+
+
+def get_repo_kind(source: str) -> Optional[str]:
+    source, scheme, host = _parse_source(source)
+ 
+    repo_kind = None
+    if "github.com/" in source:
+        repo_kind = "github"
+    elif "gitlab.com/" in source:
+        repo_kind = "gitlab"
+    elif f"{scheme}{host}/" not in GITAPI_REPO_BLACKLIST:
+        #we have another URL that may or may not be a private gitlab instance, test
+        if f"{scheme}{host}/" in repo_type_cache:
+            repo_kind = repo_type_cache[f"{scheme}{host}/"]
+        else:
+            test_url = f"{scheme}{host}/-/manifest.json"  #this seems a relatively cheap way to test if it's a gitlab instance
+            response = requests.get(test_url)
+            if response.status_code == 200 and response.headers['Content-Type'].startswith("application/json"):
+                response = response.json()
+                if response['short_name'] == 'GitLab':
+                    repo_kind = "gitlab"
+
     #Populate the cache even when there is a 4xx failure
-    repo_type_cache[f"{prefix}{git_address}/"] = repo_kind[0]
-    if(repo_kind == ("gitlab",)):
-       _parse_gitlab(response, g,res,f"{prefix}{git_address}", args)  
-    elif(repo_kind == ("gitlab",)):
-       _parse_github(response, g,res,f"{prefix}{git_address}", args)
-    return cleaned_url
+    repo_type_cache[f"{scheme}{host}/"] = repo_kind
+
+    return repo_kind
+
+def parse(g: Graph, res: Union[URIRef, BNode], source: str, repo_kind:str, args: AttribDict) -> str:
+    source, scheme, host = _parse_source(source)
+ 
+    github_suffix=source.replace(scheme + host,'')[1:]
+    gitlab_suffix=github_suffix.replace('/', '%2F')
+    gitlab_repo_api_url = f"{scheme}{host}/api/v4/projects/{gitlab_suffix}"
+
+    if repo_kind == "github":
+        response = rate_limit_get(source.replace(f"{source}",f"{scheme}api.github.com/repos/"), "github")
+        _parse_github(response, g,res,f"{scheme}{host}", args)
+    elif repo_kind == "gitlab":
+        response = rate_limit_get(gitlab_repo_api_url, "gitlab")
+        _parse_gitlab(response, g,res,f"{scheme}{host}", args)  
+
+    return source
 
 github_crosswalk_table = {
     SDO.codeRepository: "html_url",
@@ -66,46 +80,44 @@ github_crosswalk_table = {
 
 # the same as requests.get(args).json(), but protects against rate limiting
 # Adapted from source: https://github.com/KnowledgeCaptureAndDiscovery/somef (MIT licensed)
-def rate_limit_get(url:str, repo_kind:tuple,  rate_limited: bool=True, backoff_rate=2, initial_backoff=1, **kwargs): 
+def rate_limit_get(url:str, repo_kind: Optional[str], backoff_rate=2, initial_backoff=1, **kwargs) -> dict: 
+    rate_limited = True
     response = {}
     has_token=False
     if not kwargs: kwargs = {}
-    if repo_kind == ("github",) and 'GITHUB_TOKEN' in environ and environ['GITHUB_TOKEN']:
+    if repo_kind == "github" and 'GITHUB_TOKEN' in environ and environ['GITHUB_TOKEN']:
         if 'headers' not in kwargs: kwargs['headers'] = {}
         kwargs['headers']["Authorization"] = "token " + environ['GITHUB_TOKEN']
         has_token = True
-    elif repo_kind == ("gitlab",) and 'GITLAB_TOKEN' in environ and environ['GITLAB_TOKEN']:
+    elif repo_kind == "gitlab" and 'GITLAB_TOKEN' in environ and environ['GITLAB_TOKEN']:
         if 'headers' not in kwargs: kwargs['headers'] = {}
         kwargs['headers']["PRIVATE-TOKEN"] = environ['GITLAB_TOKEN']
         has_token = True
-    response = requests.get(url, **kwargs)
-    data = response
-    rate_limited_response = False
-    if ('message' in response and 'API rate limit exceeded' in response['message']): rate_limited_response = True
-    while rate_limited and rate_limited_response:
-        rate_limit_remaining = data.headers["RateLimit-Remaining" if repo_kind == ("gitlab",) else "x-ratelimit-remaining"]
-        epochtime = int(data.headers["RateLimit-Reset" if repo_kind == ("gitlab",) else  "x-ratelimit-reset"])
-        date_reset = datetime.fromtimestamp(epochtime)
-        print(f"Remaining {repo_kind[0]} API requests: " + rate_limit_remaining + " ### Next rate limit reset at: " + str(date_reset) + f" (has_token={has_token})")
+    while rate_limited:
+        response = requests.get(url, **kwargs)
+        rate_limit_remaining = int(response.headers.get("RateLimit-Remaining" if repo_kind == "gitlab" else "x-ratelimit-remaining",-1))
+        epochtime = int(response.headers.get("RateLimit-Reset" if repo_kind == "gitlab" else  "x-ratelimit-reset",0))
+        if rate_limit_remaining > -1 and epochtime > 0:
+            date_reset = datetime.fromtimestamp(epochtime)
+            print(f"Remaining {repo_kind} API requests: {rate_limit_remaining} ### Next rate limit reset at: {date_reset} (has_token={has_token})")
+        else:
+            rate_limited = False
         response = response.json()
         if 'message' in response and 'API rate limit exceeded' in response['message']:
             rate_limited = True
-            print(f"{repo_kind[0]} API: rate limited. Backing off for {initial_backoff} seconds (has_token={has_token})", file=sys.stderr)
+            print(f"{repo_kind} API: rate limited. Backing off for {initial_backoff} seconds (has_token={has_token})", file=sys.stderr)
             sys.stderr.flush()
             if initial_backoff > 120:
-                raise Exception(f"{repo_kind[0]} API timed out because of rate limiting, giving up... (has_token={has_token})")
+                raise Exception(f"{repo_kind} API timed out because of rate limiting, giving up... (has_token={has_token})")
             time.sleep(initial_backoff)
             # increase the backoff for next time
             initial_backoff *= backoff_rate
-            response = requests.get(url, **kwargs)
-            data = response 
         else:
             rate_limited = False
     return response
 
-def _parse_github(response, g: Graph, res: Union[URIRef, BNode], source: str, args: AttribDict):
+def _parse_github(response: dict, g: Graph, res: Union[URIRef, BNode], source: str, args: AttribDict):
     """Query and parse from the github API"""
-    response = response.json()
     users_api_url=f"{source}/api/v3/users/"
     if("github.com/" in source):
      users_api_url=source.replace("www.github.com/", "api.github.com/").replace("github.com/", "api.github.com/") + "/users/"
@@ -166,9 +178,8 @@ gitlab_crosswalk_table = {
     SDO.name: "name",
     SDO.url: "web_url"
 }
-def _parse_gitlab(response, g: Graph, res: Union[URIRef, BNode], source, args: AttribDict):
+def _parse_gitlab(response: dict, g: Graph, res: Union[URIRef, BNode], source, args: AttribDict):
     """Query and parse from the gitlab API"""
-    response = response.json()
     users_api_url = f"{source}/api/v4/users/"
     #Processing start
     for prop, gitlab_key in gitlab_crosswalk_table.items():
@@ -206,7 +217,8 @@ def _parse_gitlab(response, g: Graph, res: Union[URIRef, BNode], source, args: A
         user_url=response_owner['owner']['web_url']
         if response_owner.get('public_email'):
             public_mail = response_owner.get('public_email')
-    else:  return
+    else:  
+        return
     firstname, lastname = parse_human_name(owner_name)
     owner_res = URIRef(user_url)
     g.add((owner_res, RDF.type, SDO.Person))
@@ -219,8 +231,8 @@ def _parse_gitlab(response, g: Graph, res: Union[URIRef, BNode], source, args: A
     response_creator_url_field=user_url
     response_creator_name=owner_name
     if 'creator_id' in response:
-     creator_id_str=str(response['creator_id'])
-     if(creator_id_str != owner_id_str):
+     creator_id_str = str(response['creator_id'])
+     if creator_id_str != owner_id_str:
         creator_api_url = users_api_url +  creator_id_str
         response_creator = rate_limit_get(creator_api_url, "gitlab")
         response_creator_url_field=response_creator['web_url']

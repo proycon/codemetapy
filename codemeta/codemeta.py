@@ -210,9 +210,16 @@ def build(**kwargs):
                     inputtypes.append("authors")
                 elif inputsource.upper().endswith("MAINTAINERS"):
                     inputtypes.append("maintainers")
-                else:
-                    #assume web/gitapi
-                    inputtypes.append("web/gitapi")
+                elif inputsource.lower().startswith("https") or inputsource.lower().startswith("git@"):
+                    #test if this is a known git platform we can query via an API
+                    repo_kind = codemeta.parsers.gitapi.get_repo_kind(inputsource)
+                    if repo_kind:
+                        inputtypes.append(repo_kind)
+                    elif not inputsource.lower().startswith("git@"):
+                        #otherwise it is just a website
+                        inputtypes.append("web")
+                elif inputsource.lower().startswith("http"):
+                    inputtypes.append("web")
         inputsources = list(zip(inputfiles, inputtypes))
         if guess:
             print(f"Detected input types: {inputsources}",file=sys.stderr)
@@ -296,27 +303,22 @@ def build(**kwargs):
         elif inputtype == "json":
             print(f"Parsing json-ld file from {source}",file=sys.stderr)
             prefuri = codemeta.parsers.jsonld.parse_jsonld(g, res, getstream(source), args)
-        elif inputtype == "web/gitapi":
-            #source = source.replace("https://api.github.com/repos/","")
-            #source = source.replace("https://github.com/","")
-            #source = source.replace("git@github.com:","")
+        elif inputtype == "web":
+            print(f"Fallback: Obtaining metadata from remote URL {source}",file=sys.stderr)
+            found = False
+            for targetres in codemeta.parsers.web.parse_web(g, res, source, args):
+                if targetres and args.with_stypes:
+                    found = True
+                    print(f"Adding service (targetProduct) {source}",file=sys.stderr)
+                    g.add((res, SDO.targetProduct, targetres))
+            if not found:
+                print(f"(no metadata found at remote URL)",file=sys.stderr)
+        elif inputtype in ("github", "gitlab"):
             #e.g. transform git@gitlab.com/X in https://gitlab.com/X
-            try:
-                re.sub(r'git@(.*):', r'https://\1/', source)
-                if source.endswith(".git"): source = source[:-4]
-                print(f"Querying GitAPI parser for {source}",file=sys.stderr)
-                prefuri = codemeta.parsers.gitapi.parse(CodeMetaCommand.repo_kind, g, res, source, args)
-            except:
-                #Faultback on web page metadata retrieve
-                print(f"Faultback: Obtaining metadata from remote URL {source}",file=sys.stderr)
-                found = False
-                for targetres in codemeta.parsers.web.parse_web(CodeMetaCommand.repo_kind, g, res, source, args):
-                    if targetres and args.with_stypes:
-                        found = True
-                        print(f"Adding service (targetProduct) {source}",file=sys.stderr)
-                        g.add((res, SDO.targetProduct, targetres))
-                if not found:
-                    print(f"(no metadata found at remote URL)",file=sys.stderr)
+            source = re.sub(r'git@(.*):', r'https://\1/', source)
+            if source.endswith(".git"): source = source[:-4]
+            print(f"Querying GitAPI parser for {source}",file=sys.stderr)
+            prefuri = codemeta.parsers.gitapi.parse(g, res, source, inputtype ,args)
         elif inputtype in ('authors', 'contributors','maintainers'):
             print(f"Extracting {inputtype} from {source}",file=sys.stderr)
             if inputtype == 'authors':

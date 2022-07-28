@@ -8,7 +8,6 @@ from rdflib import Graph, URIRef, BNode, Literal
 from rdflib.namespace import RDF
 from codemeta.common import AttribDict, SDO, generate_uri, add_authors, get_last_component
 from codemeta.parsers.jsonld import parse_jsonld_data
-from codemeta.parsers.gitapi import rate_limit_get
 from bs4 import BeautifulSoup
 
 def detect_type(data):
@@ -61,10 +60,10 @@ def parse_clam(soup):
 
 
 
-def parse_web(repo_kind: tuple, g: Graph, res: Union[URIRef, BNode], url, args: AttribDict) -> Iterator[Union[URIRef,BNode,None]]:
-    r = rate_limit_get(url, repo_kind, False, headers={ "Accept": "application/json+ld;q=1.0,application/json;q=0.9,application/x-yaml;q=0.8,application/xml;q=0.7;text/html;q=0.6;text/plain;q=0.1" } )
+def parse_web(g: Graph, res: Union[URIRef, BNode], url, args: AttribDict) -> Iterator[Union[URIRef,BNode,None]]:
+    r = requests.get(url, headers={ "Accept": "application/json+ld;q=1.0,application/json;q=0.9,application/x-yaml;q=0.8,application/xml;q=0.7;text/html;q=0.6;text/plain;q=0.1" })
     r.raise_for_status()
-    contenttype = r.headers.get('content-type').split(';')[0].strip()
+    contenttype = r.headers.get('content-type',"").split(';')[0].strip()
     print(f"    Service replied with content-type {contenttype}",file=sys.stderr)
     datatype = None
     data = None
