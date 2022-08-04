@@ -90,6 +90,7 @@ def get_badge(repo_kind: tuple, g: Graph, res: Union[URIRef,None], key):
             yield f"https://img.shields.io/github/commits-since/{git_suffix}/latest.svg?style=flat&color=5c7297&sort=semver", None, "Number of commits since the last release. Gives an indication of project development activity and rough indication of how up-to-date the latest release is."
      elif "gitlab" in repo_kind:
      # https://docs.gitlab.com/ee/api/project_badges.html
+     # https://github.com/Naereen/badges
         if key == "lastcommits":
             #append all found badges at the end
             encoded_git_suffix=git_suffix.replace('/', '%2F')
