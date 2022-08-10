@@ -167,6 +167,27 @@ class BuildTest_SetupPy(unittest.TestCase):
         """Test html serialisation"""
         serialize(self.g, self.res, AttribDict({ "output": "html" }), self.contextgraph)
 
+class BuildTest_GithubAPI(unittest.TestCase):
+    """Build codemeta.json from existing codemeta.json (basically a parse, validation/reconciliation and reserialisation)"""
+
+    def setUp(self):
+        #relies on automatically guessing the type
+        #deliberately picked software that is end-of-life and will not change much anymore
+        self.g, self.res, self.args, self.contextgraph = build(inputsources=["https://github.com/proycon/labirinto"])
+
+    def test001_api(self):
+        """Testing github API response"""
+        #this is a single combined test to save API queries
+        self.assertIsInstance( self.g, Graph )
+        self.assertIsInstance( self.res, URIRef)
+        #self.assertIn( (self.res, SDO.identifier, Literal("labirinto")), self.g)
+        self.assertIn( (self.res, RDF.type, SDO.SoftwareSourceCode), self.g)
+        self.assertIn( (self.res, SDO.name, Literal("labirinto")), self.g)
+        self.assertIn( (self.res, SDO.codeRepository, URIRef("https://github.com/proycon/labirinto")), self.g)
+        self.assertIn( (self.res, CODEMETA.issueTracker, URIRef("https://github.com/proycon/labirinto/issues")), self.g)
+        self.assertIn( (self.res, SDO.description, None), self.g) #doesn't test actual value
+        self.assertIn( (self.res, SDO.keywords, Literal("codemeta")), self.g)
+
 if __name__ == '__main__':
     unittest.main()
 
