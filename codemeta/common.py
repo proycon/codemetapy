@@ -397,13 +397,21 @@ def add_triple(g: Graph, res: Union[URIRef, BNode],key, value, args: AttribDict,
             f_add((res, CODEMETA.developmentStatus, getattr(REPOSTATUS, repostatus) ))
         else:
             f_add((res, CODEMETA.developmentStatus, Literal(value)))
-    elif key == "license" and value != "UNKNOWN": #python distutils has a tendency to assign 'UNKNOWN', we don't use this value
+    elif key == "license": 
+        if value == "UNKNOWN":
+            #python distutils has a tendency to assign 'UNKNOWN', we don't use this value
+            return True
         value = value_or_uri(value, args.baseuri)
         value = license_to_spdx(value)
-        if value.find('spdx') != -1:
-            f_add((res, SDO.license, URIRef(value)))
+        if isinstance(value, str):
+            listify = lambda x: [x]
         else:
-            f_add((res, SDO.license, Literal(value)))
+            listify = lambda x: x
+        for value in listify(value):
+            if value.find('spdx') != -1:
+                f_add((res, SDO.license, URIRef(value)))
+            else:
+                f_add((res, SDO.license, Literal(value)))
     elif key == "applicationCategory":
         f_add((res, SDO.applicationCategory, Literal(value)))
     elif key == "audience":
