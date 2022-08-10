@@ -5,8 +5,8 @@ import os
 import unittest
 from rdflib import Graph, BNode, URIRef, Literal
 from rdflib.namespace import RDF
-from codemeta.common import CODEMETA, SDO
-from codemeta.codemeta import build
+from codemeta.common import CODEMETA, SDO, AttribDict
+from codemeta.codemeta import build, serialize
 
 class BuildTest_Json(unittest.TestCase):
     """Build codemeta.json from existing codemeta.json (basically a parse, validation/reconciliation and reserialisation)"""
@@ -96,6 +96,18 @@ class BuildTest_Json(unittest.TestCase):
         self.assertEqual(len(langs), 1, "Testing number of programming languages")
         self.assertIn( (langs[0],RDF.type, SDO.ComputerLanguage), self.g, "Testing programming language type")
 
+    def test100_serialisation_json(self):
+        """Test json serialisation"""
+        serialize(self.g, self.res, AttribDict({ "output": "json" }), self.contextgraph)
+
+    def test100_serialisation_turtle(self):
+        """Test json serialisation"""
+        serialize(self.g, self.res, AttribDict({ "output": "ttl" }), self.contextgraph)
+
+    def test100_serialisation_html(self):
+        """Test html serialisation"""
+        serialize(self.g, self.res, AttribDict({ "output": "html" }), self.contextgraph)
+
 
 class BuildTest_SetupPy(unittest.TestCase):
 
@@ -143,6 +155,17 @@ class BuildTest_SetupPy(unittest.TestCase):
             self.assertIn( (x, SDO.familyName, None), self.g, "Testing if author has a familyName") #not testing actual value
 
 
+    def test100_serialisation_json(self):
+        """Test json serialisation"""
+        serialize(self.g, self.res, AttribDict({ "output": "json" }), self.contextgraph)
+
+    def test100_serialisation_turtle(self):
+        """Test json serialisation"""
+        serialize(self.g, self.res, AttribDict({ "output": "ttl" }), self.contextgraph)
+
+    def test100_serialisation_html(self):
+        """Test html serialisation"""
+        serialize(self.g, self.res, AttribDict({ "output": "html" }), self.contextgraph)
 
 if __name__ == '__main__':
     unittest.main()
