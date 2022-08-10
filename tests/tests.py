@@ -73,6 +73,29 @@ class BuildTest_Json(unittest.TestCase):
         self.assertIn( (URIRef("https://orcid.org/0000-0002-1046-0006"), SDO.email, Literal("proycon@anaproy.nl")), self.g, "Testing specific author's email")
         self.assertIn( (URIRef("https://orcid.org/0000-0002-1046-0006"), SDO.position, Literal(3)), self.g, "Testing specific author's position")
 
+    def test009_producer(self):
+        """Testing producer (not exhaustively)"""
+        self.assertIn( (self.res,SDO.producer, URIRef("https://huc.knaw.nl")), self.g, "Testing producer")
+        self.assertIn( (URIRef("https://huc.knaw.nl"), SDO.name, Literal("KNAW Humanities Cluster")), self.g, "Testing producer name")
+        self.assertIn( (URIRef("https://huc.knaw.nl"), SDO.url, URIRef("https://huc.knaw.nl")), self.g, "Testing producer url")
+
+    def test010_softwarehelp(self):
+        """Testing softwareHelp (not exhaustively)"""
+        self.assertIn( (self.res,SDO.softwareHelp, URIRef("https://frognlp.readthedocs.io")), self.g, "Testing softwareHelp")
+        self.assertIn( (URIRef("https://frognlp.readthedocs.io"), RDF.type, SDO.WebSite), self.g, "Testing softwareHelp type")
+
+    def test011_funder(self):
+        funders = [ x[2] for x in self.g.triples((self.res, SDO.funder, None)) ]
+        self.assertEqual(len(funders), 2, "Testing number of funders")
+        for x in funders:
+            self.assertIn( (x, RDF.type, SDO.Organization), self.g, "Testing if funder is a schema:Organization")
+
+    def test012_proglang(self):
+        """Testing programming language (not exhaustively)"""
+        langs = [ x[2] for x in self.g.triples((self.res, SDO.programmingLanguage, None)) ]
+        self.assertEqual(len(langs), 1, "Testing number of programming languages")
+        self.assertIn( (langs[0],RDF.type, SDO.ComputerLanguage), self.g, "Testing programming language type")
+
 
 class BuildTest_SetupPy(unittest.TestCase):
 
