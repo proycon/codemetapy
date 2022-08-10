@@ -141,7 +141,7 @@ class BuildTest_SetupPy(unittest.TestCase):
         self.assertIn( (self.res, CODEMETA.developmentStatus, URIRef("https://www.repostatus.org/#wip")), self.g)
 
     def test006_keywords(self):
-        """Testing keywords property (not exhausively)"""
+        """Testing keywords property (not exhaustively)"""
         self.assertIn( (self.res, SDO.keywords, Literal("arabic")), self.g)
         self.assertIn( (self.res, SDO.keywords, Literal("islam")), self.g)
 

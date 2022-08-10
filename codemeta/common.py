@@ -23,8 +23,9 @@ PROGLANG_PYTHON = {
 SDO = Namespace("http://schema.org/")
 
 CODEMETA = Namespace("https://codemeta.github.io/terms/")
-#Custom extensions not in codemeta/schema.org (yet), they are proposed in https://github.com/codemeta/codemeta/issues/271 and supersede the above one
-SOFTWARETYPES = Namespace("https://w3id.org/software-types#")
+#Custom extensions not in codemeta/schema.org (yet), they are initially proposed in https://github.com/codemeta/codemeta/issues/271
+SOFTWARETYPES = Namespace("https://w3id.org/software-types#") #See https://github.com/SoftwareUnderstanding/software_types
+SOFTWAREIODATA = Namespace("https://w3id.org/software-iodata#") #See https://github.com/SoftwareUnderstanding/software-iodata
 
 REPOSTATUS = Namespace("https://www.repostatus.org/#")
 
@@ -38,6 +39,7 @@ SCHEMA_SOURCE = "https://raw.githubusercontent.com/schemaorg/schemaorg/main/data
 CODEMETA_SOURCE = "https://raw.githubusercontent.com/codemeta/codemeta/2.0/codemeta.jsonld"
 #^-- target of https://doi.org/10.5063/schema/codemeta-2.0, prefer github because that at least serves things reliably for both rdflib and the JsonLD playground
 STYPE_SOURCE = "https://w3id.org/software-types"
+SIO_SOURCE = "https://w3id.org/software-iodata"
 
 REPOSTATUS_SOURCE = "https://raw.githubusercontent.com/proycon/repostatus.org/ontology/badges/latest/ontology.jsonld"
 #^--- TODO: adapt URL after merge upstream (https://github.com/jantman/repostatus.org/pull/48)
@@ -48,6 +50,7 @@ TMPDIR  = os.environ.get("TMPDIR","/tmp")
 SCHEMA_LOCAL_SOURCE = "file://" + os.path.join(TMPDIR, "schemaorgcontext.jsonld")
 CODEMETA_LOCAL_SOURCE = "file://" + os.path.join(TMPDIR, "codemeta.jsonld")
 STYPE_LOCAL_SOURCE = "file://" + os.path.join(TMPDIR, "stype.jsonld")
+SIO_LOCAL_SOURCE = "file://" + os.path.join(TMPDIR, "sio.jsonld")
 REPOSTATUS_LOCAL_SOURCE = "file://" + os.path.join(TMPDIR, "repostatus.jsonld")
 
 COMMON_SOURCEREPOS = ["https://github.com/","http://github.com","https://gitlab.com/","http://gitlab.com/","https://codeberg.org/","http://codeberg.org", "https://git.sr.ht/", "https://bitbucket.com/"]
@@ -57,6 +60,7 @@ CONTEXT = [
     CODEMETA_LOCAL_SOURCE,
     SCHEMA_LOCAL_SOURCE,
     STYPE_LOCAL_SOURCE,
+    SIO_LOCAL_SOURCE,
 ]
 
 
@@ -241,7 +245,7 @@ SINGULAR_PROPERTIES = ( SDO.name, SDO.version, SDO.description, CODEMETA.develop
 PREFER_URIREF_PROPERTIES = (SDO.url, SDO.license, SDO.codeRepository, CODEMETA.issueTracker, CODEMETA.contIntegration, CODEMETA.readme, CODEMETA.releaseNotes, SDO.softwareHelp)
 
 def init_context(no_cache=False):
-    sources = ( (CODEMETA_LOCAL_SOURCE, CODEMETA_SOURCE), (SCHEMA_LOCAL_SOURCE, SCHEMA_SOURCE), (STYPE_LOCAL_SOURCE, STYPE_SOURCE), (REPOSTATUS_LOCAL_SOURCE, REPOSTATUS_SOURCE) )
+    sources = ( (CODEMETA_LOCAL_SOURCE, CODEMETA_SOURCE), (SCHEMA_LOCAL_SOURCE, SCHEMA_SOURCE), (STYPE_LOCAL_SOURCE, STYPE_SOURCE), (SIO_LOCAL_SOURCE, SIO_SOURCE), (REPOSTATUS_LOCAL_SOURCE, REPOSTATUS_SOURCE) )
 
     for local, remote in sources:
         localfile = local.replace("file://","")
@@ -259,6 +263,7 @@ def bind_graph(g: Graph):
     g.bind('schema', SDO)
     g.bind('codemeta', CODEMETA)
     g.bind('stype', SOFTWARETYPES)
+    g.bind('sio', SOFTWAREIODATA)
 
 def init_graph(no_cache=False):
     """Initializes the RDF graph, the context and the prefixes"""
@@ -299,6 +304,9 @@ def init_graph(no_cache=False):
     contextgraph.add((SDO.WebPage, RDFS.comment, Literal("A very particular page on the web")))
 
     with open(STYPE_LOCAL_SOURCE.replace("file://",""),'rb') as f:
+        contextgraph.parse(data=json.load(f), format="json-ld")
+
+    with open(SIO_LOCAL_SOURCE.replace("file://",""),'rb') as f:
         contextgraph.parse(data=json.load(f), format="json-ld")
 
     with open(REPOSTATUS_LOCAL_SOURCE.replace("file://",""),'rb') as f:
