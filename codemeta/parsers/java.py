@@ -4,7 +4,7 @@ import os.path
 from typing import Union, IO
 from rdflib import Graph, URIRef, BNode, Literal
 from rdflib.namespace import RDF
-import lxml
+import lxml.etree
 from codemeta.common import AttribDict, add_triple, CODEMETA, SOFTWARETYPES, add_authors, SDO, COMMON_SOURCEREPOS, SOFTWARETYPES, license_to_spdx, generate_uri
 from codemeta.crosswalk import readcrosswalk, CWKey
 
@@ -55,28 +55,28 @@ def parse_java(g: Graph, res: Union[URIRef, BNode], file: IO , crosswalk, args: 
                     for key3, node3 in parse_node(node2):
                         if key3 == "name":
                             license = license_to_spdx(node3.text)
-                        if license.find("spdx") == -1 and key3 == "url":
+                        if isinstance(license, str) and license.find("spdx") == -1 and key3 == "url":
                             license = node3.text
                     if license:
                         add_triple(g,res, "license", license, args)
         elif key == "issueManagement":
             for key2, node2 in parse_node(node):
-                if key2 == "url":
+                if key2 == "url" and '$' not in node2.text: #only if there are no variables in the url!
                     add_triple(g,res, "issueTracker", node2.text, args)
         elif key == "ciManagement":
             for key2, node2 in parse_node(node):
-                if key2 == "url":
+                if key2 == "url" and '$' not in node2.text: #only if there are no variables in the url!
                     add_triple(g,res, "contIntegration", node2.text, args)
         elif key == "scm":
             for key2, node2 in parse_node(node):
-                if key2 == "url":
+                if key2 == "url" and '$' not in node2.text: #only if there are no variables in the url!
                     add_triple(g,res, "codeRepository", node2.text, args)
                     prefuri = node2.text
         elif key == "repositories":
             for key2, node2 in parse_node(node):
                 if key2 == "repository":
                     for key3, node3 in parse_node(node2):
-                        if key3 == "url":
+                        if key3 == "url" and '$' not in node3.text: #only if there are no variables in the url!
                             add_triple(g,res, "repository", node3.text, args)
                             prefuri = node3.text
         elif key == "properties":

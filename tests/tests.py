@@ -180,13 +180,33 @@ class BuildTest_GithubAPI(unittest.TestCase):
         #this is a single combined test to save API queries
         self.assertIsInstance( self.g, Graph )
         self.assertIsInstance( self.res, URIRef)
-        #self.assertIn( (self.res, SDO.identifier, Literal("labirinto")), self.g)
         self.assertIn( (self.res, RDF.type, SDO.SoftwareSourceCode), self.g)
         self.assertIn( (self.res, SDO.name, Literal("labirinto")), self.g)
         self.assertIn( (self.res, SDO.codeRepository, URIRef("https://github.com/proycon/labirinto")), self.g)
         self.assertIn( (self.res, CODEMETA.issueTracker, URIRef("https://github.com/proycon/labirinto/issues")), self.g)
         self.assertIn( (self.res, SDO.description, None), self.g) #doesn't test actual value
         self.assertIn( (self.res, SDO.keywords, Literal("codemeta")), self.g)
+
+class BuildTest_JavaPomXML(unittest.TestCase):
+    """Build codemeta.json from pom.xml"""
+
+    def setUp(self):
+        #relies on automatically guessing the type
+        #deliberately picked software that is end-of-life and will not change much anymore
+        self.g, self.res, self.args, self.contextgraph = build(inputsources=["widoco.pom.xml"])
+
+    def test001_sanity(self):
+        """Testing whether a codemeta.json was read accurately, tests some basic properties"""
+        self.assertIsInstance( self.g, Graph )
+        self.assertIsInstance( self.res, URIRef)
+        self.assertIn( (self.res, RDF.type, SDO.SoftwareSourceCode), self.g)
+
+    def test002_basics(self):
+        """Testing some basic identifying properties"""
+        self.assertIn( (self.res, SDO.name, Literal("Widoco")), self.g)
+        self.assertIn( (self.res, SDO.version, Literal("1.4.17")), self.g)
+        self.assertIn( (self.res, SDO.runtimePlatform, Literal("Java 1.8")), self.g)
+
 
 if __name__ == '__main__':
     unittest.main()
