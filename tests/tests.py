@@ -192,11 +192,10 @@ class BuildTest_JavaPomXML(unittest.TestCase):
 
     def setUp(self):
         #relies on automatically guessing the type
-        #deliberately picked software that is end-of-life and will not change much anymore
         self.g, self.res, self.args, self.contextgraph = build(inputsources=["widoco.pom.xml"])
 
     def test001_sanity(self):
-        """Testing whether a codemeta.json was read accurately, tests some basic properties"""
+        """Testing whether a pom.xml was read accurately, tests some basic properties"""
         self.assertIsInstance( self.g, Graph )
         self.assertIsInstance( self.res, URIRef)
         self.assertIn( (self.res, RDF.type, SDO.SoftwareSourceCode), self.g)
@@ -207,6 +206,56 @@ class BuildTest_JavaPomXML(unittest.TestCase):
         self.assertIn( (self.res, SDO.version, Literal("1.4.17")), self.g)
         self.assertIn( (self.res, SDO.runtimePlatform, Literal("Java 1.8")), self.g)
 
+    def test100_serialisation_json(self):
+        """Test json serialisation"""
+        serialize(self.g, self.res, AttribDict({ "output": "json" }), self.contextgraph)
+
+    def test100_serialisation_turtle(self):
+        """Test json serialisation"""
+        serialize(self.g, self.res, AttribDict({ "output": "ttl" }), self.contextgraph)
+
+    def test100_serialisation_html(self):
+        """Test html serialisation"""
+        serialize(self.g, self.res, AttribDict({ "output": "html" }), self.contextgraph)
+
+class BuildTest_NpmPackageJSON(unittest.TestCase):
+    """Build codemeta.json from npm package json"""
+
+    def setUp(self):
+        #relies on automatically guessing the type
+        self.g, self.res, self.args, self.contextgraph = build(inputsources=["labirinto.package.json"])
+
+    def test001_sanity(self):
+        """Testing whether a package.json was read accurately, tests some basic properties"""
+        self.assertIsInstance( self.g, Graph )
+        self.assertIsInstance( self.res, URIRef)
+        self.assertIn( (self.res, RDF.type, SDO.SoftwareSourceCode), self.g)
+
+    def test002_basics(self):
+        """Testing some basic identifying properties"""
+        self.assertIn( (self.res, SDO.name, Literal("labirinto")), self.g)
+        self.assertIn( (self.res, SDO.version, Literal("0.2.6")), self.g)
+        self.assertIn( (self.res, SDO.runtimePlatform, Literal("npm >= 3.0.0")), self.g)
+        self.assertIn( (self.res, SDO.runtimePlatform, Literal("node >= 6.0.0")), self.g)
+
+    def test003_urlref(self):
+        """Testing some common URL References"""
+        self.assertIn( (self.res, SDO.codeRepository, URIRef("https://github.com/proycon/labirinto")), self.g)
+        self.assertIn( (self.res, SDO.license, URIRef("http://spdx.org/licenses/AGPL-3.0-or-later")), self.g)
+        self.assertIn( (self.res, SDO.url, URIRef("https://github.com/proycon/labirinto")), self.g)
+        self.assertIn( (self.res, CODEMETA.issueTracker, URIRef("https://github.com/proycon/labirinto/issues")), self.g)
+
+    def test100_serialisation_json(self):
+        """Test json serialisation"""
+        serialize(self.g, self.res, AttribDict({ "output": "json" }), self.contextgraph)
+
+    def test100_serialisation_turtle(self):
+        """Test json serialisation"""
+        serialize(self.g, self.res, AttribDict({ "output": "ttl" }), self.contextgraph)
+
+    def test100_serialisation_html(self):
+        """Test html serialisation"""
+        serialize(self.g, self.res, AttribDict({ "output": "html" }), self.contextgraph)
 
 if __name__ == '__main__':
     unittest.main()
