@@ -1,4 +1,6 @@
 [![Project Status: Active -- The project has reached a stable, usable state and is being actively developed.](https://www.repostatus.org/badges/latest/active.svg)](https://www.repostatus.org/#active)
+[![GitHub build](https://github.com/proycon/codemetapy/actions/workflows/codemetapy.yml/badge.svg?branch=master)](https://github.com/proycon/codemetapy/actions/)
+[![GitHub release](https://img.shields.io/github/release/proycon/codemetapy.svg)](https://GitHub.com/proycon/codemetapy/releases/)
 [![Latest release in the Python Package Index](https://img.shields.io/pypi/v/codemetapy)](https://pypi.org/project/codemetapy/)
 
 # Codemetapy
