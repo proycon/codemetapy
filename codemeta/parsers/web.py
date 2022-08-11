@@ -130,7 +130,8 @@ def parse_web(g: Graph, res: Union[URIRef, BNode], url, args: AttribDict) -> Ite
             v = get_meta(soup, "schema:keywords", "keywords")
             if v:
                 for item in v.split(","):
-                    if item: g.add((targetres, SDO.keywords, Literal(v)))
+                    item = item.strip()
+                    if item: g.add((targetres, SDO.keywords, Literal(item)))
 
             yield targetres
             data = None

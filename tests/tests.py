@@ -296,6 +296,28 @@ class BuildTest_NpmPackageJSON(unittest.TestCase):
         """Test html serialisation"""
         serialize(self.g, self.res, AttribDict({ "output": "html" }), self.contextgraph)
 
+class BuildTest_WebApplication(unittest.TestCase):
+    """Build codemeta.json from webpage metadata"""
+
+    def setUp(self):
+        #relies on automatically guessing the type
+        self.g, self.res, self.args, self.contextgraph = build(inputsources=["https://shebanq.ancient-data.org/"], with_stypes=True)
+
+    def test001_webapplication(self):
+        """Testing basic properties"""
+        self.assertIsInstance( self.g, Graph )
+        self.assertIsInstance( self.res, URIRef)
+        self.assertIn( (self.res, RDF.type, SDO.SoftwareSourceCode), self.g)
+        service = self.g.value(self.res, SDO.targetProduct)
+        self.assertIsNotNone(service)
+        self.assertIn( (service, RDF.type, SDO.WebApplication), self.g)
+        self.assertIn( (service, SDO.url, Literal("https://shebanq.ancient-data.org/")), self.g)
+        self.assertIn( (service, SDO.name, Literal("SHEBANQ")), self.g)
+        self.assertIn( (service, SDO.description, None), self.g) #not testing value
+        self.assertIn( (service, SDO.author, None), self.g) #not testing value
+        self.assertIn( (service, SDO.keywords, Literal("Hebrew")), self.g)
+        self.assertIn( (service, SDO.keywords, Literal("Bible")), self.g)
+
 
 if __name__ == '__main__':
     unittest.main()
