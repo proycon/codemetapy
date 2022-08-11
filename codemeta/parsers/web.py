@@ -177,7 +177,7 @@ def parse_web(g: Graph, res: Union[URIRef, BNode], url, args: AttribDict) -> Ite
             else:
                 targetres = res
             parse_jsonld_data(g, targetres, data, args)
-            return targetres
+            yield targetres
         elif datatype == 'openapi':
             raise NotImplementedError #TODO
         else:

@@ -177,7 +177,7 @@ def find_main(data, res: Union[URIRef,None]):
         return data, None
 
 
-def rewrite_context(context):
+def rewrite_context(context) -> list:
     """Rewrite local contexts to their remote counterparts"""
     if isinstance(context, list):
         for i, value in enumerate(context):
@@ -191,6 +191,9 @@ def rewrite_context(context):
                 context[i] = IODATA_SOURCE
             elif value == REPOSTATUS_LOCAL_SOURCE:
                 context[i] = REPOSTATUS_SOURCE
+    elif isinstance(context, str):
+        context = rewrite_context([context])
+    return context
 
 def serialize_to_jsonld(g: Graph, res: Union[Sequence,URIRef,None]) -> dict:
     """Serializes the RDF graph to JSON, taking care of 'framing' for embedded nodes"""
@@ -218,7 +221,7 @@ def serialize_to_jsonld(g: Graph, res: Union[Sequence,URIRef,None]) -> dict:
 
     data = sort_by_position(data)
     if '@context' in data:
-        rewrite_context(data['@context'])
+        data['@context'] = rewrite_context(data['@context'])
 
     #we may have some lingering prefixes which we don't need, cleanup:
     data = cleanup(data)

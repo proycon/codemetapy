@@ -243,6 +243,7 @@ SINGULAR_PROPERTIES = ( SDO.name, SDO.version, SDO.description, CODEMETA.develop
 
 #properties that should prefer URIRef rather than Literal **if and only if** the value is a URI
 PREFER_URIREF_PROPERTIES = (SDO.url, SDO.license, SDO.codeRepository, CODEMETA.issueTracker, CODEMETA.contIntegration, CODEMETA.readme, CODEMETA.releaseNotes, SDO.softwareHelp)
+PREFER_URIREF_PROPERTIES_SIMPLE = ('url','license', 'codeRepository', 'issueTracker', 'contIntegration', 'readme', 'releaseNotes', 'softwareHelp')
 
 def init_context(no_cache=False):
     sources = ( (CODEMETA_LOCAL_SOURCE, CODEMETA_SOURCE), (SCHEMA_LOCAL_SOURCE, SCHEMA_SOURCE), (STYPE_LOCAL_SOURCE, STYPE_SOURCE), (IODATA_LOCAL_SOURCE, IODATA_SOURCE), (REPOSTATUS_LOCAL_SOURCE, REPOSTATUS_SOURCE) )
@@ -572,8 +573,13 @@ def reconcile(g: Graph, res: URIRef, args: AttribDict):
     #Convert Literal to URIRef for certain properties
     for prop in PREFER_URIREF_PROPERTIES:
         for _,_,obj in g.triples((res, prop, None)):
-            if obj and isinstance(obj, Literal) and str(obj).startswith("http"):
-                g.set((res, prop, URIRef(str(obj))))
+            if obj and isinstance(obj, Literal):
+                if str(obj).startswith("http"):
+                    g.set((res, prop, URIRef(str(obj))))
+                elif str(obj).startswith("//"): #if absolute url is missing a schema, assume HTTPS
+                    g.set((res, prop, URIRef("https:" + str(obj))))
+                else:
+                    continue
                 g.remove((res,prop,obj))
 
     if (res, SDO.targetProduct, None) not in g:
