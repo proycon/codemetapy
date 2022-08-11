@@ -111,15 +111,28 @@ class BuildTest_Json(unittest.TestCase):
                 self.assertIn( (x,RDF.type, SOFTWARETYPES.CommandLineApplication), self.g, "Testing target product type")
                 self.assertIn( (x,SOFTWARETYPES.executableName, Literal("frog")), self.g, "Testing executable name")
                 self.assertIn( (x,SDO.description, None), self.g, "Testing description") #not testing actual value
-                self.assertIn( (x,SDO.runtimePlatform, Literal("Linux")), self.g, "Testing runtimePlatform") #not testing actual value
-                self.assertIn( (x,SDO.runtimePlatform, Literal("BSD")), self.g, "Testing runtimePlatform") #not testing actual value
-                self.assertIn( (x,SDO.runtimePlatform, Literal("macOS")), self.g, "Testing runtimePlatform") #not testing actual value
+                self.assertIn( (x,SDO.runtimePlatform, Literal("Linux")), self.g, "Testing runtimePlatform")
+                self.assertIn( (x,SDO.runtimePlatform, Literal("BSD")), self.g, "Testing runtimePlatform")
+                self.assertIn( (x,SDO.runtimePlatform, Literal("macOS")), self.g, "Testing runtimePlatform")
                 found.add(2)
             else:
                 self.assertIn( (x,RDF.type, SOFTWARETYPES.CommandLineApplication), self.g, "Testing target product type")
         self.assertIn(1, found)
         self.assertIn(2, found)
 
+    def test014_iodata(self):
+        """Testing IO data"""
+        targetproducts = [ x[2] for x in self.g.triples((self.res, SDO.targetProduct, None)) ]
+        self.assertEqual(len(targetproducts), 5, "Testing number of target products")
+        found = False
+        for x in targetproducts:
+            name = self.g.value(x, SDO.name)
+            if name == Literal("frog"):
+                for y in self.g.triples((x, SOFTWAREIODATA.consumesData, None)):
+                    self.assertIn( (y,RDF.type, SDO.TextDigitalDocument), self.g, "Testing consumesData type")
+                    self.assertTrue( (y,RDF.type, SDO.TextDigitalDocument, Literal("text/plain")) in self.g or (y,RDF.type, SDO.TextDigitalDocument, Literal("application/folia+xml")) in self.g, "Testing encoding")
+                    self.assertIn( (y,RDF.type, SDO.inLanguage, None), self.g, "Testing inLanguage type") #not testing actual value
+        self.assertTrue(found)
 
     def test100_serialisation_json(self):
         """Test json serialisation"""
