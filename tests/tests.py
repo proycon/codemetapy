@@ -5,7 +5,7 @@ import os
 import unittest
 from rdflib import Graph, BNode, URIRef, Literal
 from rdflib.namespace import RDF
-from codemeta.common import CODEMETA, SDO, AttribDict
+from codemeta.common import CODEMETA, SDO, AttribDict, SOFTWARETYPES, SOFTWAREIODATA
 from codemeta.codemeta import build, serialize
 
 class BuildTest_Json(unittest.TestCase):
@@ -95,6 +95,31 @@ class BuildTest_Json(unittest.TestCase):
         langs = [ x[2] for x in self.g.triples((self.res, SDO.programmingLanguage, None)) ]
         self.assertEqual(len(langs), 1, "Testing number of programming languages")
         self.assertIn( (langs[0],RDF.type, SDO.ComputerLanguage), self.g, "Testing programming language type")
+
+    def test013_targetproduct(self):
+        """Testing target product"""
+        targetproducts = [ x[2] for x in self.g.triples((self.res, SDO.targetProduct, None)) ]
+        self.assertEqual(len(targetproducts), 5, "Testing number of target products")
+        found = set()
+        for x in targetproducts:
+            name = self.g.value(x, SDO.name)
+            self.assertIsNotNone(name)
+            if name == Literal("libfrog"):
+                self.assertIn( (x,RDF.type, SOFTWARETYPES.SoftwareLibrary), self.g, "Testing target product type ")
+                found.add(1)
+            elif name == Literal("frog"):
+                self.assertIn( (x,RDF.type, SOFTWARETYPES.CommandLineApplication), self.g, "Testing target product type")
+                self.assertIn( (x,SOFTWARETYPES.executableName, Literal("frog")), self.g, "Testing executable name")
+                self.assertIn( (x,SDO.description, None), self.g, "Testing description") #not testing actual value
+                self.assertIn( (x,SDO.runtimePlatform, Literal("Linux")), self.g, "Testing runtimePlatform") #not testing actual value
+                self.assertIn( (x,SDO.runtimePlatform, Literal("BSD")), self.g, "Testing runtimePlatform") #not testing actual value
+                self.assertIn( (x,SDO.runtimePlatform, Literal("macOS")), self.g, "Testing runtimePlatform") #not testing actual value
+                found.add(2)
+            else:
+                self.assertIn( (x,RDF.type, SOFTWARETYPES.CommandLineApplication), self.g, "Testing target product type")
+        self.assertIn(1, found)
+        self.assertIn(2, found)
+
 
     def test100_serialisation_json(self):
         """Test json serialisation"""
@@ -256,6 +281,7 @@ class BuildTest_NpmPackageJSON(unittest.TestCase):
     def test100_serialisation_html(self):
         """Test html serialisation"""
         serialize(self.g, self.res, AttribDict({ "output": "html" }), self.contextgraph)
+
 
 if __name__ == '__main__':
     unittest.main()
