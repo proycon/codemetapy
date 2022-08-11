@@ -2,7 +2,7 @@ import sys
 import json
 from typing import Union, IO, Sequence
 from rdflib import Graph, URIRef, BNode, Literal
-from codemeta.common import AttribDict, license_to_spdx, SDO, CONTEXT, CODEMETA_SOURCE, CODEMETA_LOCAL_SOURCE, SCHEMA_SOURCE, SCHEMA_LOCAL_SOURCE, STYPE_SOURCE, STYPE_LOCAL_SOURCE, SIO_SOURCE, SIO_LOCAL_SOURCE, init_context, REPOSTATUS_LOCAL_SOURCE, REPOSTATUS_SOURCE, get_subgraph
+from codemeta.common import AttribDict, license_to_spdx, SDO, CONTEXT, CODEMETA_SOURCE, CODEMETA_LOCAL_SOURCE, SCHEMA_SOURCE, SCHEMA_LOCAL_SOURCE, STYPE_SOURCE, STYPE_LOCAL_SOURCE, IODATA_SOURCE, IODATA_LOCAL_SOURCE, init_context, REPOSTATUS_LOCAL_SOURCE, REPOSTATUS_SOURCE, get_subgraph
 
 def flatten_singletons(data): #TODO: no longer used, remove
     """Recursively flattens singleton ``key: { "@id": uri }`` instances to ``key: uri``"""
@@ -187,8 +187,8 @@ def rewrite_context(context):
                 context[i] = SCHEMA_SOURCE
             elif value == STYPE_LOCAL_SOURCE:
                 context[i] = STYPE_SOURCE
-            elif value == SIO_LOCAL_SOURCE:
-                context[i] = SIO_SOURCE
+            elif value == IODATA_LOCAL_SOURCE:
+                context[i] = IODATA_SOURCE
             elif value == REPOSTATUS_LOCAL_SOURCE:
                 context[i] = REPOSTATUS_SOURCE
 

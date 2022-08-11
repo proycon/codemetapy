@@ -128,10 +128,11 @@ class BuildTest_Json(unittest.TestCase):
         for x in targetproducts:
             name = self.g.value(x, SDO.name)
             if name == Literal("frog"):
-                for y in self.g.triples((x, SOFTWAREIODATA.consumesData, None)):
+                for _,_, y in self.g.triples((x, SOFTWAREIODATA.consumesData, None)):
                     self.assertIn( (y,RDF.type, SDO.TextDigitalDocument), self.g, "Testing consumesData type")
-                    self.assertTrue( (y,RDF.type, SDO.TextDigitalDocument, Literal("text/plain")) in self.g or (y,RDF.type, SDO.TextDigitalDocument, Literal("application/folia+xml")) in self.g, "Testing encoding")
-                    self.assertIn( (y,RDF.type, SDO.inLanguage, None), self.g, "Testing inLanguage type") #not testing actual value
+                    self.assertTrue( (y,SDO.encodingFormat, Literal("text/plain")) in self.g or (y,SDO.encodingFormat, Literal("application/folia+xml")) in self.g, "Testing encoding")
+                    self.assertIn( (y, SDO.inLanguage, None), self.g, "Testing inLanguage type") #not testing actual value
+                    found = True
         self.assertTrue(found)
 
     def test100_serialisation_json(self):
