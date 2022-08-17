@@ -7,6 +7,7 @@ on:
       - 'codemeta/**'
       - 'setup.py'
       - '.github/**'
+      - 'tests/**'
 
   pull_request:
     branches: [master]
