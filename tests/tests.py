@@ -336,6 +336,51 @@ class BuildTest_Web_JSONLD(unittest.TestCase):
         self.assertIn( (service, SDO.url, URIRef("https://www.delpher.nl/")), self.g)
         self.assertIn( (service, SDO.potentialAction, None), self.g) #not testing value
 
+class BuildTest_Combine(unittest.TestCase):
+    """Combine two inputs for the same resource"""
+
+    def setUp(self):
+        #relies on automatically guessing the types
+        self.g, self.res, self.args, self.contextgraph = build(inputsources=["labirinto.package.json", "labirinto.codemeta-harvest.json"])
+
+    def test001_sanity(self):
+        """Testing whether a package.json was read accurately, tests some basic properties"""
+        self.assertIsInstance( self.g, Graph )
+        self.assertIsInstance( self.res, URIRef)
+        self.assertIn( (self.res, RDF.type, SDO.SoftwareSourceCode), self.g)
+
+    def test002_basics(self):
+        """Testing some basic identifying properties"""
+        self.assertIn( (self.res, SDO.name, Literal("labirinto")), self.g)
+        self.assertIn( (self.res, SDO.version, Literal("0.2.6")), self.g)
+        self.assertIn( (self.res, SDO.runtimePlatform, Literal("npm >= 3.0.0")), self.g)
+        self.assertIn( (self.res, SDO.runtimePlatform, Literal("node >= 6.0.0")), self.g)
+
+    def test003_urlref(self):
+        """Testing some common URL References"""
+        self.assertIn( (self.res, SDO.codeRepository, URIRef("https://github.com/proycon/labirinto")), self.g)
+        self.assertIn( (self.res, SDO.license, URIRef("http://spdx.org/licenses/AGPL-3.0-or-later")), self.g)
+        self.assertIn( (self.res, SDO.url, URIRef("https://github.com/proycon/labirinto")), self.g)
+        self.assertIn( (self.res, CODEMETA.issueTracker, URIRef("https://github.com/proycon/labirinto/issues")), self.g)
+
+    def test004_combined(self):
+        """Testing properties that come from the second resource"""
+        self.assertIn( (self.res, CODEMETA.developmentStatus, URIRef("https://www.repostatus.org/#unsupported")), self.g)
+        self.assertIn( (self.res, CODEMETA.issueTracker, URIRef("https://github.com/proycon/labirinto/issues")), self.g)
+        producer = self.g.value(self.res, SDO.producer)
+        self.assertIsNotNone(producer)
+        self.assertIn( (producer, RDF.type, SDO.Organization), self.g)
+        self.assertIn( (producer, SDO.name, Literal("Centre for Language and Speech Technology")), self.g)
+        parent = self.g.value(producer, SDO.parentOrganization)
+        self.assertIsNotNone(parent)
+        self.assertIn( (parent, RDF.type, SDO.Organization), self.g)
+        self.assertIn( (parent, SDO.name, Literal("Centre for Language Studies")), self.g)
+        grandparent = self.g.value(parent, SDO.parentOrganization)
+        self.assertIsNotNone(grandparent)
+        self.assertIn( (grandparent, RDF.type, SDO.Organization), self.g)
+        self.assertIn( (grandparent, SDO.name, Literal("Radboud University")), self.g)
+
+
 if __name__ == '__main__':
     unittest.main()
 

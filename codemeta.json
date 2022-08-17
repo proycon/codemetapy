@@ -2,7 +2,8 @@
     "@context": [
         "https://raw.githubusercontent.com/codemeta/codemeta/2.0/codemeta.jsonld",
         "https://raw.githubusercontent.com/schemaorg/schemaorg/main/data/releases/13.0/schemaorgcontext.jsonld",
-        "https://w3id.org/software-types"
+        "https://w3id.org/software-types",
+        "https://w3id.org/software-iodata"
     ],
     "@id": "https://github.com/proycon/codemetapy.git",
     "@type": "SoftwareSourceCode",
