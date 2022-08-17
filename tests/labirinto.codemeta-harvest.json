@@ -1,0 +1,32 @@
+{
+    "@context": [
+        "https://raw.githubusercontent.com/codemeta/codemeta/2.0/codemeta.jsonld",
+        "https://raw.githubusercontent.com/schemaorg/schemaorg/main/data/releases/13.0/schemaorgcontext.jsonld",
+        "https://w3id.org/software-types",
+        "https://w3id.org/software-iodata"
+    ],
+    "developmentStatus": "https://www.repostatus.org/#unsupported",
+    "issueTracker": "https://github.com/proycon/labirinto/issues",
+    "producer": { 
+        "@id": "https://www.ru.nl/clst", 
+        "@type": "Organization",
+        "name": "Centre for Language and Speech Technology",
+        "url": "https://www.ru.nl/clst",
+        "parentOrganization": {
+            "@id": "https://www.ru.nl/cls",
+            "@type": "Organization",
+            "name": "Centre for Language Studies",
+            "url": "https://www.ru.nl/cls",
+            "parentOrganization": {
+                "@id": "https://www.ru.nl",
+                "name": "Radboud University",
+                "@type": "Organization",
+                "url": "https://www.ru.nl",
+                "location": {
+                    "@type": "Place",
+                    "name": "Nijmegen"
+                }
+            }
+        }
+    }
+}
