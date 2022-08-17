@@ -8,7 +8,7 @@ can be extended for other input types too."""
 # CLST, Radboud University Nijmegen
 # & KNAW Humanities Cluster
 # GPL v3
-
+import re
 import sys
 import argparse
 import json
@@ -18,7 +18,7 @@ import random
 from collections import OrderedDict, defaultdict
 from typing import Union, IO, Optional, Sequence, Tuple
 import copy
-import distutils.cmd #note: will be removed in python 3.12!
+import distutils.cmd #note: will be removed in python 3.12! TODO constraint <= 3.11 in apk/apt-get in Dockerfile
 #pylint: disable=C0413
 
 from rdflib import Graph, BNode, URIRef
@@ -34,7 +34,7 @@ import codemeta.parsers.jsonld
 import codemeta.parsers.nodejs
 import codemeta.parsers.java
 import codemeta.parsers.web
-import codemeta.parsers.github
+import codemeta.parsers.gitapi
 import codemeta.parsers.authors
 from codemeta.serializers.jsonld import serialize_to_jsonld
 from codemeta.serializers.html import serialize_to_html
@@ -60,7 +60,6 @@ class CodeMetaCommand(distutils.cmd.Command):
         ('with-stypes','t','Generate software types using targetProduct (custom extension not part of the official codemeta/schema.org specification yet)'),
         ('dry-run','n','Write to stdout instead of codemeta.json')
     ]
-
     def initialize_options(self):
         self.with_entrypoints = False
         self.dry_run = False
@@ -150,7 +149,7 @@ def serialize(g: Graph, res: Union[Sequence,URIRef,BNode,None], args: AttribDict
         else:
             return doc
     elif args.output == "html":
-        doc = serialize_to_html(g, res, args, contextgraph, sparql_query, **kwargs) #note: sparql query is applied in serialization function if needed
+        doc = serialize_to_html(g, res, args, contextgraph, sparql_query,  **kwargs) #note: sparql query is applied in serialization function if needed
         if args.outputfile and args.outputfile != "-":
             with open(args.outputfile,'w',encoding='utf-8') as fp:
                 fp.write(doc)
@@ -196,10 +195,8 @@ def build(**kwargs) -> Tuple[Graph, URIRef, AttribDict, Graph]:
             print(f"Passed {len(inputfiles)} files/sources but specified {len(inputtypes)} input types! Automatically guessing types...",  file=sys.stderr)
             guess = True
             for inputsource in inputfiles[len(inputtypes):]:
-                if inputsource.lower().startswith("https://api.github.com/repos/") or inputsource.lower().startswith("https://github.com/") or inputsource.lower().startswith("git@github.com"):
-                    inputtypes.append("github")
-                elif inputsource.lower().startswith("http"):
-                    inputtypes.append("web")
+                if inputsource.lower().endswith("setup.py"):
+                    inputtypes.append("python")
                 elif inputsource.endswith("package.json"):
                     inputtypes.append("nodejs")
                 elif inputsource.endswith("pyproject.toml"):
@@ -214,9 +211,16 @@ def build(**kwargs) -> Tuple[Graph, URIRef, AttribDict, Graph]:
                     inputtypes.append("authors")
                 elif inputsource.upper().endswith("MAINTAINERS"):
                     inputtypes.append("maintainers")
-                else:
-                    #assume python
-                    inputtypes.append("python")
+                elif inputsource.lower().startswith("https") or inputsource.lower().startswith("git@"):
+                    #test if this is a known git platform we can query via an API
+                    repo_kind = codemeta.parsers.gitapi.get_repo_kind(inputsource)
+                    if repo_kind:
+                        inputtypes.append(repo_kind)
+                    elif not inputsource.lower().startswith("git@"):
+                        #otherwise it is just a website
+                        inputtypes.append("web")
+                elif inputsource.lower().startswith("http"):
+                    inputtypes.append("web")
         inputsources = list(zip(inputfiles, inputtypes))
         if guess:
             print(f"Detected input types: {inputsources}",file=sys.stderr)
@@ -279,19 +283,9 @@ def build(**kwargs) -> Tuple[Graph, URIRef, AttribDict, Graph]:
     l = len(inputsources)
     for i, (source, inputtype) in enumerate(inputsources):
         print(f"Processing source #{i+1} of {l}",file=sys.stderr)
-
         prefuri = None #preferred URI returned by the parsing method
-        if inputtype == "web":
-            print(f"Obtaining metadata from remote URL {source}",file=sys.stderr)
-            found = False
-            for targetres in codemeta.parsers.web.parse_web(g, res, source, args):
-                if targetres and args.with_stypes:
-                    found = True
-                    print(f"Adding service (targetProduct) {source}",file=sys.stderr)
-                    g.add((res, SDO.targetProduct, targetres))
-            if not found:
-                print(f"(no metadata found at remote URL)",file=sys.stderr)
-        elif inputtype == "python":
+          
+        if inputtype == "python":
             print(f"Obtaining python package metadata for: {source}",file=sys.stderr)
             #source is a name of a package or path to a pyproject.toml file
             prefuri = codemeta.parsers.python.parse_python(g, res, source, crosswalk, args)
@@ -310,13 +304,22 @@ def build(**kwargs) -> Tuple[Graph, URIRef, AttribDict, Graph]:
         elif inputtype == "json":
             print(f"Parsing json-ld file from {source}",file=sys.stderr)
             prefuri = codemeta.parsers.jsonld.parse_jsonld(g, res, getstream(source), args)
-        elif inputtype == "github":
-            source = source.replace("https://api.github.com/repos/","")
-            source = source.replace("https://github.com/","")
-            source = source.replace("git@github.com:","")
+        elif inputtype == "web":
+            print(f"Fallback: Obtaining metadata from remote URL {source}",file=sys.stderr)
+            found = False
+            for targetres in codemeta.parsers.web.parse_web(g, res, source, args):
+                if targetres and args.with_stypes:
+                    found = True
+                    print(f"Adding service (targetProduct) {source}",file=sys.stderr)
+                    g.add((res, SDO.targetProduct, targetres))
+            if not found:
+                print(f"(no metadata found at remote URL)",file=sys.stderr)
+        elif inputtype in ("github", "gitlab"):
+            #e.g. transform git@gitlab.com/X in https://gitlab.com/X
+            source = re.sub(r'git@(.*):', r'https://\1/', source)
             if source.endswith(".git"): source = source[:-4]
-            print(f"Querying GitHub API for {source}",file=sys.stderr)
-            prefuri = codemeta.parsers.github.parse_github(g, res, source, args)
+            print(f"Querying GitAPI parser for {source}",file=sys.stderr)
+            prefuri = codemeta.parsers.gitapi.parse(g, res, source, inputtype ,args)
         elif inputtype in ('authors', 'contributors','maintainers'):
             print(f"Extracting {inputtype} from {source}",file=sys.stderr)
             if inputtype == 'authors':
@@ -354,7 +357,6 @@ def build(**kwargs) -> Tuple[Graph, URIRef, AttribDict, Graph]:
     reconcile(g, res, args)
 
     return (g,res,args, contextgraph)
-
 
 
 

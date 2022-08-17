@@ -1,11 +1,13 @@
 import sys
 import os.path
 from datetime import datetime
+import codemeta.parsers.gitapi
 from rdflib import Graph, URIRef, BNode, Literal
 from rdflib.namespace import RDF, SKOS, RDFS
 from typing import Union, IO, Optional, Sequence
 from codemeta.common import AttribDict, REPOSTATUS, license_to_spdx, SDO, CODEMETA, SOFTWARETYPES, CODEMETAPY, SCHEMA_SOURCE, CODEMETA_SOURCE, CONTEXT, SCHEMA_LOCAL_SOURCE, SCHEMA_SOURCE, CODEMETA_LOCAL_SOURCE, CODEMETA_SOURCE, STYPE_SOURCE, STYPE_LOCAL_SOURCE, init_context, SINGULAR_PROPERTIES, merge_graphs, get_subgraph, get_last_component, query
 from codemeta import __path__ as rootpath
+import codemeta.parsers.gitapi
 from jinja2 import Environment, FileSystemLoader
 
 def get_triples(g: Graph, res: Union[URIRef,BNode,None], prop, labelprop=SDO.name, abcsort=False):
@@ -67,26 +69,44 @@ def get_index(g: Graph, restype=SDO.SoftwareSourceCode):
 def is_resource(res) -> bool:
     return isinstance(res, (URIRef,BNode))
 
-def parse_github_url(s):
-    if not s: return None
-    if s.endswith(".git"): s = s[:-4]
-    if s.startswith("https://github.com/"):
-        owner, repo = s.replace("https://github.com/","").split("/")
-        return owner, repo
-    return None, None
 
 def get_badge(g: Graph, res: Union[URIRef,None], key):
-    owner, repo = parse_github_url(g.value(res, SDO.codeRepository))
-    if owner and repo:
-        #github badges
-        if key == "stars":
-            yield f"https://img.shields.io/github/stars/{owner}/{repo}.svg?style=flat&color=5c7297", None, "Stars are an indicator of the popularity of this project on GitHub"
-        elif key == "issues":
-            yield f"https://img.shields.io/github/issues/{owner}/{repo}.svg?style=flat&color=5c7297", None, "The number of open issues on the issue tracker"
-            yield f"https://img.shields.io/github/issues-closed/{owner}/{repo}.svg?style=flat&color=5c7297", None, "The number of closes issues on the issue tracker"
-        elif key == "lastcommits":
-            yield f"https://img.shields.io/github/last-commit/{owner}/{repo}.svg?style=flat&color=5c7297", None, "Last commit (main branch). Gives an indication of project development activity and rough indication of how up-to-date the latest release is."
-            yield f"https://img.shields.io/github/commits-since/{owner}/{repo}/latest.svg?style=flat&color=5c7297&sort=semver", None, "Number of commits since the last release. Gives an indication of project development activity and rough indication of how up-to-date the latest release is."
+    source =g.value(res, SDO.codeRepository).strip("/")
+    cleaned_url = source
+    prefix = ""
+    if source.startswith("https://"):
+        repo_kind = codemeta.parsers.gitapi.get_repo_kind(source)
+        git_address = cleaned_url.replace('https://','').split('/')[0]
+        prefix="https://"
+        git_suffix=cleaned_url.replace(prefix + git_address,'')[1:]
+        if "github" == repo_kind:
+            #github badges
+            if key == "stars":
+                yield f"https://img.shields.io/github/stars/{git_suffix}.svg?style=flat&color=5c7297", None, "Stars are an indicator of the popularity of this project on GitHub"
+            elif key == "issues":
+                #https://shields.io/category/issue-tracking
+                yield f"https://img.shields.io/github/issues/{git_suffix}.svg?style=flat&color=5c7297", None, "The number of open issues on the issue tracker"
+                yield f"https://img.shields.io/github/issues-closed/{git_suffix}.svg?style=flat&color=5c7297", None, "The number of closes issues on the issue tracker"
+            elif key == "lastcommits":
+                yield f"https://img.shields.io/github/last-commit/{git_suffix}.svg?style=flat&color=5c7297", None, "Last commit (main branch). Gives an indication of project development activity and rough indication of how up-to-date the latest release is."
+                yield f"https://img.shields.io/github/commits-since/{git_suffix}/latest.svg?style=flat&color=5c7297&sort=semver", None, "Number of commits since the last release. Gives an indication of project development activity and rough indication of how up-to-date the latest release is."
+        elif "gitlab" == repo_kind:
+            # https://docs.gitlab.com/ee/api/project_badges.html
+            # https://github.com/Naereen/badges
+            if key == "lastcommits":
+                #append all found badges at the end
+                encoded_git_suffix=git_suffix.replace('/', '%2F')
+                response = codemeta.parsers.gitapi.rate_limit_get(f"{prefix}{git_address}/api/v4/projects/{encoded_git_suffix}/badges", "gitlab")
+                if response:
+                    response = response.json()
+                    for badge in response:
+                       if badge['kind'] == 'project': 
+                        #or rendered_image_url field?
+                        image_url=badge['image_url'] 
+                        name=badge['name']
+                        yield f"{image_url}", f"{name}", f"{name}"  
+     
+
 
 def type_label(g: Graph, res: Union[URIRef,None]):
     label = g.value(res, RDF.type)
@@ -119,9 +139,8 @@ def get_interface_types(g: Graph, res: Union[URIRef,None], contextgraph: Graph, 
 
 
 
-def serialize_to_html(g: Graph, res: Union[Sequence,URIRef,None], args: AttribDict, contextgraph: Graph, sparql_query: Optional[str] = None, **kwargs) -> dict:
+def serialize_to_html( g: Graph, res: Union[Sequence,URIRef,None], args: AttribDict, contextgraph: Graph, sparql_query: Optional[str] = None,  **kwargs) -> dict:
     """Serialize to HTML with RDFa"""
-
     if res and not isinstance(res, (list,tuple)):
         #Get the subgraph that focusses on this specific resource
         g = get_subgraph(g, [res])
@@ -153,7 +172,7 @@ def serialize_to_html(g: Graph, res: Union[Sequence,URIRef,None], args: AttribDi
         else:
             index = get_index(g)
     template = env.get_template(template)
-    return template.render(g=g, res=res, SDO=SDO,CODEMETA=CODEMETA, CODEMETAPY=CODEMETAPY, RDF=RDF,RDFS=RDFS,STYPE=SOFTWARETYPES, REPOSTATUS=REPOSTATUS, SKOS=SKOS, get_triples=get_triples, type_label=type_label, css=args.css, contextgraph=contextgraph, URIRef=URIRef, get_badge=get_badge, now=datetime.now().strftime("%Y-%m-%d %H:%M:%S"), index=index, get_interface_types=get_interface_types,baseuri=args.baseuri,baseurl=args.baseurl, toolstore=args.toolstore, get_last_component=get_last_component, is_resource=is_resource, int=int, **kwargs)
+    return template.render(res=res, repo_kind=repo_kind, SDO=SDO,CODEMETA=CODEMETA, CODEMETAPY=CODEMETAPY, RDF=RDF,RDFS=RDFS,STYPE=SOFTWARETYPES, REPOSTATUS=REPOSTATUS, SKOS=SKOS, get_triples=get_triples, type_label=type_label, css=args.css, contextgraph=contextgraph, URIRef=URIRef, get_badge=get_badge, now=datetime.now().strftime("%Y-%m-%d %H:%M:%S"), index=index, get_interface_types=get_interface_types,baseuri=args.baseuri,baseurl=args.baseurl, toolstore=args.toolstore, get_last_component=get_last_component, is_resource=is_resource, int=int, **kwargs)
 
 
 
