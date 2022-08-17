@@ -75,7 +75,7 @@ To read an existing codemeta.json and extend it:
 This tool can also deal with debian packages by parsing the output of
 `apt show` (albeit limited):
 
-`$ apt show somepackage | codemetapy -i apt -`
+`$ apt show somepackage | codemetapy -i debian -`
 
 Here `-` represents standard input, which enables you to use piping
 solutions on a unix shell, `-i` denotes the input types, you can chain
