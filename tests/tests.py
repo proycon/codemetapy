@@ -8,6 +8,11 @@ from rdflib.namespace import RDF
 from codemeta.common import CODEMETA, SDO, AttribDict, SOFTWARETYPES, SOFTWAREIODATA
 from codemeta.codemeta import build, serialize
 
+def debugout(g: Graph, s,p=None,o=None):
+    print("DEBUG OUTPUT:", file=sys.stderr)
+    for s,p,o in g.triples((s,p,o)):
+        print(s,p,o, file=sys.stderr)
+
 class BuildTest_Json(unittest.TestCase):
     """Build codemeta.json from existing codemeta.json (basically a parse, validation/reconciliation and reserialisation)"""
 

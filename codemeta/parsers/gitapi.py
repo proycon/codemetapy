@@ -60,11 +60,13 @@ def parse(g: Graph, res: Union[URIRef, BNode], source: str, repo_kind:str, args:
     gitlab_repo_api_url = f"{scheme}{host}/api/v4/projects/{gitlab_suffix}"
 
     if repo_kind == "github":
-        response = rate_limit_get(source.replace(f"{source}",f"{scheme}api.github.com/repos/"), "github")
+        response = rate_limit_get(f"{scheme}api.github.com/repos/{github_suffix}", "github")
         _parse_github(response, g,res,f"{scheme}{host}", args)
     elif repo_kind == "gitlab":
         response = rate_limit_get(gitlab_repo_api_url, "gitlab")
         _parse_gitlab(response, g,res,f"{scheme}{host}", args)  
+    else:
+        raise ValueError(f"Not a git API, repo_kind={repo_kind}")
 
     return source
 
@@ -82,7 +84,7 @@ github_crosswalk_table = {
 # Adapted from source: https://github.com/KnowledgeCaptureAndDiscovery/somef (MIT licensed)
 def rate_limit_get(url:str, repo_kind: Optional[str], backoff_rate=2, initial_backoff=1, **kwargs) -> dict: 
     rate_limited = True
-    response = {}
+    data = {}
     has_token=False
     if not kwargs: kwargs = {}
     if repo_kind == "github" and 'GITHUB_TOKEN' in environ and environ['GITHUB_TOKEN']:
@@ -94,6 +96,7 @@ def rate_limit_get(url:str, repo_kind: Optional[str], backoff_rate=2, initial_ba
         kwargs['headers']["PRIVATE-TOKEN"] = environ['GITLAB_TOKEN']
         has_token = True
     while rate_limited:
+        print(f"Querying {url}")
         response = requests.get(url, **kwargs)
         rate_limit_remaining = int(response.headers.get("RateLimit-Remaining" if repo_kind == "gitlab" else "x-ratelimit-remaining",-1))
         epochtime = int(response.headers.get("RateLimit-Reset" if repo_kind == "gitlab" else  "x-ratelimit-reset",0))
@@ -102,8 +105,8 @@ def rate_limit_get(url:str, repo_kind: Optional[str], backoff_rate=2, initial_ba
             print(f"Remaining {repo_kind} API requests: {rate_limit_remaining} ### Next rate limit reset at: {date_reset} (has_token={has_token})")
         else:
             rate_limited = False
-        response = response.json()
-        if 'message' in response and 'API rate limit exceeded' in response['message']:
+        data = response.json()
+        if 'message' in data and 'API rate limit exceeded' in data['message']:
             rate_limited = True
             print(f"{repo_kind} API: rate limited. Backing off for {initial_backoff} seconds (has_token={has_token})", file=sys.stderr)
             sys.stderr.flush()
@@ -113,16 +116,15 @@ def rate_limit_get(url:str, repo_kind: Optional[str], backoff_rate=2, initial_ba
             # increase the backoff for next time
             initial_backoff *= backoff_rate
         else:
+            response.raise_for_status()
             rate_limited = False
-    return response
+    return data
 
 def _parse_github(response: dict, g: Graph, res: Union[URIRef, BNode], source: str, args: AttribDict):
     """Query and parse from the github API"""
-    users_api_url=f"{source}/api/v3/users/"
-    if("github.com/" in source):
-     users_api_url=source.replace("www.github.com/", "api.github.com/").replace("github.com/", "api.github.com/") + "/users/"
+    print(f"    Parsing Github API response",file=sys.stderr)
+    users_api_url=f"https://api.github.com/users/"
     
-    owner=response['owner']['login']
     #repo = response['name']
     for prop, github_key in github_crosswalk_table.items():
         if github_key in response:
@@ -142,7 +144,8 @@ def _parse_github(response: dict, g: Graph, res: Union[URIRef, BNode], source: s
         g.add((res, CODEMETA.issueTracker, Literal(response['html_url'] + "/issues")))
 
     if 'owner' in response:
-        owner_api_url = f"{users_api_url}/{owner}"
+        owner = response['owner']['login']
+        owner_api_url = f"{users_api_url}{owner}"
         response = rate_limit_get(owner_api_url, "github")
         owner_type = response.get("type","").lower()
         owner_res = None
