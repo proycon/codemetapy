@@ -41,8 +41,7 @@ CODEMETA_SOURCE = "https://raw.githubusercontent.com/codemeta/codemeta/2.0/codem
 STYPE_SOURCE = "https://w3id.org/software-types"
 IODATA_SOURCE = "https://w3id.org/software-iodata"
 
-REPOSTATUS_SOURCE = "https://raw.githubusercontent.com/proycon/repostatus.org/ontology/badges/latest/ontology.jsonld"
-#^--- TODO: adapt URL after merge upstream (https://github.com/jantman/repostatus.org/pull/48)
+REPOSTATUS_SOURCE = "https://raw.githubusercontent.com/jantman/repostatus.org/master/badges/latest/ontology.jsonld"
 
 
 TMPDIR  = os.environ.get("TMPDIR","/tmp")
