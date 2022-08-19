@@ -225,12 +225,12 @@ INTERFACE_CLUES_DEPS = {
     "wordpress": SOFTWARETYPES.WebApplication,
     "joomla": SOFTWARETYPES.WebApplication,
     "spring": SOFTWARETYPES.WebApplication,
-    "fastapi": SOFTWARETYPES.WebService, #the distinction webservice/webapplication on the basis of dependencies is fairly ambiguous
-    "bottle": SOFTWARETYPES.WebService,
-    "hug": SOFTWARETYPES.WebService,
-    "falcon": SOFTWARETYPES.WebService,
-    "tornado": SOFTWARETYPES.WebService,
-    "cherrypy": SOFTWARETYPES.WebService,
+    "fastapi": SDO.WebAPI, #the distinction webservice/webapplication on the basis of dependencies is fairly ambiguous
+    "bottle": SDO.WebAPI,
+    "hug": SDO.WebAPI,
+    "falcon": SDO.WebAPI,
+    "tornado": SDO.WebAPI,
+    "cherrypy": SDO.WebAPI,
     "ncurses": SOFTWARETYPES.TerminalApplication,
     "click": SOFTWARETYPES.CommandLineApplication
 }
