@@ -18,13 +18,15 @@ import random
 from collections import OrderedDict, defaultdict
 from typing import Union, IO, Optional, Sequence, Tuple
 import copy
+import datetime
 import distutils.cmd #note: will be removed in python 3.12! TODO constraint <= 3.11 in apk/apt-get in Dockerfile
 #pylint: disable=C0413
 
-from rdflib import Graph, BNode, URIRef
-from rdflib.namespace import RDF
+from rdflib import Graph, BNode, URIRef, Literal
+from rdflib.namespace import RDF, SH
 from rdflib.plugins.shared.jsonld.context import Context
 import rdflib.plugins.serializers.jsonld
+from pyshacl import validate as pyshacl_validate
 
 from codemeta.common import init_graph, init_context, CODEMETA, AttribDict, getstream, CONTEXT, SDO, reconcile, add_triple, generate_uri, remap_uri, query
 import codemeta.crosswalk
@@ -98,6 +100,8 @@ def main():
     parser.add_argument('-i','--inputtype', dest='inputtypes',type=str,help="Metadata input type: python, apt (debian packages), registry, json, yaml. May be a comma seperated list of multiple types if files are passed on the command line", action='store',required=False)
     parser.add_argument('-g','--graph', dest='graph',help="Output a knowledge graph that groups all input files together. Only JSON input files are supported.", action='store_true',required=False)
     parser.add_argument('-s','--select', type=str, help="Output only the selected resource (by URI) from the graph", action='store',required=False)
+    parser.add_argument('-V','--validate', type=str, help="Validate against the provided SHACL file. Adds a review property with the condensed validation results.", action='store',required=False)
+    parser.add_argument('--exitv', help="Set exit status according to validation result. Use with --validate", action='store_true',required=False)
     parser.add_argument('--css',type=str, help="Associate a CSS stylesheet (URL) with the HTML output, multiple stylesheets can be separated by a comma", action='store',  required=False)
     parser.add_argument('--no-cache',dest="no_cache", help="Do not cache context files, force redownload", action='store_true',  required=False)
     parser.add_argument('--toolstore', help="When converting to HTML, link pages together as served by the CLARIAH tool store (https://github.com/CLARIAH/tool-discovery)", action='store_true',  required=False)
@@ -119,16 +123,83 @@ def main():
     if args.baseuri and not args.baseurl:
         args.baseurl = args.baseuri
 
+    valid = False
     if args.graph:
         #join multiple inputs into a larger graph
         g, res, args, contextgraph = read(**args.__dict__)
-        output = serialize(g, res, args, contextgraph)
     else:
         #normal behaviour
         g, res, args, contextgraph = build(**args.__dict__)
-        output = serialize(g, res, args, contextgraph)
+    if args.validate: valid, _ = validate(g, res, args, contextgraph)
+    output = serialize(g, res, args, contextgraph)
     if output:
         print(output)
+
+    if args.exitv and args.validate:
+        return 0 if valid else 1
+
+
+def validate(g: Graph, res: Union[Sequence,URIRef,BNode,None], args: AttribDict, contextgraph: Union[Graph,None] = None) -> Tuple[bool, Graph]:
+    shacl_file: str = args.validate
+    if shacl_file.endswith("ttl"):
+        shacl_format="turtle"
+    elif shacl_file.endswith(("json","jsonld")):
+        shacl_format="json-ld"
+    else:
+        raise ValueError(f"Expect ttl or json file for SHACL ({args.validate}), unable to determine from extension")
+    shacl_graph = Graph()
+    shacl_graph.parse(args.validate, format=shacl_format)
+    conforms, results_graph, _ = pyshacl_validate(data_graph=g, shacl_graph=shacl_graph, ont_graph=contextgraph, abort_on_first=False, allow_infos=True, allow_warnings=True)
+    counter = 0
+    review = BNode()
+    g.add((review, RDF.type, SDO.Review))
+    g.add((review, SDO.author, Literal(f"codemetapy validator using {os.path.basename(shacl_file)}")))
+    g.add((review, SDO.datePublished, Literal(datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"))))
+    g.add((review, SDO.name, Literal("Automatic software metadata validation report")))
+    messages = []
+    warnings = 0
+    violations = 0
+    info = 0
+    for node ,_,_ in results_graph.triples((None,SH.focusNode,res)):
+        if (node, RDF.type, SH.ValidationResult) in results_graph:
+            severity = ""
+            if (node, SH.resultSeverity, SH.Violation) in results_graph:
+                severity = "Violation"
+                violations += 1
+            elif (node, SH.resultSeverity, SH.Warning) in results_graph:
+                severity = "Warning"
+                warnings += 1
+            elif (node, SH.resultSeverity, SH.Warning) in results_graph:
+                severity = "Info"
+                info += 1
+            else:
+                severity = "Unknown"
+            #path = results_graph.value(node, SH.resultPath)
+            msg = results_graph.value(node, SH.resultMessage)
+            if msg:
+                counter +=1 
+                print(f"VALIDATION {str(res)} #{counter}: {severity}: {str(msg)}", file=sys.stderr)
+                messages.append("* " + msg)
+    if messages:
+        if conforms:
+            if warnings:
+                head = "Validation was successful, but there are some warnings which should be addressed:"
+                g.add((review, SDO.reviewRating, Literal(3)))
+            else:
+                head = "Validation was successful, but there are some remarks which you may or may not want to address:"
+                g.add((review, SDO.reviewRating, Literal(4)))
+        else:
+            head = "Validation failed due to one or more requirement violations:"
+            if violations > 1 or warnings > 5:
+                g.add((review, SDO.reviewRating, Literal(1)))
+            else:
+                g.add((review, SDO.reviewRating, Literal(2)))
+        g.add((review, SDO.reviewBody, Literal(head + "\n\n" + "\n".join(messages))))
+    else:
+        g.add((review, SDO.reviewBody, Literal("Validates perfectly, no further remarks!")))
+        g.add((review, SDO.reviewRating, Literal(5)))
+    g.add((res, SDO.review, review))
+    return conforms, results_graph
 
 
 def serialize(g: Graph, res: Union[Sequence,URIRef,BNode,None], args: AttribDict, contextgraph: Union[Graph,None] = None, sparql_query: Optional[str] = None, **kwargs) -> Graph:
