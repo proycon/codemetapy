@@ -9,6 +9,7 @@ from codemeta.common import init_graph, init_context, CODEMETA, AttribDict,  SDO
 from pyshacl import validate as pyshacl_validate
 
 def validate(g: Graph, res: Union[Sequence,URIRef,BNode,None], args: AttribDict, contextgraph: Union[Graph,None] = None) -> Tuple[bool, Graph]:
+    """Validates software metadata using SHACL, generates a validation report and adds it to the SoftwareSourceCode metadata via the schema:review property"""
     shacl_file: str = args.validate
     if shacl_file.endswith("ttl"):
         shacl_format="turtle"
@@ -76,3 +77,15 @@ def validate(g: Graph, res: Union[Sequence,URIRef,BNode,None], args: AttribDict,
         g.add((review, SDO.reviewRating, Literal(5)))
     g.add((res, SDO.review, review))
     return conforms, results_graph
+
+def get_validation_report(g: Graph, res: Union[Sequence,URIRef,BNode]) -> Optional[str]:
+    """Get the text of an existing validation report for the given resource"""
+    if (res,RDF.type,SDO.Review):
+        return g.value(res,SDO.reviewBody)
+    else:
+        for _,_,review in g.triples((res,SDO.review,None)):
+            return g.value(review,SDO.reviewBody)
+
+            
+
+    
