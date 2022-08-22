@@ -23,7 +23,7 @@ import distutils.cmd #note: will be removed in python 3.12! TODO constraint <= 3
 #pylint: disable=C0413
 
 from rdflib import Graph, BNode, URIRef, Literal
-from rdflib.namespace import RDF, SH
+from rdflib.namespace import RDF
 from rdflib.plugins.shared.jsonld.context import Context
 import rdflib.plugins.serializers.jsonld
 

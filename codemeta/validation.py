@@ -1,5 +1,8 @@
+import sys
+import os
+import datetime
 from rdflib import Graph, Namespace, URIRef, BNode, Literal
-from rdflib.namespace import RDF
+from rdflib.namespace import RDF, SH
 from typing import Union, IO, Sequence, Optional, Tuple
 from codemeta.common import init_graph, init_context, CODEMETA, AttribDict,  SDO,  generate_uri
 
@@ -17,7 +20,7 @@ def validate(g: Graph, res: Union[Sequence,URIRef,BNode,None], args: AttribDict,
     shacl_graph.parse(args.validate, format=shacl_format)
     conforms, results_graph, _ = pyshacl_validate(data_graph=g, shacl_graph=shacl_graph, ont_graph=contextgraph, abort_on_first=False, allow_infos=True, allow_warnings=True)
     counter = 0
-    review = generate_uri(None, args.baseuri,prefix="validation")
+    review = URIRef(generate_uri(None, args.baseuri,prefix="validation"))
     g.add((review, RDF.type, SDO.Review))
     g.add((review, SDO.author, Literal(f"codemetapy validator using {os.path.basename(shacl_file)}")))
     g.add((review, SDO.datePublished, Literal(datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"))))
