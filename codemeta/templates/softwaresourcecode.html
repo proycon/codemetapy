@@ -407,6 +407,13 @@
         </dd>
         {% endif %}
 
+        {% if g.value(sscres, SDO.review) %}
+        <dt class="review" title="Rating of the quality and completeness of this software metadata, based on automatic validation. Click the stars for the full validation report. Note that this is not a judgement on the suitability of the software for any particular task.">Metadata validation</dt>
+        <dd class="review">
+            {% include 'validationrating.html' %}
+        </dd>
+        {% endif %}
+
         {% if g.value(sscres, SDO.dateCreated) %}
         <dt class="dateCreated" title="The date and time at which the software (all versions) was first created">Created</dt>
         <dd class="dateCreated">
@@ -424,6 +431,7 @@
             {% endfor %}
         </dd>
         {% endif %}
+
 
      </dl>
     </div>

@@ -1,0 +1,17 @@
+      {% for _,_,review in g.triples((sscres, SDO.review,None)) %}
+        {% if (review, SDO.name, Literal("Automatic software metadata validation report")) in g %}
+            {% if g.value(review, SDO.reviewRating) %}
+            {% set rating = int(g.value(review, SDO.reviewRating)) %}
+            <span class="rating{{ rating }}" title="Automatic software metadata rating, click to inspect validation report">
+            <a href="{{ review }}">
+            {% for _ in range(0, rating) %}
+            &starf;
+            {% endfor %}
+            {% for _ in range(rating, 5) %}
+            &star;
+            {% endfor %}
+            </a>
+            </span>
+            {% endif %}
+        {% endif %}
+      {% endfor %}
