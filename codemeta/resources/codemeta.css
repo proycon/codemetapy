@@ -427,6 +427,22 @@ div.card div.links li span.description {
 #harvestlog {
     display: none;
 }
+.rating0, .rating1 {
+    color: red;
+}
+.rating2 {
+    color: #ff3400;
+}
+.rating3 {
+    color: #ffad00;
+}
+.rating4 {
+    color: #bdff00;
+}
+.rating5 {
+    color: green;
+}
+
 
 
 
