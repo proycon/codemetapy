@@ -24,7 +24,11 @@ def validate(g: Graph, res: Union[Sequence,URIRef,BNode,None], args: AttribDict,
     g.add((review, RDF.type, SDO.Review))
     g.add((review, SDO.author, Literal(f"codemetapy validator using {os.path.basename(shacl_file)}")))
     g.add((review, SDO.datePublished, Literal(datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"))))
-    g.add((review, SDO.name, Literal("Automatic software metadata validation report")))
+    name = g.value(res,SDO.name)
+    if not name: name = "unnamed software"
+    version = g.value(res,SDO.version)
+    if not version: version = "(unknown version)"
+    g.add((review, SDO.name, Literal(f"Automatic software metadata validation report for {name} {version}")))
     messages = []
     warnings = 0
     violations = 0
@@ -48,17 +52,18 @@ def validate(g: Graph, res: Union[Sequence,URIRef,BNode,None], args: AttribDict,
             if msg:
                 counter +=1 
                 print(f"VALIDATION {str(res)} #{counter}: {severity}: {str(msg)}", file=sys.stderr)
-                messages.append("* " + msg)
+                messages.append(f"{counter}. {msg}")
+    head = args.textv  + "\n\n" if args.textv else ""
     if messages:
         if conforms:
             if warnings:
-                head = "Validation was successful, but there are some warnings which should be addressed:"
+                head += "Validation was successful, but there are some warnings which should be addressed:"
                 g.add((review, SDO.reviewRating, Literal(3)))
             else:
-                head = "Validation was successful, but there are some remarks which you may or may not want to address:"
+                head += "Validation was successful, but there are some remarks which you may or may not want to address:"
                 g.add((review, SDO.reviewRating, Literal(4)))
         else:
-            head = "Validation failed due to one or more requirement violations:"
+            head += "Validation failed due to one or more requirement violations:"
             if violations > 3:
                 g.add((review, SDO.reviewRating, Literal(0)))
             elif violations > 1 or warnings > 5:
