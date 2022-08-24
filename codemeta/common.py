@@ -569,6 +569,8 @@ def reconcile(g: Graph, res: URIRef, args: AttribDict):
         else:
             g.set((res, SDO.license, Literal(license)))
 
+
+
     #Convert Literal to URIRef for certain properties
     for prop in PREFER_URIREF_PROPERTIES:
         for _,_,obj in g.triples((res, prop, None)):
@@ -587,6 +589,58 @@ def reconcile(g: Graph, res: URIRef, args: AttribDict):
         #and add a targetproduct (with only a type)
         guess_interfacetype(g,res, args)
 
+def enrich(g: Graph, res: URIRef, args: AttribDict):
+    """Do some automatic inference and enrichment of the graph"""
+    IDENTIFIER = g.value(res, SDO.identifier)
+    if not IDENTIFIER: IDENTIFIER = str(res)
+    HEAD = f"[CODEMETA ENRICHMENT ({IDENTIFIER})]"
+
+    if not g.value(res, SDO.programmingLanguage):
+        for _,_,o in g.triples((res, SDO.runtimePlatform,None)):
+            for platform in ("Python","Perl","Ruby","Julia","PHP"): #java is not added because the JVM does not necessarily mean things are written in java, NodeJS is not added because it can mean either Javascript or Typescript
+                if str(o).lower().startswith(platform.lower()):
+                    lang = platform
+                    print(f"{HEAD} automatically adding programmingLanguage {lang} derived from runtimePlatform {platform}",file=sys.stderr)
+                    g.add((res, SDO.programmingLanguage, Literal(lang)))
+    elif not g.value(res, SDO.runtimePlatform):
+        for _,_,o in g.triples((res, SDO.programmingLanguage,None)):
+            for lang in ("Python","Perl","Ruby","Julia","PHP","Java","Kotlin","Groovy","Erlang","Elixir"):
+                if str(o).lower().startswith(lang.lower()):
+                    if lang in ("Kotlin","Groovy"):
+                        platform = "Java"
+                    elif lang in "Elixir":
+                        platform = "Erlang"
+                    else:
+                        platform = lang
+                    print(f"{HEAD} automatically adding runtimePlatform {platform} derived from programmingLanguage {lang}",file=sys.stderr)
+                    g.add((res, SDO.runtimePlatform, Literal(platform)))
+
+    if not g.value(res, SDO.contributor):
+        for _,_,o in g.triples((res, SDO.author,None)):
+            print(f"{HEAD} adding author {o} as contributor",file=sys.stderr)
+            g.add((res, SDO.contributor, o))
+    elif not g.value(res, SDO.author):
+        for _,_,o in g.triples((res, SDO.author,None)):
+            print(f"{HEAD} adding contributor {o} as author",file=sys.stderr)
+            g.add((res, SDO.author, o))
+
+    authors = len(list(g.triples((res, SDO.author,None))))
+    if not g.value(res, SDO.maintainer) and authors == 1:
+        print(f"{HEAD} considering sole author as maintainer",file=sys.stderr)
+        author = g.value(res, SDO.author)
+        g.add((res, SDO.maintainer, author))
+
+    if not g.value(res, SDO.producer) and authors == 1:
+        for author in g.triples((res, SDO.author,None)):
+            if isinstance(author, (URIRef,BNode)):
+                if (author, RDF.type, SDO.Person) in g:
+                    for _,_,o in g.triples((author, SDO.affiliation,None)):
+                        print(f"{HEAD} adding affiliation of sole author as producer",file=sys.stderr)
+                        g.add((res, SDO.producer, o))
+                elif (author, RDF.type, SDO.Organization) in g:
+                    print(f"{HEAD} author is organization, add as producer",file=sys.stderr)
+                    g.add((res, SDO.producer, author))
+        
 
 def guess_interfacetype(g: Graph, res: Union[URIRef,BNode], args: AttribDict) -> Union[URIRef,None]:
     IDENTIFIER = g.value(res, SDO.identifier)

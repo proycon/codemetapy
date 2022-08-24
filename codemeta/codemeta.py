@@ -27,7 +27,7 @@ from rdflib.namespace import RDF
 from rdflib.plugins.shared.jsonld.context import Context
 import rdflib.plugins.serializers.jsonld
 
-from codemeta.common import init_graph, init_context, CODEMETA, AttribDict, getstream, CONTEXT, SDO, reconcile, add_triple, generate_uri, remap_uri, query
+from codemeta.common import init_graph, init_context, CODEMETA, AttribDict, getstream, CONTEXT, SDO, reconcile, add_triple, generate_uri, remap_uri, query, enrich
 import codemeta.crosswalk
 import codemeta.parsers.python
 import codemeta.parsers.debian
@@ -101,6 +101,7 @@ def main():
     parser.add_argument('-g','--graph', dest='graph',help="Output a knowledge graph that groups all input files together. Only JSON input files are supported.", action='store_true',required=False)
     parser.add_argument('-s','--select', type=str, help="Output only the selected resource (by URI) from the graph", action='store',required=False)
     parser.add_argument('-V','--validate', type=str, help="Validate against the provided SHACL file. Adds a review property with the condensed validation results.", action='store',required=False)
+    parser.add_argument('--enrich', help="Enable to automatic inference and enrichment", action='store_true',required=False)
     parser.add_argument('--exitv', help="Set exit status according to validation result. Use with --validate", action='store_true',required=False)
     parser.add_argument('--textv', type=str, help="Set extra text to add to a validation report. Use with --validate", action='store',required=False)
     parser.add_argument('--css',type=str, help="Associate a CSS stylesheet (URL) with the HTML output, multiple stylesheets can be separated by a comma", action='store',  required=False)
@@ -366,6 +367,10 @@ def build(**kwargs) -> Tuple[Graph, URIRef, AttribDict, Graph]:
 
     #Test and fix conflicts in the graph (and report them)
     reconcile(g, res, args)
+    
+    if args.enrich:
+        #Some automatic infererence and enrichment
+        enrich(g, res, args)
 
     return (g,res,args, contextgraph)
 
