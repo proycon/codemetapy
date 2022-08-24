@@ -385,6 +385,18 @@ class BuildTest_Combine(unittest.TestCase):
         self.assertIn( (grandparent, RDF.type, SDO.Organization), self.g)
         self.assertIn( (grandparent, SDO.name, Literal("Radboud University")), self.g)
 
+class BuildTest_Enrich(unittest.TestCase):
+    """Build codemeta.json from existing codemeta.json (basically a parse, validation/reconciliation and reserialisation)"""
+
+    def setUp(self):
+        #relies on automatically guessing the type
+        self.g, self.res, self.args, self.contextgraph = build(inputsources=["frog.codemeta.json"], enrich=True)
+
+    def test001_sanity(self):
+        """Testing whether a codemeta.json was read accurately, tests some basic properties"""
+        self.assertIsInstance( self.g, Graph )
+        self.assertIsInstance( self.res, URIRef)
+        self.assertIn( (self.res, RDF.type, SDO.SoftwareSourceCode), self.g)
 
 if __name__ == '__main__':
     unittest.main()
