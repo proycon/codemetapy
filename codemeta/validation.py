@@ -43,7 +43,7 @@ def validate(g: Graph, res: Union[Sequence,URIRef,BNode,None], args: AttribDict,
             elif (node, SH.resultSeverity, SH.Warning) in results_graph:
                 severity = "Warning"
                 warnings += 1
-            elif (node, SH.resultSeverity, SH.Warning) in results_graph:
+            elif (node, SH.resultSeverity, SH.Info) in results_graph:
                 severity = "Info"
                 info += 1
             else:
