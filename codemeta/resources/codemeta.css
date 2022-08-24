@@ -194,7 +194,7 @@ img.thumbnail {
 .positive {
     color: green;
 }
-.negative {
+.negative, .negative a {
     color: #da4800 !important;
 }
 div.warning {

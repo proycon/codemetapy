@@ -71,7 +71,7 @@
     {% endif %}
 
     {% if (res, CODEMETAPY.errors, None) in g and int(g.value(res, CODEMETAPY.errors)) > 0 %}
-        <h3>Log</h3>
+        <h3 id="log">Log</h3>
         <div class="log">
             <span class="negative" title="There were problems harvesting this metadata, please inspect the log"><i class="fa fa-bug"></i>  There were {{ g.value(res, CODEMETAPY.errors) }} error(s) harvesting this metadata, please inspect the log.</span>
             <button onclick="document.getElementById('harvestlog').style.display = 'block'">Show the full log</button>
