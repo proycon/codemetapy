@@ -12,6 +12,16 @@
             {% endfor %}
             </a>
             </span>
+            {% else %}
+            <span class="rating{{ rating }}" title="Automatic software metadata rating, click to inspect validation report">
+            <a href="{{ review }}">
+            &star;
+            &star;
+            &star;
+            &star;
+            &star;
+            </a>
+            </span>
             {% endif %}
         {% endif %}
       {% endfor %}
