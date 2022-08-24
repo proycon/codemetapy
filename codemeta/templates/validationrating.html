@@ -1,5 +1,5 @@
       {% for _,_,review in g.triples((sscres, SDO.review,None)) %}
-        {% if (review, SDO.name, Literal("Automatic software metadata validation report")) in g %}
+        {% if str(g.value(review, SDO.name)).startswith("Automatic software metadata validation report") %}
             {% if g.value(review, SDO.reviewRating) %}
             {% set rating = int(g.value(review, SDO.reviewRating)) %}
             <span class="rating{{ rating }}" title="Automatic software metadata rating, click to inspect validation report">
