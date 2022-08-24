@@ -638,6 +638,18 @@ def enrich(g: Graph, res: URIRef, args: AttribDict):
         author = g.value(res, SDO.author)
         g.add((res, SDO.maintainer, author))
 
+    maintainers = list(g.triples((res, SDO.maintainer,None)))
+    if not g.value(res, SDO.producer) and maintainers:
+        for maintainer in maintainers:
+            if isinstance(maintainer, (URIRef,BNode)):
+                if (maintainer, RDF.type, SDO.Person) in g:
+                    for _,_,affiliation in g.triples((maintainer, SDO.affiliation,None)):
+                        print(f"{HEAD} setting maintainer's affiliation as producer",file=sys.stderr)
+                        g.add((res, SDO.producer, affiliation))
+                elif (maintainer, RDF.type, SDO.Organization) in g:
+                    print(f"{HEAD} maintainer is organization, add as producer",file=sys.stderr)
+                    g.add((res, SDO.producer, maintainer))
+
     if not g.value(res, SDO.producer) and authors == 1:
         for author in g.triples((res, SDO.author,None)):
             if isinstance(author, (URIRef,BNode)):
@@ -648,6 +660,7 @@ def enrich(g: Graph, res: URIRef, args: AttribDict):
                 elif (author, RDF.type, SDO.Organization) in g:
                     print(f"{HEAD} author is organization, add as producer",file=sys.stderr)
                     g.add((res, SDO.producer, author))
+
         
 
 def guess_interfacetype(g: Graph, res: Union[URIRef,BNode], args: AttribDict) -> Union[URIRef,None]:
