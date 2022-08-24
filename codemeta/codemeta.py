@@ -102,7 +102,7 @@ def main():
     parser.add_argument('-s','--select', type=str, help="Output only the selected resource (by URI) from the graph", action='store',required=False)
     parser.add_argument('-V','--validate', type=str, help="Validate against the provided SHACL file. Adds a review property with the condensed validation results.", action='store',required=False)
     parser.add_argument('--exitv', help="Set exit status according to validation result. Use with --validate", action='store_true',required=False)
-    parser.add_argument('--textv', help="Set extra text to add to a validation report. Use with --validate", action='store_true',required=False)
+    parser.add_argument('--textv', type=str, help="Set extra text to add to a validation report. Use with --validate", action='store',required=False)
     parser.add_argument('--css',type=str, help="Associate a CSS stylesheet (URL) with the HTML output, multiple stylesheets can be separated by a comma", action='store',  required=False)
     parser.add_argument('--no-cache',dest="no_cache", help="Do not cache context files, force redownload", action='store_true',  required=False)
     parser.add_argument('--toolstore', help="When converting to HTML, link pages together as served by the CLARIAH tool store (https://github.com/CLARIAH/tool-discovery)", action='store_true',  required=False)
