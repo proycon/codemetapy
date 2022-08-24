@@ -427,19 +427,19 @@ div.card div.links li span.description {
 #harvestlog {
     display: none;
 }
-.rating0, .rating1 {
+.rating0, .rating1, .rating0 a, rating1 a {
     color: red;
 }
-.rating2 {
+.rating2, .rating2 a {
     color: #ff3400;
 }
-.rating3 {
+.rating3, .rating3 a {
     color: #ffad00;
 }
-.rating4 {
+.rating4, .rating4 a {
     color: #bdff00;
 }
-.rating5 {
+.rating5, .rating5 a {
     color: green;
 }
 
