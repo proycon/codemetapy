@@ -82,7 +82,7 @@
             <span class="negative" title="No development status was provided nor could be extracted automatically">unknown</span>
         {% endif %}
     
-        {% if g.value(sscres, SDO.review) %}
+        {% if g.value(res, SDO.review) %}
         {% set sscres = res %}
         <br/>
         {% include 'validationrating.html' %}
