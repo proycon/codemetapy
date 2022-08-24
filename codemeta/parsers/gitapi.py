@@ -164,6 +164,7 @@ def _parse_github(response: dict, g: Graph, res: Union[URIRef, BNode], source: s
                 g.add((owner_res, SDO.affiliation, affil_res))
         elif owner_type == "organization" and response.get('name'):
             owner_res = URIRef(generate_uri(response.get('name'), args.baseuri, prefix="org"))
+            g.add((owner_res, RDF.type, SDO.Organization))
             g.add((owner_res, SDO.name, Literal(response.get('name'))))
             g.add((res, SDO.producer, owner_res))
         if owner_res:
