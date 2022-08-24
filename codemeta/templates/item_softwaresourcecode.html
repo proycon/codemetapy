@@ -18,7 +18,7 @@
         </a>
         {% endif %}
         {% else %}
-        <span class="negative">unknown</span>
+        <span class="negative"><i class="fa fa-question"></i> unknown</span>
         {% endif %}
         {% if  (res, SDO.dateModified, None) in g %}
         <span class="dateModified" property="schema:dateModified" title="Date at which this version was last modified">{{ g.value(res, SDO.dateModified).replace("T"," ").replace("Z"," ") }}</span>
@@ -27,7 +27,7 @@
     <td class="interface">
         <ul>
         {% for label, comment in get_interface_types(g, res, contextgraph,fallback=True) %}
-        <li{% if comment %} title="{{ comment }}"{% endif %}{% if label == "Unknown" %} class="negative"{% endif %}>{{ label }}</li>
+        <li{% if comment %} title="{{ comment }}"{% endif %}{% if label == "Unknown" %} class="negative"{% endif %}>{% if label == "Unknown" %}<i class="fa fa-question"></i> {% endif %}{{ label }}</li>
         {% endfor %}
         </ul>
     </td>
@@ -79,7 +79,7 @@
         {% elif (res, CODEMETA.developmentStatus, None) in g %}
             {{ g.value(res, CODEMETA.developmentStatus) }}
         {% else  %}
-            <span class="negative" title="No development status was provided nor could be extracted automatically">unknown</span>
+            <span class="negative" title="No development status was provided nor could be extracted automatically"><i class="fa fa-question"></i> unknown</span>
         {% endif %}
     
         {% if g.value(res, SDO.review) %}
@@ -89,7 +89,7 @@
         {% endif %}
 
         {% if (res, CODEMETAPY.errors, None) in g and int(g.value(res, CODEMETAPY.errors)) > 0 %}
-        <br/><span class="negative" title="There were problems harvesting this metadata, please inspect the log"><i class="fa fa-triangle-exclamation"></i> {{ g.value(res, CODEMETAPY.errors) }}</span>
+        <br/><span class="negative" title="There were problems harvesting this metadata, please inspect the log"><i class="fa fa-bug"></i> {{ g.value(res, CODEMETAPY.errors) }}</span>
         {% endif %}
     </td>
     <td class="maintainer">
