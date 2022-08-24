@@ -482,10 +482,18 @@ def add_authors(g: Graph, res: Union[URIRef, BNode], value, property=SDO.author,
         if not mail:
             #mails and urls may be tucked away with the name
             # npm allows strings like "Barney Rubble <b@rubble.com> (http://barnyrubble.tumblr.com/)"
-            # we do the same
-            m = re.search(r'([^<]+)(?:<([^@]+@[^>]+)>)?\s*(?:(\(http[^\)]+\)))?',name)
+            # we do the same, alternatively we allow affiliations:
+            #       "Barney Rubble <b@rubble.com> (Barney's Chocolate Factory)"
+            m = re.search(r'([^<]+)(?:<([^@]+@[^>]+)>)?\s*(?:(\([^\)]+\)))?',name)
             if m:
-                name, mail, url = m.groups()
+                name, mail, extra = m.groups()
+                if extra:
+                    if extra.startswith("http"):
+                        url = extra
+                    elif extra.startswith("www"):
+                        url = "http://" + extra
+                    else:
+                        org = extra
 
         firstname, lastname = parse_human_name(name.strip())
 
