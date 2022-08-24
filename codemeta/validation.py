@@ -58,19 +58,22 @@ def validate(g: Graph, res: Union[Sequence,URIRef,BNode,None], args: AttribDict,
     if messages:
         if conforms:
             if warnings:
-                head += "Validation was successful, but there are some warnings which should be addressed:"
+                head += f"Validation of {name} {version} was successful (score=3/5), but there are some warnings which should be addressed:"
                 g.add((review, SDO.reviewRating, Literal(3)))
             else:
-                head += "Validation was successful, but there are some remarks which you may or may not want to address:"
+                head += f"Validation of {name} {version} was successful (score=4/5), but there are some remarks which you may or may not want to address:"
                 g.add((review, SDO.reviewRating, Literal(4)))
         else:
-            head += "Validation failed due to one or more requirement violations:"
             if violations > 3:
                 g.add((review, SDO.reviewRating, Literal(0)))
+                score = "(score 0/5)"
             elif violations > 1 or warnings > 5:
                 g.add((review, SDO.reviewRating, Literal(1)))
+                score = "(score 1/5)"
             else:
                 g.add((review, SDO.reviewRating, Literal(2)))
+                score = "(score 2/5)"
+            head += f"Validation of {name} {version} failed {score} due to one or more requirement violations:"
         g.add((review, SDO.reviewBody, Literal(head + "\n\n" + "\n".join(messages))))
     else:
         g.add((review, SDO.reviewBody, Literal("Validates perfectly, no further remarks!")))
