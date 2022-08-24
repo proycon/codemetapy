@@ -524,7 +524,7 @@ def add_authors(g: Graph, res: Union[URIRef, BNode], value, property=SDO.author,
         if org:
             orgres = URIRef(generate_uri(org, kwargs.get('baseuri'), prefix="org"))
             g.add((orgres, RDF.type, SDO.Organization))
-            g.add((orgres, RDF.name, org))
+            g.add((orgres, RDF.name, Literal(org)))
             g.add((author, SDO.affiliation, orgres))
 
         g.add((res, property, author))
