@@ -53,7 +53,7 @@ def validate(g: Graph, res: Union[Sequence,URIRef,BNode,None], args: AttribDict,
             if msg:
                 counter +=1 
                 print(f"VALIDATION {str(res)} #{counter}: {severity}: {str(msg)}", file=sys.stderr)
-                messages.append(f"{counter}. {msg}")
+                messages.append(f"{counter}. {severity}: {msg}")
     head = args.textv  + "\n\n" if args.textv else ""
     if messages:
         if conforms:
