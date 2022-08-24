@@ -427,7 +427,7 @@ div.card div.links li span.description {
 #harvestlog {
     display: none;
 }
-.rating0, .rating1, .rating0 a, rating1 a {
+.rating0, .rating1, .rating0 a, .rating1 a {
     color: red;
 }
 .rating2, .rating2 a {
