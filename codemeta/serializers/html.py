@@ -15,19 +15,23 @@ def get_triples(g: Graph, res: Union[URIRef,BNode,None], prop, labelprop=SDO.nam
     havepos = False
     for _,_, res2 in g.triples((res, prop, None)):
         if isinstance(res2, Literal):
-            results.append( (res2, res2, None, _get_sortkey2(g,res2)) )
+            results.append( (res2, res2, 9999, 9999) )
         else:
             pos = g.value(res2, SDO.position)
             if pos is not None:
                 havepos = True
+            elif isinstance(pos, int):
+                pass
+            elif isinstance(pos, str):
+                pos = int(pos) if pos.isnumeric() else 9999
             label = g.value(res2, labelprop)
             if label:
                 results.append((label, res2, pos, _get_sortkey2(g,res2)))
             else:
-                results.append((res2, res2, pos, _get_sortkey2(g,res2)))
+                results.append((str(res2), res2, pos, _get_sortkey2(g,res2)))
     if havepos:
         try:
-            results.sort(key=lambda x: str(x[2]))
+            results.sort(key=lambda x: x[2])
         except TypeError: #protection against edge cases, leave unsorted then
             pass
     if abcsort:
@@ -52,7 +56,7 @@ def _get_sortkey2(g: Graph, res: Union[URIRef,BNode,None]):
     elif (res, RDF.type, SDO.CommandLineApplication) in g:
         return 5
     else:
-        return 999
+        return 9999
 
 
 def get_index(g: Graph, restype=SDO.SoftwareSourceCode):
