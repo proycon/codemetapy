@@ -254,10 +254,13 @@ def init_context(no_cache=False):
             r = requests.get(remote, headers={ "Accept": "application/json+ld;q=1.0,application/json;q=0.9,text/plain;q=0.5" })
             r.raise_for_status()
             with open(localfile, 'wb') as f:
-                f.write(r.content.replace(b'"softwareRequirements": { "@id": "schema:softwareRequirements", "@type": "@id"},',b'"softwareRequirements": { "@id": "schema:softwareRequirements" },'))
+                f.write(r.content.replace(b'"softwareRequirements": { "@id": "schema:softwareRequirements", "@type": "@id"},',b'"softwareRequirements": { "@id": "schema:softwareRequirements" },') \
                                            # ^-- rdflib gets confused by this definition in codemeta which we already
                                            #     have in schema .org(without an extra @type: @id), ensure the two are
                                            #     equal (without the @type)
+                                 .replace(b'"referencePublication": { "@id": "codemeta:referencePublication", "@type": "@id"},',b'"referencePublication": { "@id": "codemeta:referencePublication" },'))
+                                           # ^--- with rdflib @type: @id here, rdflib (and our code) doesn't embed the full referencePublication as we want. Trick the serialiser by rewriting this part of the context.
+
 
 def bind_graph(g: Graph):
     g.bind('schema', SDO)
