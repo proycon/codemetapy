@@ -28,6 +28,13 @@ def rewrite_context(context: Union[list,str]) -> list:
             pass
     elif isinstance(context, str):
         context = rewrite_context([context])
+    #ammend context
+    if SCHEMA_LOCAL_SOURCE not in context:
+        context.append(SCHEMA_LOCAL_SOURCE)
+    if STYPE_LOCAL_SOURCE not in context:
+        context.append(STYPE_LOCAL_SOURCE)
+    if IODATA_LOCAL_SOURCE not in context:
+        context.append(IODATA_LOCAL_SOURCE)
     return context
 
 def rewrite_schemeless_uri(data: dict) -> dict:
