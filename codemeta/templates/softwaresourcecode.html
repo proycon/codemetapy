@@ -408,6 +408,24 @@
         </dd>
         {% endif %}
 
+        {% if g.value(sscres, SOFTWAREIODATA.consumesData) %}
+        <dt class="iodata" title="High-level overview of the type(s) of data that the software consumes as input">Input data</dt>
+        <dd class="iodata">
+        {% for label, iores in get_triples(g, sscres, SOFTWAREIODATA.consumesData) %}
+            <div>{% include 'iodata.html' %}</div>
+        {% endfor %}
+        </dd>
+        {% endif %}
+
+        {% if g.value(sscres, SOFTWAREIODATA.producesData) %}
+        <dt class="iodata" title="High-level overview of the type(s) of data that the software produces as output">Output data</dt>
+        <dd class="iodata">
+        {% for label, iores in get_triples(g, sscres, SOFTWAREIODATA.producesData) %}
+            <div>{% include 'iodata.html' %}</div>
+        {% endfor %}
+        </dd>
+        {% endif %}
+
         {% if g.value(sscres, SDO.review) %}
         <dt class="review" title="Rating of the quality and completeness of this software metadata, based on automatic validation. Click the stars for the full validation report. Note that this is not a judgement on the suitability of the software for any particular task.">Metadata validation</dt>
         <dd class="review">

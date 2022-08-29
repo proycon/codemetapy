@@ -1,0 +1,117 @@
+<dl>
+{% if iores %}
+    {% if g.value(iores, SDO.name) %}
+    <dt>Name</dt>
+    <dd>{{ g.value(iores, SDO.name) }}</dd>
+    {% endif %}
+
+    {% if g.value(iores, SDO.version) %}
+    <dt title="Version of the data">Version</dt>
+    <dd>{{ g.value(iores, SDO.version) }}</dd>
+    {% endif %}
+
+    {% if g.value(iores, SDO.description) %}
+    <dt>Description</dt>
+    <dd>{{ g.value(iores, SDO.description) }}</dd>
+    {% endif %}
+
+    {% if g.value(iores, SDO.author)  %}
+    <dt class="author" title="The main people that developed the data">Author(s)</dt>
+    <dd class="author">
+        <ul>
+         {% for label, pores in get_triples(g, iores, SDO.author) %}
+         <li property="schema:author">
+             {% include 'person_or_org.html' %}
+         </li>
+         {% endfor %}
+        </ul>
+    </dd>
+    {% endif %}
+
+    {% if g.value(iores, RDF.type) %}
+    <dt title="Data type (usually according to schema.org)">Type</dt>
+    <dd><span class="type">{{ g.value(iores, RDF.type).replace("http://schema.org/","") }}</span></dd>
+    {% endif %}
+
+    {% if g.value(iores, SDO.encodingFormat) %}
+    <dt title="Encoding format (usually expressed as a MIME type)">Encoding Format</dt>
+    <dd>
+        {% for formatlabel, _ in get_triples(g, iores, SDO.encodingFormat) %}
+        <span class="format">{{ formatlabel }}</span>
+        {% endfor %}
+    </dd>
+    {% endif %}
+
+    {% if g.value(iores, SDO.inLanguage) %}
+    <dt title="Natural language the data is in">Language</dt>
+    <dd>
+        {% for langlabel, _ in get_triples(g, iores, SDO.inLanguage) %}
+        <span class="language">{{ langlabel }}</span>
+        {% endfor %}
+    </dd>
+    {% endif %}
+
+    {% if g.value(iores, SDO.license) %}
+    <dt>License</dt>
+    <dd>{{ g.value(iores, SDO.license) }}</dd>
+    {% endif %}
+
+    {% if g.value(iores, SDO.url) %}
+    <dt title="The website for this data">Website</dt>
+    <dd>
+        <ul>
+            {% for _,_, value in g.triples((iores, SDO.url, None)) %}
+            <li><a rel="schema:url" href="{{ value }}">{{ value }}</a></li>
+            {% endfor %}
+        </ul>
+    </dd>
+    {% endif %}
+
+    {% if g.value(iores, SDO.producer)  %}
+    <dt title="The organisation (or person) that produces/develops the data">Producer</dt>
+    <dd>
+        <ul>
+         {% for label, pores in get_triples(g, iores, SDO.producer) %}
+         <li>{% include 'person_or_org.html' %}</li>
+         {% endfor %}
+        </ul>
+    </dd>
+    {% endif %}
+
+    {% if g.value(iores, SDO.provider)  %}
+    <dt title="The organisation (or person) that provides the data">provider</dt>
+    <dd>
+        <ul>
+         {% for label, pores in get_triples(g, iores, SDO.provider) %}
+         <li>{% include 'person_or_org.html' %}</li>
+         {% endfor %}
+        </ul>
+    </dd>
+    {% endif %}
+
+    {% if g.value(iores, SDO.publisher)  %}
+    <dt title="The organisation (or person) that publishes the data">Publisher</dt>
+    <dd>
+        <ul>
+         {% for label, pores in get_triples(g, iores, SDO.publisher) %}
+         <li>{% include 'person_or_org.html' %}</li>
+         {% endfor %}
+        </ul>
+    </dd>
+    {% endif %}
+
+    {% if g.value(iores, SDO.funder) %}
+    <dt title="funder source (e.g. specific grant)">Funder</dt>
+    <dd>
+        <ul>
+             {% for label, pores in get_triples(g, iores, SDO.funder, abcsort=True) %}
+             <li>{% include 'person_or_org.html' %}</li>
+             {% endfor %}
+        </ul>
+    </dd>
+    {% endif %}
+
+{% else %}
+    {{ label }}
+{% endif %}
+</dl>

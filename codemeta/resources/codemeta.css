@@ -169,7 +169,7 @@ tr.targetProduct td.name {
 div.targetProduct div.properties {
     background: transparent;
     margin-top: 0px;
-    text-align: right;
+    text-align: left;
 }
 tr.targetProduct td.links a.mainlink {
     font-weight: bold;
@@ -443,6 +443,21 @@ div.card div.links li span.description {
     color: green;
 }
 
+dd.iodata div {
+    border-bottom: 1px solid #999;
+    border-left: 1px solid #999;
+    padding: 5px;
+}
+.iodata span.format {
+    display: inline-block;
+    font-family: monospace;
+    margin-right: 10px;
+}
+.iodata span.type {
+    display: inline-block;
+    font-family: monospace;
+    margin-right: 10px;
+}
 
 
 
