@@ -36,7 +36,7 @@
     {% if g.value(iores, SDO.encodingFormat) %}
     <dt title="Encoding format (usually expressed as a MIME type)">Encoding Format</dt>
     <dd>
-        {% for formatlabel, _ in get_triples(g, iores, SDO.encodingFormat) %}
+        {% for formatlabel, _ in get_triples(g, iores, SDO.encodingFormat, abcsort=True) %}
         <span class="format">{{ formatlabel }}</span>
         {% endfor %}
     </dd>
@@ -45,7 +45,7 @@
     {% if g.value(iores, SDO.inLanguage) %}
     <dt title="Natural language the data is in">Language</dt>
     <dd>
-        {% for langlabel, _ in get_triples(g, iores, SDO.inLanguage) %}
+        {% for langlabel, _ in get_triples(g, iores, SDO.inLanguage, abcsort=True) %}
         <span class="language">{{ langlabel }}</span>
         {% endfor %}
     </dd>
@@ -79,7 +79,7 @@
     {% endif %}
 
     {% if g.value(iores, SDO.provider)  %}
-    <dt title="The organisation (or person) that provides the data">provider</dt>
+    <dt title="The organisation (or person) that provides the data">Provider</dt>
     <dd>
         <ul>
          {% for label, pores in get_triples(g, iores, SDO.provider) %}
