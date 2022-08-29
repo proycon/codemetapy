@@ -59,6 +59,7 @@
         <li>{{ title }}</li>
         {% endif %}
         {% endfor %}
+
         {% for title, ref in get_triples(g, sscres, SDO.citation) %}
         {% if ref %}
         <li>{% include 'reference.html' %}</li>

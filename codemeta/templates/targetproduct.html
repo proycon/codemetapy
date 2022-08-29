@@ -180,6 +180,21 @@
             </dd>
             {% endif %}
 
+            {% if g.value(targetres, CODEMETA.funding) %}
+            <dt class="funding" title="Funding source (e.g. specific grant)">Funding</dt>
+            <dd class="funding">
+                <ul>
+                     {% for label, res2 in get_triples(g, targetres, CODEMETA.funding, abcsort=True) %}
+                         {% if res2 and g.value(res2, SDO.url) %}
+                            <li property="codemeta:funding"><a href="{{ g.value(res2, SDO.url) }}">{{ label }}</a></li>
+                         {% else %}
+                            <li property="codemeta:funding">{{ label }}</li>
+                         {% endif %}
+                     {% endfor %}
+                </ul>
+            </dd>
+            {% endif %}
+
             {% if g.value(targetres, SDO.permissions) %}
             <dt class="permissions" title="Permissions that are needed to run the software">Permissions</dt>
             <dd class="permissions">
