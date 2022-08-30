@@ -95,7 +95,7 @@
     </div>
     {% endif %}
 
-    {% if (res, SDO.targetPlatform, None) in g or (res, SDO.operatingSystem, None)%}
+    {% if (res, SDO.targetPlatform, None) in g or (res, SDO.operatingSystem, None) in g %}
     <div class="targetplatforms">
         <i class="fa fa-cogs" title="Target platform"></i> <ul>
          {% for label in get_target_platforms(g, res) %}
