@@ -130,6 +130,9 @@
             <a href="{{ g.value(res2, SDO.url) }}"><i class="fa fa-book" title="Documentation: {{ g.value(res2, SDO.url) }}"></i></a>
             {% endif %}
         {% endfor %}
+        {% for _,_, ciurl in g.triples((res, CODEMETA.contIntegration, None)) %}
+            <a href="{{ ciurl }}"><i class="fa fa-check" title="Continuous Integration (icon not indicative of results!)"></i></a>
+        {% endfor %}
         {% for _,_, res2 in g.triples((res, SDO.documentation, None)) %}
             {% if g.value(res2, SDO.name) and g.value(res2, SDO.url) %}
             <a href="{{ g.value(res2, SDO.url) }}"><i class="fa fa-book" title="Documentation: {{ g.value(res2, SDO.name) }}"></i></a>
