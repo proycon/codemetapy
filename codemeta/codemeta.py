@@ -326,12 +326,17 @@ def build(**kwargs) -> Tuple[Graph, URIRef, AttribDict, Graph]:
                     g.add((res, SDO.targetProduct, targetres))
             if not found:
                 print(f"(no metadata found at remote URL)",file=sys.stderr)
-        elif inputtype in ("github", "gitlab"):
+        elif inputtype in ("github", "gitlab", "gitapi"):
             #e.g. transform git@gitlab.com/X in https://gitlab.com/X
             source = re.sub(r'git@(.*):', r'https://\1/', source)
             if source.endswith(".git"): source = source[:-4]
-            print(f"Querying GitAPI parser for {source}",file=sys.stderr)
-            prefuri = codemeta.parsers.gitapi.parse(g, res, source, inputtype ,args)
+            if inputtype == "gitapi": #disambiguate
+                inputtype = codemeta.parsers.gitapi.get_repo_kind(source)
+            if inputtype:
+                print(f"Querying GitAPI parser for {source}",file=sys.stderr)
+                prefuri = codemeta.parsers.gitapi.parse(g, res, source, inputtype ,args)
+            else:
+                raise ValueError(f"Unable to disambiguate gitapi type")
         elif inputtype in ('authors', 'contributors','maintainers'):
             print(f"Extracting {inputtype} from {source}",file=sys.stderr)
             if inputtype == 'authors':
