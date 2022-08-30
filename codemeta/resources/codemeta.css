@@ -93,9 +93,7 @@ dd ul, table ul {
     color: black;
     font-size: 0.9em;
 }
-div.targetplatforms {
-    float: left;
-}
+
 
 .interface ul, table ul {
     list-style: none;
@@ -468,6 +466,13 @@ dd.iodata div {
     margin-right: 10px;
 }
 
+div.card img.thumbnail {
+    display: block;
+    float: none;
+    margin-left: auto;
+    margin-right: auto;
+    text-align: center;
+}
 
 
 

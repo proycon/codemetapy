@@ -21,6 +21,10 @@
         </div>
     </div>
 
+    {% if (res, SDO.thumbnailUrl, None) in g %}
+    <img class="thumbnail" src="{{ g.value(res, SDO.thumbnailUrl) }}" alt="thumbnail/logo" />
+    {% endif %}
+
     <h2>
         <span class="name" property="schema:name">
         {% if baseuri and toolstore %}
