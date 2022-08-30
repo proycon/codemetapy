@@ -241,17 +241,17 @@ th.description, td.description {
 th.maintainer, th.author, th.producer {
     width: 8%;
 }
-div.keywords, div.category {
+div.keywords, div.category, div.targetplatforms {
     margin-top: 5px;
     font-size: 90%;
 }
 .interface {
     font-size: 90%;
 }
-div.keywords ul, div.category ul {
+div.keywords ul, div.category ul, div.targetplatforms ul {
     display: inline;
 }
-div.keywords ul li, .interface ul li, dd.softwareRequirements ul li, div.category ul li {
+div.keywords ul li, .interface ul li, dd.softwareRequirements ul li, div.category ul li, div.targetplatforms ul li {
     background: #ddd;
     font-size: 90%;
 }
@@ -355,9 +355,7 @@ div.card div.description {
     margin-bottom: 5px;
 }
 div.card div.minilinks {
-    margin-left: auto;
-    margin-right: auto;
-    text-align: center;
+    float: right;
 }
 div.card div.links {
     margin-top: 2px;

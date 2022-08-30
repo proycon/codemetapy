@@ -165,7 +165,8 @@
                 <i class="fa fa-dollar-sign" title="Funding: {{ label }}"></i>
             {% endif %}
         {% endfor %}
-                
+        {% set sscres = res %}
+        {% include 'validationrating.html' %}
     {% endif %}
     </div>
 
