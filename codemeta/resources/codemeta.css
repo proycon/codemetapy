@@ -84,7 +84,7 @@ dd ul, table ul {
     list-style: none;
 }
 
-.keywords ul li, .softwareRequirements ul li, .category ul li {
+.keywords ul li, .softwareRequirements ul li, .category ul li, .targetplatforms ul li {
     display: inline-block;
     padding: 2px;
     margin: 2px;
@@ -336,10 +336,10 @@ div.card div.developmentStatus {
     font-size: 80%;
     opacity: 0.75;
 }
-div.card div.keywords, div.card div.category {
+div.card div.keywords, div.card div.category, div.card div.targetplatforms {
     text-align: left;
 }
-div.card div.keywords li, div.card div.category li {
+div.card div.keywords li, div.card div.category li, div.card div.targetplatforms li {
     color: #666;
     border: none;
 }
@@ -430,7 +430,7 @@ div.card div.links li span.description {
 #harvestlog {
     display: none;
 }
-#harvestlog pre {
+pre#harvestlog {
     word-wrap: break-word;
     white-space: pre-wrap;
 }
