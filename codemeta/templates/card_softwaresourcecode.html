@@ -116,6 +116,7 @@
             <i class="fa fa-copyright" title="License: {{ license }}"></i>
         {% endif %}
         {% endfor %}
+
         {% for _,_, readme in g.triples((res, SDO.readme, None)) %}
             <a href="{{ readme }}"><i class="fa fa-file" title="Readme"></i></a>
         {% endfor %}
@@ -136,22 +137,35 @@
             <a href="{{ g.value(res2, SDO.url) }}"><i class="fa fa-book" title="Documentation: {{ g.value(res2, SDO.url) }}"></i></a>
             {% endif %}
         {% endfor %}
-         {% for label, res2 in get_triples(g, res, CODEMETA.funding, abcsort=True) %}
-             {% if res2 and g.value(res2, SDO.url) %}
-                 <a href="{{ g.value(res2, SDO.url) }}"><i class="fa fa-dollar-sign" title="Funding: {{ label }}"></i></a>
-             {% else %}
-                 <i class="fa fa-dollar-sign" title="Funding: {{ label }}"></i>
-             {% endif %}
-         {% endfor %}
-         {% for label, res2 in get_triples(g, res, SDO.funder, abcsort=True) %}
-             {% if res2 and g.value(res2, SDO.url) %}
-                 <a href="{{ g.value(res2, SDO.url) }}"><i class="fa fa-dollar-sign" title="Funding: {{ label }}"></i></a>
-             {% else %}
-                 <i class="fa fa-dollar-sign" title="Funding: {{ label }}"></i>
-             {% endif %}
-         {% endfor %}
+        {% for title, res2 in get_triples(g, res, CODEMETA.referencePublication) %}
+            {% if res2 and g.value(res2, SDO.url) %}
+            <a href="{{ g.value(res2, SDO.url) }}"><i class="fa fa-quote-right" title="Reference Publication: {{ title }}"></i></a>
+            {% else %}
+            <i class="fa fa-quote-right" title="Reference Publication: {{ title }}"></i>
+            {% endif %}
+        {% endfor %}
+        {% for title, res2 in get_triples(g, res, SDO.citation) %}
+            {% if res2 and g.value(res2, SDO.url) %}
+            <a href="{{ g.value(res2, SDO.url) }}"><i class="fa fa-quote-right" title="Reference Publication: {{ title }}"></i></a>
+            {% else %}
+            <i class="fa fa-quote-right" title="Reference Publication: {{ title }}"></i>
+            {% endif %}
+        {% endfor %}
+        {% for label, res2 in get_triples(g, res, CODEMETA.funding, abcsort=True) %}
+            {% if res2 and g.value(res2, SDO.url) %}
+                <a href="{{ g.value(res2, SDO.url) }}"><i class="fa fa-dollar-sign" title="Funding: {{ label }}"></i></a>
+            {% else %}
+                <i class="fa fa-dollar-sign" title="Funding: {{ label }}"></i>
+            {% endif %}
+        {% endfor %}
+        {% for label, res2 in get_triples(g, res, SDO.funder, abcsort=True) %}
+            {% if res2 and g.value(res2, SDO.url) %}
+                <a href="{{ g.value(res2, SDO.url) }}"><i class="fa fa-dollar-sign" title="Funding: {{ label }}"></i></a>
+            {% else %}
+                <i class="fa fa-dollar-sign" title="Funding: {{ label }}"></i>
+            {% endif %}
+        {% endfor %}
                 
-         {% endif %}
     {% endif %}
     </div>
 
