@@ -93,7 +93,9 @@ dd ul, table ul {
     color: black;
     font-size: 0.9em;
 }
-
+div.targetplatforms {
+    float: left;
+}
 
 .interface ul, table ul {
     list-style: none;

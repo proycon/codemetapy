@@ -117,7 +117,7 @@
         {% endif %}
         {% endfor %}
 
-        {% for _,_, readme in g.triples((res, SDO.readme, None)) %}
+        {% for _,_, readme in g.triples((res, CODEMETA.readme, None)) %}
             <a href="{{ readme }}"><i class="fa fa-file" title="Readme"></i></a>
         {% endfor %}
         {% for _,_, file in g.triples((res, CODEMETA.buildInstructions, None)) %}
