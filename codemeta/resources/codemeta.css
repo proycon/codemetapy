@@ -354,6 +354,11 @@ div.card div.description {
     margin-top: 5px;
     margin-bottom: 5px;
 }
+div.card div.minilinks {
+    margin-left: auto;
+    margin-right: auto;
+    text-align: center;
+}
 div.card div.links {
     margin-top: 2px;
     clear: both;
