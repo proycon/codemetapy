@@ -142,7 +142,7 @@ def get_interface_types(g: Graph, res: Union[URIRef,None], contextgraph: Graph, 
     return list(sorted(types))
 
 
-def get_target_platforms(g: Graph, res: Union[URIRef,None], contextgraph: Graph):
+def get_target_platforms(g: Graph, res: Union[URIRef,None]):
     types =  set()
     for label,_ in get_triples(g, res, SDO.targetPlatform):
         label = label.lower().split(" ")[0]
