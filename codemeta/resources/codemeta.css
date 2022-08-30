@@ -427,6 +427,10 @@ div.card div.links li span.description {
 #harvestlog {
     display: none;
 }
+#harvestlog pre {
+    word-wrap: break-word;
+    white-space: pre-wrap;
+}
 .rating0, .rating1, .rating0 a, .rating1 a {
     color: red;
 }
