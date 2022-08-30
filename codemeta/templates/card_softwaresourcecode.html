@@ -167,14 +167,12 @@
         {% endfor %}
         {% for _,_,review in g.triples((res, SDO.review,None)) %}
           {% if str(g.value(review, SDO.name)).startswith("Automatic software metadata validation report") %}
-            {% if g.value(review, SDO.reviewRating) %}
             {% set rating = int(g.value(review, SDO.reviewRating)) %}
             <span class="rating{{ rating }}" title="Automatic software metadata rating {{rating}}/5, click to inspect validation report">
             <a href="{{ review }}">
             <i class="fa fa-star"></i>
             </a>
             </span>
-            {% endif %}
           {% endif %}
         {% endfor %}
     {% endif %}
