@@ -77,7 +77,7 @@
 
     {% if (res, SDO.applicationCategory, None) in g %}
     <div class="category">
-        <i class="fa fa-sitemap"></i> <ul>
+        <i class="fa fa-sitemap" title="Category"></i> <ul>
          {% for label, _ in get_triples(g, res, SDO.applicationCategory, abcsort=True) %}
             <li property="schema:">{{ label }}</li>
          {% endfor %}
@@ -87,7 +87,7 @@
 
     {% if (res, SDO.keywords, None) in g %}
     <div class="keywords">
-        <i class="fa fa-tags"></i> <ul>
+        <i class="fa fa-tags" title="Keywords"></i> <ul>
          {% for label, _ in get_triples(g, res, SDO.keywords, abcsort=True) %}
             <li property="schema:keywords">{{ label }}</li>
          {% endfor %}
@@ -97,7 +97,7 @@
 
     {% if (res, SDO.targetPlatform, None) in g or (res, SDO.operatingSystem, None)%}
     <div class="targetplatforms">
-        <i class="fa fa-cogs"></i> <ul>
+        <i class="fa fa-cogs" title="Target platform"></i> <ul>
          {% for label in get_target_platforms(g, res) %}
             <li>{{ label }}</li>
          {% endfor %}
