@@ -165,7 +165,7 @@
                 <i class="fa fa-dollar-sign" title="Funding: {{ label }}"></i>
             {% endif %}
         {% endfor %}
-        {% for _,_,review in g.triples((sscres, SDO.review,None)) %}
+        {% for _,_,review in g.triples((res, SDO.review,None)) %}
           {% if str(g.value(review, SDO.name)).startswith("Automatic software metadata validation report") %}
             {% if g.value(review, SDO.reviewRating) %}
             {% set rating = int(g.value(review, SDO.reviewRating)) %}
