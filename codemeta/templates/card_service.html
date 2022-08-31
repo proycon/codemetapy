@@ -217,7 +217,7 @@
         {% endif %}
 
 
-        {% g.value(sscres, SDO.url) in g %}
+        {% if g.value(sscres, SDO.url) in g %}
         <li><i class="fa fa-home"></i>&nbsp;<a rel="schema:url" href="{{ g.value(sscres, SDO.url) }}" title="This is the project website associated with this software">Website</a></li>
         {% endif %}
 
