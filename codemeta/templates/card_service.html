@@ -1,9 +1,5 @@
 <div about="{{ targetres }}" class="card service" typeof="schema:SoftwareApplication">
-{% if (targetres, RDF.type, SDO.WebApplication) in g or
-  (targetres, RDF.type, SDO.WebSite) in g or
-  (targetres, RDF.type, SDO.NotebookApplication) in g or
-  (targetres, RDF.type, SDO.WebPage) in g %}
-    {% set sscres = list(g.subjects(SDO.targetProduct, targetres))[0] %}
+    {% set sscres = res %}
 
     <div class="topbar">
         <div class="developmentStatus" property="codemeta:developmentStatus">
@@ -243,6 +239,4 @@
         Modified: <span class="dateModified" property="schema:dateModified" title="Date at which this version's source code was last modified">{{ g.value(sscres, SDO.dateModified).split("T")[0] }}</span>
         {% endif %}
     </div>
-
-{% endif %}
 </div>
