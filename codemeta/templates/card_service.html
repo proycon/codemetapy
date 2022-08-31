@@ -9,7 +9,7 @@
                     <a rel="codemeta:developmentStatus" href="{{ g.value(targetres, CODEMETA.developmentStatus) }}"><img src="https://www.repostatus.org/badges/latest/{{ repostatus_id }}.svg" title="{{ contextgraph.value(repostatus, SKOS.prefLabel) }}: {{ contextgraph.value(repostatus, SKOS.definition) }}" alt="{{ contextgraph.value(repostatus, SKOS.prefLabel) }}: {{ contextgraph.value(repostatus, SKOS.definition) }}"  /></a>
             {% elif (targetres, CODEMETA.developmentStatus, None) in g %}
                 {{ g.value(targetres, CODEMETA.developmentStatus) }}
-            {% elif (sscres, CODEMETA.developmentStatus, None) in g and g.value(targetres, CODEMETA.developmentStatus).find("repostatus") != -1 %}
+            {% elif (sscres, CODEMETA.developmentStatus, None) in g and g.value(sscres, CODEMETA.developmentStatus).find("repostatus") != -1 %}
                 {% set repostatus = URIRef(g.value(sscres, CODEMETA.developmentStatus)) %}
                 {% set repostatus_id = repostatus.split('#')[-1] %}
                     <a rel="codemeta:developmentStatus" href="{{ g.value(sscres, CODEMETA.developmentStatus) }}"><img src="https://www.repostatus.org/badges/latest/{{ repostatus_id }}.svg" title="{{ contextgraph.value(repostatus, SKOS.prefLabel) }}: {{ contextgraph.value(repostatus, SKOS.definition) }}" alt="{{ contextgraph.value(repostatus, SKOS.prefLabel) }}: {{ contextgraph.value(repostatus, SKOS.definition) }}"  /></a>
