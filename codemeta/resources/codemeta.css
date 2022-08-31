@@ -392,14 +392,14 @@ div.card div.links li.go span.description {
 div.card div.links li.go a, div.card div.links li.go a:visited, div.card div.links li:hover, div.card div.links li:hover a {
     color: white;
 }
-div.card div.author ul, div.card div.producer ul {
+div.card div.author ul, div.card div.producer ul, div.provider ul {
     list-style: none;
 }
-div.card div.author li, div.card div.producer li {
+div.card div.author li, div.card div.producer li, div.provider li {
     display: inline-block;
     font-size: 90%;
 }
-div.card div.author li, div.card div.producer li, div.card div.author li a, div.card div.producer li a{
+div.card div.author li, div.card div.producer li, div.card div.author li a, div.card div.producer li a, div.card div.provider li a {
     color: #0092bc;
 }
 
