@@ -473,6 +473,9 @@ div.card img.thumbnail {
     margin-right: auto;
     text-align: center;
 }
+li.maintainer {
+    font-weight: bold;
+}
 
 
 

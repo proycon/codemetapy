@@ -28,7 +28,7 @@
     <h2>
         <span class="name" property="schema:name">
         {% if baseuri and toolstore %}
-        <a href="{{ res }}">
+        <a href="{{ res }}" title="Go to the overview page for this tool">
         {% endif %}
         {{ g.value(res, SDO.name) }}
         {% if baseuri %}
@@ -83,7 +83,7 @@
     <div class="category">
         <i class="fa fa-sitemap" title="Category"></i> <ul>
          {% for label, _ in get_triples(g, res, SDO.applicationCategory, abcsort=True) %}
-            <li property="schema:">{{ label }}</li>
+            <li property="schema:applicationCategory">{{ label }}</li>
          {% endfor %}
         </ul>
     </div>
@@ -110,7 +110,6 @@
     {% endif %}
 
     <div class="minilinks">
-    {% if g.value(res, SDO.license) %}
         {% for _,_, license in g.triples((res, SDO.license, None)) %}
         {% if (license, SDO.name, None) in contextgraph %}
             <a href="{{ license }}"><i class="fa fa-copyright" title="License: {{ contextgraph.value(license, SDO.name) }}"></i></a>
@@ -182,7 +181,6 @@
             </span>
           {% endif %}
         {% endfor %}
-    {% endif %}
     </div>
 
     <div class="links">
@@ -243,7 +241,7 @@
 
     {% if  (res, SDO.dateCreated, None) in g %}
     <div class="dateCreated">
-        Created: <span class="dateCreated" property="schema:dateCreated" title="Date at which this version was last modified">{{ g.value(res, SDO.dateCreated).split("T")[0]}}</span>
+        Created: <span class="dateCreated" property="schema:dateCreated" title="Date at which the first verison was created">{{ g.value(res, SDO.dateCreated).split("T")[0]}}</span>
     </div>
     {% endif %}
 
