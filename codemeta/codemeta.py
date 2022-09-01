@@ -301,6 +301,8 @@ def build(**kwargs) -> Tuple[Graph, URIRef, AttribDict, Graph]:
           
         if inputtype == "null":
             print(f"Starting from scratch, using command line parameters to build",file=sys.stderr)
+            if hasattr(args, "codeRepository"):
+                prefuri = getattr(args, "codeRepository")
         elif inputtype == "python":
             print(f"Obtaining python package metadata for: {source}",file=sys.stderr)
             #source is a name of a package or path to a pyproject.toml file
