@@ -3,7 +3,7 @@
     {% if baseuri and toolstore %}
     <a href="{{ res }}">
     {% endif %}
-    {% if g.value(res, SDO.name) %)
+    {% if g.value(res, SDO.name) %}
     {{ g.value(res, SDO.name) }}
     {% else %}
     {{ g.value(res, SDO.identifier) }}
