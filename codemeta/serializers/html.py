@@ -66,6 +66,13 @@ def get_index(g: Graph, restype=SDO.SoftwareSourceCode):
         label = g.value(res, SDO.name)
         if label:
             results.append((res, label))
+        else:
+            identifier = g.value(res, SDO.identifier)
+            if identifier: 
+                label = identifier.strip("/ \n").capitalize()
+                results.append((res, label))
+            else:
+                results.append((res, "(untitled"))
     results.sort(key=lambda x: x[1].lower())
     return results
 
