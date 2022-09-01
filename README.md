@@ -73,6 +73,10 @@ To read an existing codemeta.json and extend it:
 
 `$ codemetapy codemeta.json somepackage > codemeta.json`
 
+If you want to start from scratch and build using command line parameters, use `/dev/null` as input, and make sure to pass some identifier and code repository:
+
+`$ codemetapy --identifier some-id --codeRepository https://github.com/my/code /dev/null > codemeta.json`
+
 This tool can also deal with debian packages by parsing the output of
 `apt show` (albeit limited):
 
@@ -82,6 +86,8 @@ Here `-` represents standard input, which enables you to use piping
 solutions on a unix shell, `-i` denotes the input types, you can chain
 as many as you want. The number of input types specifies must correspond
 exactly to the number of input sources (the positional arguments).
+
+
 
 ## Some notes on Vocabulary
 

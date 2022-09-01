@@ -110,7 +110,7 @@ def main():
     parser.add_argument('--strict', dest='strict', help="Strictly adhere to the codemeta standard and disable any extensions on top of it", action='store_true')
     parser.add_argument('--released', help="Signal that this software is released, this affects whether development status maps to either WIP or active", action='store_true')
     parser.add_argument('--title', type=str, help="Title to add when generating HTML pages", action='store')
-    parser.add_argument('inputsources', nargs='*', help='Input sources, the nature of the source depends on the type, often a file (or use - for standard input), set -i accordingly with the types (must contain as many items as passed!)')
+    parser.add_argument('inputsources', nargs='*', help='Input sources, the nature of the source depends on the type, often a file (or use - for standard input, /dev/null to start from scratch without external input), set -i accordingly with the types (must contain as many items as passed!)')
 
     for key, prop in sorted(props.items()):
         if key:
@@ -207,7 +207,9 @@ def build(**kwargs) -> Tuple[Graph, URIRef, AttribDict, Graph]:
             print(f"Passed {len(inputfiles)} files/sources but specified {len(inputtypes)} input types! Automatically guessing types...",  file=sys.stderr)
             guess = True
             for inputsource in inputfiles[len(inputtypes):]:
-                if inputsource.lower().endswith("setup.py"):
+                if inputsource == "/dev/null":
+                    inputtypes.append("null")
+                elif inputsource.lower().endswith("setup.py"):
                     inputtypes.append("python")
                 elif inputsource.endswith("package.json"):
                     inputtypes.append("nodejs")
@@ -297,7 +299,9 @@ def build(**kwargs) -> Tuple[Graph, URIRef, AttribDict, Graph]:
         print(f"Processing source #{i+1} of {l}",file=sys.stderr)
         prefuri = None #preferred URI returned by the parsing method
           
-        if inputtype == "python":
+        if inputtype == "null":
+            print(f"Starting from scratch, using command line parameters to build",file=sys.stderr)
+        elif inputtype == "python":
             print(f"Obtaining python package metadata for: {source}",file=sys.stderr)
             #source is a name of a package or path to a pyproject.toml file
             prefuri = codemeta.parsers.python.parse_python(g, res, source, crosswalk, args)
