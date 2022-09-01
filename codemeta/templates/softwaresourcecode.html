@@ -1,6 +1,10 @@
 <div about="{{ sscres }}" typeof="schema:SoftwareSourceCode" class="softwaresourcecode">
     <div class="leftcolumn">
+    {% if g.value(sscres, SDO.name) %}
     <h1 property="schema:name">{{ g.value(sscres, SDO.name) }}</h1>
+    {% else %}
+    <h1 property="schema:identifier">{{ g.value(sscres, SDO.identifier) }}</h1>
+    {% endif %}
 
     {% if g.value(sscres, SDO.thumbnailUrl) %}
     <img class="thumbnail" src="{{ g.value(sscres, SDO.thumbnailUrl) }}" alt="{{ g.value(sscres, SDO.name) }}" />

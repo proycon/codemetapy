@@ -30,7 +30,11 @@
         {% if baseuri and toolstore %}
         <a href="{{ res }}" title="Go to the overview page for this tool">
         {% endif %}
+        {% if g.value(res, SDO.name) %)
         {{ g.value(res, SDO.name) }}
+        {% else %}
+        {{ g.value(res, SDO.identifier) }}
+        {% endif %}
         {% if baseuri %}
         </a>
         {% endif %}
