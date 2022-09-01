@@ -10,6 +10,10 @@ from codemeta.common import AttribDict, SDO, generate_uri, add_authors, get_last
 from codemeta.parsers.jsonld import parse_jsonld_data
 from bs4 import BeautifulSoup
 
+
+class MiddlewareObstructionException(Exception):
+    pass
+
 def detect_type(data):
     if "@context" in data and "@type" in data:
         value = data['@context']
@@ -58,7 +62,8 @@ def parse_clam(soup):
         "license": get_soup(soup, "license")
     }
 
-
+def detect_sso_middleware(r: requests.Response):
+    return r.history and 'location' in r.history[-1].headers and r.history[-1].headers['location'].lower().find("shibboleth") != -1
 
 def parse_web(g: Graph, res: Union[URIRef, BNode], url, args: AttribDict) -> Iterator[Union[URIRef,BNode,None]]:
     r = requests.get(url, headers={ "Accept": "application/json+ld;q=1.0,application/json;q=0.9,application/x-yaml;q=0.8,application/xml;q=0.7;text/html;q=0.6;text/plain;q=0.1" })
@@ -78,6 +83,12 @@ def parse_web(g: Graph, res: Union[URIRef, BNode], url, args: AttribDict) -> Ite
         with open(r.text,'r', encoding="utf-8") as f:
             data = yaml.load(f, yaml.Loader)
     elif contenttype == "text/html":
+        if detect_sso_middleware(r):
+            #we've been redirected to a login page directly
+            #so we can't extract any useful metadata
+            #we add a dummy entry:
+            raise MiddlewareObstructionException(f"Unable to extract metadata from {url} because it immediately redirects to an external (SSO) login page rather than a proper landing page")
+        #normal behaviour
         print("    Parsing html...",file=sys.stderr)
         soup = BeautifulSoup(r.text, 'html.parser')
         scriptblock = soup.find("script", {"type":"application/ld+json"})
