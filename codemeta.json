@@ -60,7 +60,6 @@
     ],
     "license": [
         "http://spdx.org/licenses/GPL-3.0-only",
-        "/home/proycon/work/codemetapy/GPL-3.0-only"
     ],
     "maintainer": {
         "@id": "/person/maarten-van-gompel",
@@ -157,9 +156,6 @@
         "name": "codemetapy",
         "runtimePlatform": "Python 3"
     },
-    "url": [
-        "https://codemeta.github.io/",
-        "https://github.com/proycon/codemetapy.git"
-    ],
-    "version": "2.2.0"
+    "url": "https://github.com/proycon/codemetapy.git",
+    "version": "2.2.1"
 }
