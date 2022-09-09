@@ -88,13 +88,21 @@ def parse_python(g: Graph, res: Union[URIRef, BNode], packagename: str, crosswal
         try:
             pkg = importlib_metadata.distribution(packagename)
         except importlib_metadata.PackageNotFoundError:
+            prevdir = None
+            if '/' in packagename:
+                dirname = os.path.dirname(packagename)
+                prevdir = os.getcwd()
+                os.chdir(dirname)
+                packagename = os.path.basename(packagename)
             #fallback if package is not installed but in local directory:
-            context = importlib_metadata.DistributionFinder.Context(name=packagename,path=".")
+            context = importlib_metadata.DistributionFinder.Context(name=packagename,path='.')
             try:
                 pkg = next(importlib_metadata.MetadataPathFinder().find_distributions(context))
             except StopIteration:
                 print(f"No such python package: {packagename}",file=sys.stderr)
+                if prevdir: os.chdir(prevdir)
                 sys.exit(4)
+            #if prevdir: os.chdir(prevdir)
 
     if isinstance(pkg._path, str):
         print(f"Found metadata in {pkg._path}",file=sys.stderr) #pylint: disable=W0212

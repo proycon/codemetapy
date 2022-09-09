@@ -19,6 +19,7 @@ from collections import OrderedDict, defaultdict
 from typing import Union, IO, Optional, Sequence, Tuple
 import copy
 import datetime
+from pathlib import Path
 import distutils.cmd #note: will be removed in python 3.12! TODO constraint <= 3.11 in apk/apt-get in Dockerfile
 #pylint: disable=C0413
 
@@ -243,12 +244,14 @@ def build(**kwargs) -> Tuple[Graph, URIRef, AttribDict, Graph]:
         if os.path.exists('setup.py'):
             print("No input files specified, but found python project in current dir, using that...",file=sys.stderr)
             print("Generating egg_info",file=sys.stderr)
-            os.system("python3 setup.py egg_info >&2")
-            for d in glob.glob("*.egg-info"):
-                inputsources = [(".".join(d.split(".")[:-1]),"python")]
+            r = os.system("python3 setup.py egg_info >&2")
+            if r != 0:
+                raise Exception("Could not generate egg_info (is python3 pointing to the right interpreter?)")
+            for path in Path('.').rglob('*.egg-info'):
+                inputsources = [(".".join(str(path).split(".")[:-1]),"python")]
                 break
             if not inputsources:
-                raise Exception("Could not generate egg_info (is python3 pointing to the right interpreter?)")
+                raise Exception("Could not found egg_info results")
         elif os.path.exists('pyproject.toml'):
             print("No input files specified, but found python project (pyproject.toml) in current dir, using that...",file=sys.stderr)
             inputsources = [("pyproject.toml","python")]
