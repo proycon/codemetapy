@@ -34,9 +34,14 @@ It can also read and manipulate existing `codemeta.json` files as well
 as parse simple AUTHORS/CONTRIBUTORS files. One of the most notable
 features of codemetapy is that it allows chaining to successively update
 a metadata description based on multiple sources. Codemetapy is used in
-that way by the [codemeta-harvester](https://github.com/proycon/codemeta-harvester), if you
-are looking for an all-in-one solution to automatically generate a
-`codemeta.json` for your project, then that is the best place to start.
+that way by the [codemeta-harvester](https://github.com/proycon/codemeta-harvester). 
+
+**Note:** If you are looking for an all-in-one solution to automatically
+generate a `codemeta.json` for your project, then
+*[codemeta-harvester](https://github.com/proycon/codemeta-harvester) is the
+best place to start*. It is a higher-level tool that automatically invokes
+codemetapy on various sources it can automatically detect, and combined those into
+a single codemeta representation.
 
 ## Installation
 
