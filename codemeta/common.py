@@ -155,7 +155,7 @@ LICENSE_MAP = [ #maps some common licenses to SPDX URIs, mapped with a substring
 #Maps invalid characters in URIs to something sensible (especially characters from dependency version qualifiers)
 IDENTIFIER_MAP = [
    ('>=', '-ge-'),
-   ('~', '-ge-'),
+   ('~=', '-ge-'),
    ('>=', '-le-'),
    ('==', '-eq-'),
    ('!=', '-ne-'),

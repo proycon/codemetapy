@@ -37,6 +37,8 @@ def parsedependency(s: str):
         s.find(" ") if s.find(" ") != -1 else 999999,
         s.find(";") if s.find(";") != -1 else 999999,
         s.find(">") if s.find(">") != -1 else 999999,
+        s.find("!") if s.find("!") != -1 else 999999,
+        s.find("~") if s.find("~") != -1 else 999999,
         s.find("=") if s.find("=") != -1 else 999999
     )
     if end != 999999:
@@ -46,7 +48,7 @@ def parsedependency(s: str):
 
     versionbegin = -1
     for i, c in enumerate(s[end:]):
-        if c not in ('>','=',' '):
+        if c not in ('>','=','~','!',' '):
             versionbegin = end + i
             break
     if versionbegin != -1:
@@ -189,18 +191,19 @@ def add_dependency(g: Graph, res: Union[URIRef, BNode], value: str, args: Attrib
         if 'extra ==' in dependency and args.no_extras:
             continue
         dependency, depversion = parsedependency(dependency.strip())
-        print(f"Found dependency {dependency} {depversion}",file=sys.stderr)
-        depres = URIRef(generate_uri(dependency+depversion.replace(' ',''),args.baseuri,"dependency")) #version number is deliberately in ID here!
-        g.add((depres, RDF.type, SDO.SoftwareApplication))
-        g.add((depres, SDO.identifier, Literal(dependency)))
-        g.add((depres, SDO.name, Literal(dependency)))
-        if args.exactplatformversion:
-            g.add((depres, SDO.runtimePlatform, Literal("Python " + str(sys.version_info.major) + "." + str(sys.version_info.minor) + "." + str(sys.version_info.micro))))
-        else:
-            g.add((depres, SDO.runtimePlatform, Literal("Python 3")))
-        if depversion:
-            g.add((depres, SDO.version, Literal(depversion)))
-        g.add((res, CODEMETA.softwareRequirements, depres))
+        if dependency:
+            print(f"Found dependency {dependency} {depversion}",file=sys.stderr)
+            depres = URIRef(generate_uri(dependency+depversion.replace(' ',''),args.baseuri,"dependency")) #version number is deliberately in ID here!
+            g.add((depres, RDF.type, SDO.SoftwareApplication))
+            g.add((depres, SDO.identifier, Literal(dependency)))
+            g.add((depres, SDO.name, Literal(dependency)))
+            if args.exactplatformversion:
+                g.add((depres, SDO.runtimePlatform, Literal("Python " + str(sys.version_info.major) + "." + str(sys.version_info.minor) + "." + str(sys.version_info.micro))))
+            else:
+                g.add((depres, SDO.runtimePlatform, Literal("Python 3")))
+            if depversion:
+                g.add((depres, SDO.version, Literal(depversion)))
+            g.add((res, CODEMETA.softwareRequirements, depres))
 
 def add_entrypoint(g: Graph, res: Union[URIRef, BNode], name: str, module_name: str, interfacetype: Union[BNode,URIRef], args: AttribDict):
     """Translate an entrypoint to a targetProduct"""
