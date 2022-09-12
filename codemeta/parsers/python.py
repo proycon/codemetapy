@@ -77,6 +77,7 @@ def parse_python(g: Graph, res: Union[URIRef, BNode], packagename: str, crosswal
     else:
         g.add((res, SDO.runtimePlatform, Literal("Python 3")))
 
+    prevdir = None
     if os.path.basename(packagename) == "pyproject.toml":
         print(f"Loading metadata from {packagename} via PEP517",file=sys.stderr) #pylint: disable=W0212
         try:
@@ -89,7 +90,6 @@ def parse_python(g: Graph, res: Union[URIRef, BNode], packagename: str, crosswal
         try:
             pkg = importlib_metadata.distribution(packagename)
         except importlib_metadata.PackageNotFoundError:
-            prevdir = None
             if '/' in packagename:
                 dirname = os.path.dirname(packagename)
                 prevdir = os.getcwd()
@@ -180,6 +180,7 @@ def parse_python(g: Graph, res: Union[URIRef, BNode], packagename: str, crosswal
 
         test_and_set_library(g, res, packagename, found, args)
 
+    if prevdir: os.chdir(prevdir)
     return prefuri
 
 #pylint: disable=W0621

@@ -158,8 +158,10 @@ class BuildTest_SetupPy(unittest.TestCase):
     def setUp(self):
         #relies on automatically guessing the type based on the directory we are inputsources
         os.chdir("fusus")
-        self.g, self.res, self.args, self.contextgraph = build()
-        os.chdir("..")
+        try:
+            self.g, self.res, self.args, self.contextgraph = build()
+        finally:
+            os.chdir("..")
 
     def test001_sanity(self):
         """Testing whether a the basics were converted accurately, tests some basic properties"""
