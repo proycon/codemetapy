@@ -35,6 +35,7 @@ def parsedependency(s: str):
     """Parses a pip dependency specification, returning the identifier, version"""
     end = min(
         s.find(" ") if s.find(" ") != -1 else 999999,
+        s.find(";") if s.find(";") != -1 else 999999,
         s.find(">") if s.find(">") != -1 else 999999,
         s.find("=") if s.find("=") != -1 else 999999
     )
@@ -184,6 +185,8 @@ def parse_python(g: Graph, res: Union[URIRef, BNode], packagename: str, crosswal
 #pylint: disable=W0621
 def add_dependency(g: Graph, res: Union[URIRef, BNode], value: str, args: AttribDict):
     for dependency in splitdependencies(value):
+        if 'extra ==' in dependency and args.no_extras:
+            continue
         dependency, depversion = parsedependency(dependency.strip())
         print(f"Found dependency {dependency} {depversion}",file=sys.stderr)
         depres = URIRef(generate_uri(dependency+depversion.replace(' ',''),args.baseuri,"dependency")) #version number is deliberately in ID here!
