@@ -512,10 +512,10 @@ def add_authors(g: Graph, res: Union[URIRef, BNode], value, property=SDO.author,
                 continue
 
         g.add((author, RDF.type, SDO.Person))
-        g.add((author, SDO.givenName, Literal(firstname)))
-        g.add((author, SDO.familyName, Literal(lastname)))
+        g.add((author, SDO.givenName, Literal(firstname.strip())))
+        g.add((author, SDO.familyName, Literal(lastname.strip())))
         if mail and '@' in mail:
-            g.add((author, SDO.email, Literal(mail)))
+            g.add((author, SDO.email, Literal(mail.strip())))
         if url:
             g.add((author, SDO.url, Literal(url.strip("() "))))
             #                              -------------^
@@ -528,7 +528,7 @@ def add_authors(g: Graph, res: Union[URIRef, BNode], value, property=SDO.author,
         if org:
             orgres = URIRef(generate_uri(org, kwargs.get('baseuri'), prefix="org"))
             g.add((orgres, RDF.type, SDO.Organization))
-            g.add((orgres, SDO.name, Literal(org)))
+            g.add((orgres, SDO.name, Literal(org.strip())))
             g.add((author, SDO.affiliation, orgres))
 
         g.add((res, property, author))
