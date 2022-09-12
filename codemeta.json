@@ -43,7 +43,7 @@
         "url": "https://proycon.anaproy.nl"
     },
     "dateCreated": "2018-04-16T10:54:22Z+0200",
-    "dateModified": "2022-06-09T121:52:34Z+0200",
+    "dateModified": "2022-09-12T13:31:47Z+0200",
     "description": "Generate and manage CodeMeta software metadata",
     "developmentStatus": "https://www.repostatus.org/#active",
     "identifier": "codemetapy",
@@ -81,7 +81,7 @@
         "BSD",
         "macOS"
     ],
-    "readme": "https://github.com/proycon/codemetapy/blob//README.rst",
+    "readme": "https://github.com/proycon/codemetapy/blob/README.rst",
     "runtimePlatform": [
         "Python 3.6",
         "Python 3.8",
