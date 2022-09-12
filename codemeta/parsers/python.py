@@ -185,7 +185,7 @@ def parse_python(g: Graph, res: Union[URIRef, BNode], packagename: str, crosswal
 
 #pylint: disable=W0621
 def add_dependency(g: Graph, res: Union[URIRef, BNode], value: str, args: AttribDict):
-    for dependency in splitdependencies(value):
+    for dependency in sorted(splitdependencies(value)):
         if 'extra ==' in dependency and args.no_extras:
             continue
         dependency, depversion = parsedependency(dependency.strip())

@@ -36,8 +36,21 @@ def remove_blank_ids(data):
     else:
         return data
 
+def alt_sort_key(data) -> str:
+    if isinstance(data, dict):
+        if 'name' in data:
+            return data['name']
+        if '@id' in data:
+            return data['@id']
+        if 'identifier' in data:
+            return data['identifier']
+    elif isinstance(data, str):
+        return data
+    return "~" #just a high alphanumeric character so it ends up after normal (ascii) stuff
+
+
 def sort_by_position(data):
-    """If list items have a position (schema:position) index, make sure to use it for sorting"""
+    """If list items have a position (schema:position) index, make sure to use it for sorting. If not, sort alphabetically of name of id"""
     if isinstance(data, (list, tuple)):
         if any( isinstance(x, dict) and 'position' in x for x in data ):
             try:
@@ -45,7 +58,10 @@ def sort_by_position(data):
             except TypeError: #in rare cases this might fail because of some inconsistency, return unsorted then
                 return [ sort_by_position(x) for x in data ]
         else:
-            return [ sort_by_position(x) for x in data ]
+            try:
+                return list(sorted( ( sort_by_position(x) for x in data) , key=lambda x: alt_sort_key(x) ) )
+            except TypeError: #in rare cases this might fail because of some inconsistency, return unsorted then
+                return [ sort_by_position(x) for x in data ]
     elif isinstance(data, dict):
         for key, value in data.items():
             data[key] = sort_by_position(value)
