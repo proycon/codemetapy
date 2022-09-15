@@ -243,7 +243,7 @@ def build(**kwargs) -> Tuple[Graph, URIRef, AttribDict, Graph]:
     else:
         #no input was specified
         if os.path.exists('setup.py'):
-            print("No input files specified, but found python project in current dir, using that...",file=sys.stderr)
+            print("No input files specified, but found python project (setup.py) in current dir, using that...",file=sys.stderr)
             print("Generating egg_info",file=sys.stderr)
             r = os.system("python3 setup.py egg_info >&2")
             #we ignore the return code for now because it may be non-zero but still have sueful results
