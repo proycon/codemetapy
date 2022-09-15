@@ -49,11 +49,17 @@ def validate(g: Graph, res: Union[Sequence,URIRef,BNode,None], args: AttribDict,
             else:
                 severity = "Unknown"
             cause = ""
-            if (node, SH.sourceConstraintComponent, SH.OrConstraintComponent) in results_graph:
-                cause = "The metadata does express this currently, but something is wrong in the way it is expressed. Is the type valid?"
-            if (node, SH.sourceConstraintComponent, SH.MinCountConstraintComponent) in results_graph:
+            if (node, SH.sourceConstraintComponent, SH.ClassConstraintComponent) in results_graph:
+                cause = "The metadata does express this currently, but the wrong class is used."
+            elif (node, SH.sourceConstraintComponent, SH.DatatypeConstraintComponent) in results_graph:
+                cause = "The metadata does express this currently, but the wrong datatype is used"
+            elif (node, SH.sourceConstraintComponent, SH.NodeKindConstraintComponent) in results_graph:
+                cause = "The metadata does express this currently, but the wrong node kind is used (probably URI vs literal)"
+            elif (node, SH.sourceConstraintComponent, SH.OrConstraintComponent) in results_graph:
+                cause = "The metadata does express this currently, but something is wrong in the way it is expressed. Is the type/class valid?"
+            elif (node, SH.sourceConstraintComponent, SH.MinCountConstraintComponent) in results_graph:
                 cause = "This is missing in the metadata"
-            if (node, SH.sourceConstraintComponent, SH.MaxCountConstraintComponent) in results_graph:
+            elif (node, SH.sourceConstraintComponent, SH.MaxCountConstraintComponent) in results_graph:
                 cause = "The metadata expresses this multiple times and is too ambiguous"
             if cause: cause = f"({cause})"
 
