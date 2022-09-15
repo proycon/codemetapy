@@ -239,6 +239,11 @@ def build(**kwargs) -> Tuple[Graph, URIRef, AttribDict, Graph]:
                     inputtypes.append("web")
         inputsources = list(zip(inputfiles, inputtypes))
         if guess:
+            while len(inputtypes) < len(inputfiles):
+                inputfile = inputfiles[len(inputtypes)]
+                print(f"No input type specified for {inputfile}, guessing this is an installed python package (may be wrong)",file=sys.stderr)
+                inputtypes.append("python")
+            inputsources = list(zip(inputfiles, inputtypes))
             print(f"Detected input types: {inputsources}",file=sys.stderr)
     else:
         #no input was specified
