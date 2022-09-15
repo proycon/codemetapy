@@ -48,12 +48,21 @@ def validate(g: Graph, res: Union[Sequence,URIRef,BNode,None], args: AttribDict,
                 info += 1
             else:
                 severity = "Unknown"
+            cause = ""
+            if (node, SH.sourceConstraintComponent, SH.OrConstraintComponent) in results_graph:
+                cause = "The metadata does express this currently, but something is wrong in the way it is expressed. Is the type valid?"
+            if (node, SH.sourceConstraintComponent, SH.MinCountConstraintComponent) in results_graph:
+                cause = "This is missing in the metadata"
+            if (node, SH.sourceConstraintComponent, SH.MaxCountConstraintComponent) in results_graph:
+                cause = "The metadata expresses this multiple times and is too ambiguous"
+            if cause: cause = f"({cause})"
+
             #path = results_graph.value(node, SH.resultPath)
             msg = results_graph.value(node, SH.resultMessage)
             if msg:
                 counter +=1 
-                print(f"VALIDATION {str(res)} #{counter}: {severity}: {str(msg)}", file=sys.stderr)
-                messages.append(f"{counter}. {severity}: {msg}")
+                print(f"VALIDATION {str(res)} #{counter}: {severity}: {str(msg)} {cause}", file=sys.stderr)
+                messages.append(f"{counter}. {severity}: {msg} {cause}")
     head = args.textv  + "\n\n" if args.textv else ""
     if messages:
         if conforms:
