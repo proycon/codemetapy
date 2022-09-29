@@ -59,7 +59,7 @@
         "linked data"
     ],
     "license": [
-        "http://spdx.org/licenses/GPL-3.0-only",
+        "http://spdx.org/licenses/GPL-3.0-only"
     ],
     "maintainer": {
         "@id": "/person/maarten-van-gompel",
