@@ -84,8 +84,8 @@ def parse_python(g: Graph, res: Union[URIRef, BNode], packagename: str, crosswal
         print(f"Loading metadata from {packagename} via PEP517",file=sys.stderr) #pylint: disable=W0212
         try:
             pkg = pep517.meta.load(os.path.dirname(packagename))
-        except:
-            print(f"Failed to process {packagename} via PEP517",file=sys.stderr)
+        except Exception as e:
+            print(f"Failed to process {packagename} via PEP517: {str(e)}",file=sys.stderr)
             sys.exit(4)
         packagename = pkg.name
     else:
