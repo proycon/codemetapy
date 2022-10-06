@@ -54,14 +54,6 @@ REPOSTATUS_LOCAL_SOURCE = "file://" + os.path.join(TMPDIR, "repostatus.jsonld")
 
 COMMON_SOURCEREPOS = ["https://github.com/","http://github.com","https://gitlab.com/","http://gitlab.com/","https://codeberg.org/","http://codeberg.org", "https://git.sr.ht/", "https://bitbucket.org/", "https://bitbucket.com/"]
 
-#The default context refers to local files, will be replaced to remote counterparts on serialisation
-CONTEXT = [
-    CODEMETA_LOCAL_SOURCE,
-    SCHEMA_LOCAL_SOURCE,
-    STYPE_LOCAL_SOURCE,
-    IODATA_LOCAL_SOURCE,
-]
-
 
 ENTRYPOINT_CONTEXT = { #these are all custom extensions not in codemeta (yet), they are proposed in https://github.com/codemeta/codemeta/issues/183 but are obsolete in favour of the newer software types (see next declaration)
     "entryPoints": { "@reverse": "schema:actionApplication" },
@@ -251,7 +243,7 @@ def init_context(no_cache=False, addcontext = None):
     
     if addcontext:
         for remote_url in addcontext:
-            if not remote_url.startwith("http"):
+            if not remote_url.startswith("http"):
                 raise Exception(f"Explicitly added context (--addcontext) must be a remote URL, got {remote_url} instead")
             local = "file://" + os.path.join(TMPDIR, os.path.basename(remote_url))
             sources.append( (local, remote_url))

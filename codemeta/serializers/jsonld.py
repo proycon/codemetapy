@@ -3,7 +3,7 @@ import json
 import os.path
 from typing import Union, IO, Sequence
 from rdflib import Graph, URIRef, BNode, Literal
-from codemeta.common import AttribDict, license_to_spdx, SDO, CONTEXT, CODEMETA_SOURCE, CODEMETA_LOCAL_SOURCE, SCHEMA_SOURCE, SCHEMA_LOCAL_SOURCE, STYPE_SOURCE, STYPE_LOCAL_SOURCE, IODATA_SOURCE, IODATA_LOCAL_SOURCE, init_context, REPOSTATUS_LOCAL_SOURCE, REPOSTATUS_SOURCE, get_subgraph, PREFER_URIREF_PROPERTIES_SIMPLE, TMPDIR
+from codemeta.common import AttribDict, license_to_spdx, SDO, CODEMETA_SOURCE, CODEMETA_LOCAL_SOURCE, SCHEMA_SOURCE, SCHEMA_LOCAL_SOURCE, STYPE_SOURCE, STYPE_LOCAL_SOURCE, IODATA_SOURCE, IODATA_LOCAL_SOURCE, init_context, REPOSTATUS_LOCAL_SOURCE, REPOSTATUS_SOURCE, get_subgraph, PREFER_URIREF_PROPERTIES_SIMPLE, TMPDIR
 
 def flatten_singletons(data): #TODO: no longer used, remove
     """Recursively flattens singleton ``key: { "@id": uri }`` instances to ``key: uri``"""
@@ -226,7 +226,7 @@ def rewrite_context(context, addcontext = None) -> list:
                 context[i] = REPOSTATUS_SOURCE
             elif addcontext:
                 for remote_url in addcontext:
-                    if not remote_url.startwith("http"):
+                    if not remote_url.startswith("http"):
                         raise Exception(f"Explicitly added context (--addcontext) must be a remote URL, got {remote_url} instead")
                     local = "file://" + os.path.join(TMPDIR, os.path.basename(remote_url))
                     if value == local:
