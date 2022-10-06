@@ -103,6 +103,8 @@ def main():
     parser.add_argument('-s','--select', type=str, help="Output only the selected resource (by URI) from the graph", action='store',required=False)
     parser.add_argument('-V','--validate', type=str, help="Validate against the provided SHACL file. Adds a review property with the condensed validation results.", action='store',required=False)
     parser.add_argument('--enrich', help="Enable automatic inference and enrichment of the metadata where possible", action='store_true',required=False)
+    parser.add_argument('--includecontext', help="Include all context vocabularies in the main graph and express it verbosely in serialisations", action='store_true',required=False)
+    parser.add_argument('--interpreter', help="Start interactive python interpreter after loading the graph", action='store_true',required=False)
     parser.add_argument('--exitv', help="Set exit status according to validation result. Use with --validate", action='store_true',required=False)
     parser.add_argument('--textv', type=str, help="Set extra text to add to a validation report. Use with --validate", action='store',required=False)
     parser.add_argument('--css',type=str, help="Associate a CSS stylesheet (URL) with the HTML output, multiple stylesheets can be separated by a comma", action='store',  required=False)
@@ -135,9 +137,20 @@ def main():
         #normal behaviour
         g, res, args, contextgraph = build(**args.__dict__)
     if args.validate: valid, _ = codemeta.validation.validate(g, res, args, contextgraph)
+    if args.includecontext:
+        g += contextgraph
     output = serialize(g, res, args, contextgraph)
     if output:
         print(output)
+
+    if args.interpreter:
+        print("Starting interactive shell: variable 'g' holds the rdflib.Graph")
+        import readline # optional, will allow Up/Down/History in the console
+        import code
+        variables = globals().copy()
+        variables.update(locals())
+        shell = code.InteractiveConsole(variables)
+        shell.interact()
 
     if args.exitv and args.validate:
         return 0 if valid else 1
