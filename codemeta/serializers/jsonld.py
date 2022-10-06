@@ -1,8 +1,9 @@
 import sys
 import json
+import os.path
 from typing import Union, IO, Sequence
 from rdflib import Graph, URIRef, BNode, Literal
-from codemeta.common import AttribDict, license_to_spdx, SDO, CONTEXT, CODEMETA_SOURCE, CODEMETA_LOCAL_SOURCE, SCHEMA_SOURCE, SCHEMA_LOCAL_SOURCE, STYPE_SOURCE, STYPE_LOCAL_SOURCE, IODATA_SOURCE, IODATA_LOCAL_SOURCE, init_context, REPOSTATUS_LOCAL_SOURCE, REPOSTATUS_SOURCE, get_subgraph, PREFER_URIREF_PROPERTIES_SIMPLE
+from codemeta.common import AttribDict, license_to_spdx, SDO, CONTEXT, CODEMETA_SOURCE, CODEMETA_LOCAL_SOURCE, SCHEMA_SOURCE, SCHEMA_LOCAL_SOURCE, STYPE_SOURCE, STYPE_LOCAL_SOURCE, IODATA_SOURCE, IODATA_LOCAL_SOURCE, init_context, REPOSTATUS_LOCAL_SOURCE, REPOSTATUS_SOURCE, get_subgraph, PREFER_URIREF_PROPERTIES_SIMPLE, TMPDIR
 
 def flatten_singletons(data): #TODO: no longer used, remove
     """Recursively flattens singleton ``key: { "@id": uri }`` instances to ``key: uri``"""
@@ -209,7 +210,7 @@ def find_main(data, res: Union[URIRef,None]):
         return data, None
 
 
-def rewrite_context(context) -> list:
+def rewrite_context(context, addcontext = None) -> list:
     """Rewrite local contexts to their remote counterparts"""
     if isinstance(context, list):
         for i, value in enumerate(context):
@@ -223,11 +224,18 @@ def rewrite_context(context) -> list:
                 context[i] = IODATA_SOURCE
             elif value == REPOSTATUS_LOCAL_SOURCE:
                 context[i] = REPOSTATUS_SOURCE
+            elif addcontext:
+                for remote_url in addcontext:
+                    if not remote_url.startwith("http"):
+                        raise Exception(f"Explicitly added context (--addcontext) must be a remote URL, got {remote_url} instead")
+                    local = "file://" + os.path.join(TMPDIR, os.path.basename(remote_url))
+                    if value == local:
+                        context[i] = remote_url
     elif isinstance(context, str):
         context = rewrite_context([context])
     return context
 
-def serialize_to_jsonld(g: Graph, res: Union[Sequence,URIRef,None], includecontext: bool = False) -> dict:
+def serialize_to_jsonld(g: Graph, res: Union[Sequence,URIRef,None], includecontext: bool = False, addcontext = None) -> dict:
     """Serializes the RDF graph to JSON, taking care of 'framing' for embedded nodes"""
 
     if res:
@@ -237,7 +245,7 @@ def serialize_to_jsonld(g: Graph, res: Union[Sequence,URIRef,None], includeconte
         else:
             g = get_subgraph(g, [res])
 
-    data = json.loads(g.serialize(format='json-ld', auto_compact=False, context=CONTEXT))
+    data = json.loads(g.serialize(format='json-ld', auto_compact=False, context=[ x[1] for x in init_context(False, addcontext)]))
 
     #rdflib doesn't do 'framing' so we have to do it in this post-processing step
     #if we have a single resource
@@ -253,7 +261,7 @@ def serialize_to_jsonld(g: Graph, res: Union[Sequence,URIRef,None], includeconte
 
     data = sort_by_position(data)
     if '@context' in data:
-        data['@context'] = rewrite_context(data['@context'])
+        data['@context'] = rewrite_context(data['@context'], addcontext)
 
     #we may have some lingering prefixes which we don't need, cleanup:
     data = cleanup(data)

@@ -246,8 +246,15 @@ SINGULAR_PROPERTIES = ( SDO.name, SDO.version, SDO.description, CODEMETA.develop
 PREFER_URIREF_PROPERTIES = (SDO.url, SDO.license, SDO.codeRepository, CODEMETA.issueTracker, CODEMETA.contIntegration, CODEMETA.readme, CODEMETA.releaseNotes, SDO.softwareHelp)
 PREFER_URIREF_PROPERTIES_SIMPLE = ('url','license', 'issueTracker', 'contIntegration', 'readme', 'releaseNotes', 'softwareHelp', 'developmentStatus', 'applicationCategory')
 
-def init_context(no_cache=False):
-    sources = ( (CODEMETA_LOCAL_SOURCE, CODEMETA_SOURCE), (SCHEMA_LOCAL_SOURCE, SCHEMA_SOURCE), (STYPE_LOCAL_SOURCE, STYPE_SOURCE), (IODATA_LOCAL_SOURCE, IODATA_SOURCE), (REPOSTATUS_LOCAL_SOURCE, REPOSTATUS_SOURCE) )
+def init_context(no_cache=False, addcontext = None):
+    sources = [ (CODEMETA_LOCAL_SOURCE, CODEMETA_SOURCE), (SCHEMA_LOCAL_SOURCE, SCHEMA_SOURCE), (STYPE_LOCAL_SOURCE, STYPE_SOURCE), (IODATA_LOCAL_SOURCE, IODATA_SOURCE), (REPOSTATUS_LOCAL_SOURCE, REPOSTATUS_SOURCE) ]
+    
+    if addcontext:
+        for remote_url in addcontext:
+            if not remote_url.startwith("http"):
+                raise Exception(f"Explicitly added context (--addcontext) must be a remote URL, got {remote_url} instead")
+            local = "file://" + os.path.join(TMPDIR, os.path.basename(remote_url))
+            sources.append( (local, remote_url))
 
     for local, remote in sources:
         localfile = local.replace("file://","")
@@ -263,6 +270,7 @@ def init_context(no_cache=False):
                                  .replace(b'"referencePublication": { "@id": "codemeta:referencePublication", "@type": "@id"},',b'"referencePublication": { "@id": "codemeta:referencePublication" },'))
                                            # ^--- with rdflib @type: @id here, rdflib (and our code) doesn't embed the full referencePublication as we want. Trick the serialiser by rewriting this part of the context.
 
+    return sources
 
 def bind_graph(g: Graph):
     g.bind('schema', SDO)
@@ -270,10 +278,10 @@ def bind_graph(g: Graph):
     g.bind('stype', SOFTWARETYPES)
     g.bind('iodata', SOFTWAREIODATA)
 
-def init_graph(no_cache=False):
+def init_graph(no_cache=False, addcontext=None):
     """Initializes the RDF graph, the context and the prefixes"""
 
-    init_context(no_cache)
+    context = init_context(no_cache, addcontext)
 
     g = Graph()
 
@@ -308,14 +316,9 @@ def init_graph(no_cache=False):
     contextgraph.add((SDO.WebPage, RDFS.label, Literal("Webpage")))
     contextgraph.add((SDO.WebPage, RDFS.comment, Literal("A very particular page on the web")))
 
-    with open(STYPE_LOCAL_SOURCE.replace("file://",""),'rb') as f:
-        contextgraph.parse(data=json.load(f), format="json-ld")
-
-    with open(IODATA_LOCAL_SOURCE.replace("file://",""),'rb') as f:
-        contextgraph.parse(data=json.load(f), format="json-ld")
-
-    with open(REPOSTATUS_LOCAL_SOURCE.replace("file://",""),'rb') as f:
-        contextgraph.parse(data=json.load(f), format="json-ld")
+    for local, _remote in context:
+        with open(local.replace("file://",""),'rb') as f:
+            contextgraph.parse(data=json.load(f), format="json-ld")
 
     return g, contextgraph
 
