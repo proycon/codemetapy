@@ -2,7 +2,7 @@ import sys
 import json
 from typing import Union, IO, Sequence
 from rdflib import Graph, URIRef, BNode, Literal
-from codemeta.common import AttribDict, license_to_spdx, SDO, CONTEXT, CODEMETA_SOURCE, CODEMETA_LOCAL_SOURCE, SCHEMA_SOURCE, SCHEMA_LOCAL_SOURCE, STYPE_SOURCE, STYPE_LOCAL_SOURCE, IODATA_SOURCE, IODATA_LOCAL_SOURCE, init_context, REPOSTATUS_LOCAL_SOURCE, REPOSTATUS_SOURCE, get_subgraph
+from codemeta.common import AttribDict, license_to_spdx, SDO, CONTEXT, CODEMETA_SOURCE, CODEMETA_LOCAL_SOURCE, SCHEMA_SOURCE, SCHEMA_LOCAL_SOURCE, STYPE_SOURCE, STYPE_LOCAL_SOURCE, IODATA_SOURCE, IODATA_LOCAL_SOURCE, init_context, REPOSTATUS_LOCAL_SOURCE, REPOSTATUS_SOURCE, get_subgraph, PREFER_URIREF_PROPERTIES_SIMPLE
 
 def flatten_singletons(data): #TODO: no longer used, remove
     """Recursively flattens singleton ``key: { "@id": uri }`` instances to ``key: uri``"""
@@ -107,7 +107,7 @@ def cleanup(data):
 #source: Niklas Lindström, https://github.com/libris/lxltools/blob/489c66b3fef8850077f2e6b4ba009b91aa6bf79c/lddb/ld/frame.py
 #c.f. https://groups.google.com/g/rdflib-dev/c/U9Czox7kQL0?pli=1
 class AutoFrame:
-    def __init__(self, data):
+    def __init__(self, data, idref_properties=None):
         self.context = data.get("@context")
         self.graph_key = "@graph"
         self.id_keys = ["@id",'id'] #schema/codemata map 'id' to '@id' so we check for both
@@ -117,6 +117,8 @@ class AutoFrame:
         self.revmap = {}
         self.reembed = True
         self.pending_revs = []
+        if idref_properties:
+            data = self.expand_implicit_id_nodes(data,idref_properties)
         for item in data.get(self.graph_key, ()):
             for p, objs in item.items():
                 if p in self.id_keys:
@@ -131,6 +133,19 @@ class AutoFrame:
                         if target_id:
                             self.revmap.setdefault(target_id, {}
                                     ).setdefault(p, []).append(item)
+
+    def expand_implicit_id_nodes(self, data, idref_properties):
+        if isinstance(data, dict):
+            for k, v in data.items():
+                if k in idref_properties and isinstance(v, str) and v.startswith(("http","_","/")):
+                    data[k] = {"@id": v }
+                elif k in idref_properties and isinstance(v, list):
+                    data[k] = [ {"@id": e } if e.startswith(("http","_","/")) else e for e in v ]
+                elif isinstance(v, dict):
+                    data[k] = self.expand_implicit_id_nodes(data[k], idref_properties)
+                elif isinstance(v, list):
+                    data[k] = [ self.expand_implicit_id_nodes(e, idref_properties) if isinstance(e,dict) else e for e in v ]
+        return data
 
     def get_id_key(self, data):
         if isinstance(data,dict):
@@ -150,6 +165,7 @@ class AutoFrame:
         return main_item
 
     def embed(self, item_id, item, embed_chain, reembed):
+        print(f"embedding {item_id}", file=sys.stderr)
         self.embedded.add(item_id)
         embed_chain.add(item_id)
         for p, o in item.items():
@@ -211,7 +227,7 @@ def rewrite_context(context) -> list:
         context = rewrite_context([context])
     return context
 
-def serialize_to_jsonld(g: Graph, res: Union[Sequence,URIRef,None]) -> dict:
+def serialize_to_jsonld(g: Graph, res: Union[Sequence,URIRef,None], includecontext: bool = False) -> dict:
     """Serializes the RDF graph to JSON, taking care of 'framing' for embedded nodes"""
 
     if res:
@@ -221,12 +237,12 @@ def serialize_to_jsonld(g: Graph, res: Union[Sequence,URIRef,None]) -> dict:
         else:
             g = get_subgraph(g, [res])
 
-    data = json.loads(g.serialize(format='json-ld', auto_compact=True, context=CONTEXT))
+    data = json.loads(g.serialize(format='json-ld', auto_compact=False, context=CONTEXT))
 
     #rdflib doesn't do 'framing' so we have to do it in this post-processing step
     #if we have a single resource
     if res and (not isinstance(res, (list,tuple)) or len(res) == 1):
-        data = AutoFrame(data).run(str(res)) or data
+        data = AutoFrame(data, idref_properties = PREFER_URIREF_PROPERTIES_SIMPLE if includecontext else None).run(str(res)) or data
 
         root, parent = find_main(data, res)
         if parent and len(data['@graph']) == 1 and res:

@@ -161,7 +161,7 @@ def main():
 def serialize(g: Graph, res: Union[Sequence,URIRef,BNode,None], args: AttribDict, contextgraph: Union[Graph,None] = None, sparql_query: Optional[str] = None, **kwargs) -> Graph:
     if args.output == "json":
         if sparql_query: res = [ x[0]  for x in query(g, sparql_query) ]
-        doc = serialize_to_jsonld(g, res)
+        doc = serialize_to_jsonld(g, res, args.includecontext)
         if args.outputfile and args.outputfile != "-":
             with open(args.outputfile,'w',encoding='utf-8') as fp:
                 fp.write(json.dumps(doc, indent=4, ensure_ascii=False, sort_keys=True))

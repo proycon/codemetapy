@@ -244,7 +244,7 @@ SINGULAR_PROPERTIES = ( SDO.name, SDO.version, SDO.description, CODEMETA.develop
 
 #properties that should prefer URIRef rather than Literal **if and only if** the value is a URI
 PREFER_URIREF_PROPERTIES = (SDO.url, SDO.license, SDO.codeRepository, CODEMETA.issueTracker, CODEMETA.contIntegration, CODEMETA.readme, CODEMETA.releaseNotes, SDO.softwareHelp)
-PREFER_URIREF_PROPERTIES_SIMPLE = ('url','license', 'codeRepository', 'issueTracker', 'contIntegration', 'readme', 'releaseNotes', 'softwareHelp')
+PREFER_URIREF_PROPERTIES_SIMPLE = ('url','license', 'issueTracker', 'contIntegration', 'readme', 'releaseNotes', 'softwareHelp', 'developmentStatus', 'applicationCategory')
 
 def init_context(no_cache=False):
     sources = ( (CODEMETA_LOCAL_SOURCE, CODEMETA_SOURCE), (SCHEMA_LOCAL_SOURCE, SCHEMA_SOURCE), (STYPE_LOCAL_SOURCE, STYPE_SOURCE), (IODATA_LOCAL_SOURCE, IODATA_SOURCE), (REPOSTATUS_LOCAL_SOURCE, REPOSTATUS_SOURCE) )
