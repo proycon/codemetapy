@@ -628,7 +628,7 @@ def enrich(g: Graph, res: URIRef, args: AttribDict):
             print(f"{HEAD} adding author {o} as contributor",file=sys.stderr)
             g.add((res, SDO.contributor, o))
     elif not g.value(res, SDO.author):
-        for _,_,o in g.triples((res, SDO.author,None)):
+        for _,_,o in g.triples((res, SDO.contributor,None)):
             print(f"{HEAD} adding contributor {o} as author",file=sys.stderr)
             g.add((res, SDO.author, o))
 
