@@ -11,7 +11,7 @@ from codemeta import __path__ as rootpath
 import codemeta.parsers.gitapi
 from jinja2 import Environment, FileSystemLoader
 
-def get_triples(g: Graph, res: Union[URIRef,BNode,None], prop, labelprop=(SDO.name,RDF.label, SKOS.prefLabel), abcsort=False, contextgraph: Optional[Graph] = None):
+def get_triples(g: Graph, res: Union[URIRef,BNode,None], prop, labelprop=(SDO.name,RDFS.label, SKOS.prefLabel), abcsort=False, contextgraph: Optional[Graph] = None):
     results = []
     havepos = False
     if not isinstance(labelprop, (tuple, list)):
