@@ -127,7 +127,7 @@ def _parse_github(response: dict, g: Graph, res: Union[URIRef, BNode], source: s
     
     #repo = response['name']
     for prop, github_key in github_crosswalk_table.items():
-        if github_key in response:
+        if github_key in response and response[github_key]:
             g.add((res, prop, Literal(response[github_key])))
 
     if response.get('license') and response['license'].get('spdx_id'):
@@ -187,7 +187,7 @@ def _parse_gitlab(response: dict, g: Graph, res: Union[URIRef, BNode], source, a
     users_api_url = f"{source}/api/v4/users/"
     #Processing start
     for prop, gitlab_key in gitlab_crosswalk_table.items():
-        if gitlab_key in response:
+        if gitlab_key in response and response[gitlab_key]:
             g.add((res, prop, Literal(response[gitlab_key])))
 
     if response.get('license') and response['license'].get('nickname'):
