@@ -45,7 +45,7 @@
         {% if (res, SDO.applicationCategory, None) in g %}
         <div class="keywords">
         <strong>Category:</strong> <ul>
-             {% for label, _ in get_triples(g, res, SDO.applicationCategory, abcsort=True) %}
+             {% for label, _ in get_triples(g, res, SDO.applicationCategory, abcsort=True, contextgraph=contextgraph) %}
                 <li property="schema:">{{ label }}</li>
              {% endfor %}
         </ul>
@@ -55,7 +55,7 @@
         {% if (res, SDO.keywords, None) in g %}
         <div class="keywords">
             <strong><i class="fa fa-tags"></i> Keywords:</strong> <ul>
-             {% for label, _ in get_triples(g, res, SDO.keywords, abcsort=True) %}
+             {% for label, _ in get_triples(g, res, SDO.keywords, abcsort=True, contextgraph=contextgraph) %}
                 <li property="schema:keywords">{{ label }}</li>
              {% endfor %}
         </ul>

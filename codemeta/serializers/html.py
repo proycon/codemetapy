@@ -11,9 +11,11 @@ from codemeta import __path__ as rootpath
 import codemeta.parsers.gitapi
 from jinja2 import Environment, FileSystemLoader
 
-def get_triples(g: Graph, res: Union[URIRef,BNode,None], prop, labelprop=SDO.name, abcsort=False):
+def get_triples(g: Graph, res: Union[URIRef,BNode,None], prop, labelprop=(SDO.name,RDF.label, SKOS.prefLabel), abcsort=False, contextgraph: Optional[Graph] = None):
     results = []
     havepos = False
+    if not isinstance(labelprop, (tuple, list)):
+        labelprop = (labelprop,)
     for _,_, res2 in g.triples((res, prop, None)):
         if isinstance(res2, Literal):
             results.append( (res2, res2, 9999, 9999) )
@@ -25,7 +27,15 @@ def get_triples(g: Graph, res: Union[URIRef,BNode,None], prop, labelprop=SDO.nam
                 pass
             elif isinstance(pos, str):
                 pos = int(pos) if pos.isnumeric() else 9999
-            label = g.value(res2, labelprop)
+            label = None
+            for p in labelprop:
+                label = g.value(res2, p)
+                if label: 
+                    break
+                elif contextgraph:
+                    label = contextgraph.value(res2, p)
+                    if label: 
+                        break
             if label:
                 results.append((label, res2, pos, _get_sortkey2(g,res2)))
             else:

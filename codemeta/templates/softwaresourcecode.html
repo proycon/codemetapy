@@ -56,7 +56,7 @@
 
     <div class="references">
         <ul>
-        {% for title, ref in get_triples(g, sscres, CODEMETA.referencePublication) %}
+        {% for title, ref in get_triples(g, sscres, CODEMETA.referencePublication, contextgraph=contextgraph) %}
         {% if ref %}
         <li>{% include 'reference.html' %}</li>
         {% else %}
@@ -64,7 +64,7 @@
         {% endif %}
         {% endfor %}
 
-        {% for title, ref in get_triples(g, sscres, SDO.citation) %}
+        {% for title, ref in get_triples(g, sscres, SDO.citation, contextgraph=contextgraph) %}
         {% if ref %}
         <li>{% include 'reference.html' %}</li>
         {% else %}
@@ -135,7 +135,7 @@
         <dt class="category">Category</dt>
         <dd class="category">
             <ul>
-                 {% for label, _ in get_triples(g, sscres, SDO.applicationCategory, abcsort=True) %}
+                 {% for label, _ in get_triples(g, sscres, SDO.applicationCategory, abcsort=True, contextgraph=contextgraph) %}
                     <li property="schema:applicationCategory">{{ label }}</li>
                  {% endfor %}
             </ul>
@@ -146,7 +146,7 @@
         <dt class="keywords">Keywords <i class="fa fa-tags"></i></dt>
         <dd class="keywords">
         <ul>
-             {% for label, _ in get_triples(g, sscres, SDO.keywords, abcsort=True) %}
+             {% for label, _ in get_triples(g, sscres, SDO.keywords, abcsort=True, contextgraph=contextgraph) %}
                 <li property="schema:keywords">{{ label }}</li>
              {% endfor %}
         </ul>
@@ -343,7 +343,7 @@
         <dt class="runtimePlatform" title="The required environment needed for the software to run">Runtime Platform</dt>
         <dd class="runtimePlatform">
             <ul>
-                 {% for label, _ in get_triples(g, sscres, SDO.runtimePlatform, abcsort=True) %}
+                 {% for label, _ in get_triples(g, sscres, SDO.runtimePlatform, abcsort=True, contextgraph=contextgraph) %}
                     <li property="schema:runtimePlatform">{{ label }}</li>
                  {% endfor %}
             </ul>
@@ -354,7 +354,7 @@
         <dt class="operatingSystem" title="The operating system on which the software may run">Operating System</dt>
         <dd class="operatingSystem">
             <ul>
-                 {% for label, _ in get_triples(g, sscres, SDO.operatingSystem, abcsort=True) %}
+                 {% for label, _ in get_triples(g, sscres, SDO.operatingSystem, abcsort=True, contextgraph=contextgraph) %}
                     <li property="schema:operatingSystem">{{ label }}</li>
                  {% endfor %}
             </ul>
@@ -382,7 +382,7 @@
         <dt class="processorRequirements" title="CPU requirements to run the software">Processor Requirements</dt>
         <dd class="processorRequirements">
             <ul>
-                 {% for label, _ in get_triples(g, sscres, SDO.processorRequirements) %}
+                 {% for label, _ in get_triples(g, sscres, SDO.processorRequirements, contextgraph=contextgraph) %}
                     <li property="schema:processorRequirements">{{ label }}</li>
                  {% endfor %}
             </ul>
@@ -393,7 +393,7 @@
         <dt class="memoryRequirements" title="Memory requirements in order to run the software">Memory Requirements</dt>
         <dd class="memoryRequirements">
             <ul>
-                 {% for label, _ in get_triples(g, sscres, SDO.memoryRequirements) %}
+                 {% for label, _ in get_triples(g, sscres, SDO.memoryRequirements, contextgraph=contextgraph) %}
                     <li property="schema:memoryRequirements">{{ label }}</li>
                  {% endfor %}
             </ul>
@@ -404,7 +404,7 @@
         <dt class="permissions" title="Permissions that are needed to run the software">Permissions</dt>
         <dd class="permissions">
             <ul>
-                 {% for label, _ in get_triples(g, sscres, SDO.permissions) %}
+                 {% for label, _ in get_triples(g, sscres, SDO.permissions, contextgraph=contextgraph) %}
                     <li property="schema:permissions">{{ label }}</li>
                  {% endfor %}
             </ul>
@@ -414,7 +414,7 @@
         {% if g.value(sscres, SOFTWAREIODATA.consumesData) %}
         <dt class="iodata" title="High-level overview of the type(s) of data that the software consumes as input">Input data</dt>
         <dd class="iodata">
-        {% for label, iores in get_triples(g, sscres, SOFTWAREIODATA.consumesData) %}
+        {% for label, iores in get_triples(g, sscres, SOFTWAREIODATA.consumesData, contextgraph=contextgraph) %}
             <div>{% include 'iodata.html' %}</div>
         {% endfor %}
         </dd>
@@ -423,7 +423,7 @@
         {% if g.value(sscres, SOFTWAREIODATA.producesData) %}
         <dt class="iodata" title="High-level overview of the type(s) of data that the software produces as output">Output data</dt>
         <dd class="iodata">
-        {% for label, iores in get_triples(g, sscres, SOFTWAREIODATA.producesData) %}
+        {% for label, iores in get_triples(g, sscres, SOFTWAREIODATA.producesData, contextgraph=contextgraph) %}
             <div>{% include 'iodata.html' %}</div>
         {% endfor %}
         </dd>
