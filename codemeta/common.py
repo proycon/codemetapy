@@ -26,6 +26,7 @@ CODEMETA = Namespace("https://codemeta.github.io/terms/")
 #Custom extensions not in codemeta/schema.org (yet), they are initially proposed in https://github.com/codemeta/codemeta/issues/271
 SOFTWARETYPES = Namespace("https://w3id.org/software-types#") #See https://github.com/SoftwareUnderstanding/software_types
 SOFTWAREIODATA = Namespace("https://w3id.org/software-iodata#") #See https://github.com/SoftwareUnderstanding/software-iodata
+TRL = Namespace("https://w3id.org/research-technology-readiness-levels")
 
 REPOSTATUS = Namespace("https://www.repostatus.org/#")
 

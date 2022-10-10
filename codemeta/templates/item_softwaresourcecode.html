@@ -85,6 +85,12 @@
         {% else  %}
             <span class="negative" title="No development status was provided nor could be extracted automatically"><i class="fa fa-question"></i> unknown</span>
         {% endif %}
+
+        {% if g.value(res, TRL.technologyReadinessLevel) and g.value(res, TRL.technologyReadinessLevel).startswith("http") %}
+            {% set trlres = URIRef(g.value(res, TRL.technologyReadinessLevel)) %}
+            {% set trl_id = trlres.split('#')[-1] %}
+            <img src="https://w3id.org/research-technology-readiness-levels/{{ trl_id }}.svg" title="{{ contextgraph.value(trlres, SKOS.prefLabel) }}: {{ contextgraph.value(trlres, SKOS.definition) }}" alt="{{ contextgraph.value(trlres, SKOS.prefLabel) }}: {{ contextgraph.value(trlres, SKOS.definition) }}"  />
+        {% endif %}
     
         {% if g.value(res, SDO.review) %}
         {% set sscres = res %}

@@ -38,7 +38,12 @@
         {% endfor %}
         </ul>
     </td>
-    <td class="developmentStatus" property="codemeta:developmentStatus">
+    <td class="developmentStatus">
+        {% if g.value(targetres, TRL.technologyReadinessLevel) and g.value(targetres, TRL.technologyReadinessLevel).startswith("http") %}
+            {% set trlres = URIRef(g.value(targetres, TRL.technologyReadinessLevel)) %}
+            {% set trl_id = trlres.split('#')[-1] %}
+            <img src="https://w3id.org/research-technology-readiness-levels/{{ trl_id }}.svg" title="{{ contextgraph.value(trlres, SKOS.prefLabel) }}: {{ contextgraph.value(trlres, SKOS.definition) }}" alt="{{ contextgraph.value(trlres, SKOS.prefLabel) }}: {{ contextgraph.value(trlres, SKOS.definition) }}"  />
+        {% endif %}
     </td>
     <td class="maintainer">
         <ul>

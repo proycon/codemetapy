@@ -171,6 +171,21 @@
         </dd>
         {% endif %}
 
+        {% if g.value(sscres, TRL.technologyReadinessLevel) %}
+        <dt class="technologyReadinessLevel" title="Indication of the readiness of the technology of this software">Technology Readiness Level</dt>
+        <dd class="technologyReadinessLevel">
+            <ul>
+                {% if g.value(sscres, TRL.technologyReadinessLevel).startswith("http") %}
+                    {% set trlres = URIRef(g.value(sscres, TRL.technologyReadinessLevel)) %}
+                    {% set trl_id = trlres.split('#')[-1] %}
+                    <li>
+                    <img src="https://w3id.org/research-technology-readiness-levels/{{ trl_id }}.svg" title="{{ contextgraph.value(trlres, SKOS.prefLabel) }}: {{ contextgraph.value(trlres, SKOS.definition) }}" alt="{{ contextgraph.value(trlres, SKOS.prefLabel) }}: {{ contextgraph.value(trlres, SKOS.definition) }}"  />
+                    </li>
+                {% endif %}
+            </ul>
+        </dd>
+        {% endif %}
+
         {% if g.value(sscres, CODEMETA.issueTracker) %}
         <dt class="issueTracker" title="A bug-reporting and feature tracking system for this software">Issue Tracker (Support)</dt>
         <dd class="issueTracker"><a rel="schema:issueTracker" href="{{ g.value(sscres, CODEMETA.issueTracker) }}">{{ g.value(sscres, CODEMETA.issueTracker) }}</a>
