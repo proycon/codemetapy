@@ -427,6 +427,9 @@ div.card div.links li span.description {
     font-style: italic;
     font-size: 80%;
 }
+div.log {
+    margin-top: 10px;
+}
 #harvestlog {
     display: none;
 }
