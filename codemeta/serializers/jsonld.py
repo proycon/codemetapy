@@ -166,7 +166,6 @@ class AutoFrame:
         return main_item
 
     def embed(self, item_id, item, embed_chain, reembed):
-        print(f"embedding {item_id}", file=sys.stderr)
         self.embedded.add(item_id)
         embed_chain.add(item_id)
         for p, o in item.items():
