@@ -141,7 +141,7 @@ class AutoFrame:
                 if k in idref_properties and isinstance(v, str) and v.startswith(("http","_","/")):
                     data[k] = {"@id": v }
                 elif k in idref_properties and isinstance(v, list):
-                    data[k] = [ {"@id": e } if e.startswith(("http","_","/")) else e for e in v ]
+                    data[k] = [ {"@id": e } if isinstance(e, str) and e.startswith(("http","_","/")) else self.expand_implicit_id_nodes(e, idref_properties) if isinstance(e, dict) else e for e in v ]
                 elif isinstance(v, dict):
                     data[k] = self.expand_implicit_id_nodes(data[k], idref_properties)
                 elif isinstance(v, list):
