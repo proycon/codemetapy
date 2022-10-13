@@ -76,7 +76,7 @@ REPOSTATUS_MAP = { #maps Python development status to repostatus.org vocabulary 
 
 TRL_MAP = { #maps Python development status to technology readiness levels (the mapping is debatable)
     "1 - planning": TRL.Stage1Planning,
-    "2 - pre-alpha": TRL.Level2ConceptFormulated, #pick the latest stage from Stage1Planning for this one
+    "2 - pre-alpha": TRL.Stage1Planning,
     "3 - alpha": TRL.Stage2ProofOfConcept,
     "4 - beta": TRL.Stage3Experimental,
     "5 - production/stable": TRL.Level8Complete,
