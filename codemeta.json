@@ -149,13 +149,19 @@
             "version": ">= 6.1.1"
         }
     ],
-    "targetProduct": {
+    "targetProduct": [{
         "@id": "/commandlineapplication/codemetapy",
         "@type": "CommandLineApplication",
         "executableName": "codemetapy",
         "name": "codemetapy",
         "runtimePlatform": "Python 3"
     },
+    {
+        "@id": "/softwarelibrary/codemetapy",
+        "@type": "SoftwareLibrary",
+        "name": "codemeta",
+        "runtimePlatform": "Python 3"
+    }],
     "url": "https://github.com/proycon/codemetapy.git",
     "version": "2.3.0"
 }
