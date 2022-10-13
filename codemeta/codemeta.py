@@ -112,7 +112,7 @@ def main():
     parser.add_argument('--css',type=str, help="Associate a CSS stylesheet (URL) with the HTML output, multiple stylesheets can be separated by a comma", action='store',  required=False)
     parser.add_argument('--no-cache',dest="no_cache", help="Do not cache context files, force redownload", action='store_true',  required=False)
     parser.add_argument('--no-extras',dest="no_extras", help="Do not include dependencies that are marked as 'extras', applies only to Python", action='store_true',  required=False)
-    parser.add_argument('--toolstore', help="When converting to HTML, link pages together as served by the CLARIAH tool store (https://github.com/CLARIAH/tool-discovery)", action='store_true',  required=False)
+    parser.add_argument('--codemetaserver', '--toolstore', dest="toolstore", help="When converting to HTML, link pages together for use with codemeta-server", action='store_true',  required=False)
     parser.add_argument('--strict', dest='strict', help="Strictly adhere to the codemeta standard and disable any extensions on top of it", action='store_true')
     parser.add_argument('--released', help="Signal that this software is released, this affects whether development status maps to either WIP or active", action='store_true')
     parser.add_argument('--trl', help="Attempt to add technology readiness level based on the vocabulary used by the CLARIAH project", action='store_true')
