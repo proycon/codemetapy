@@ -3,6 +3,7 @@ import json
 import os.path
 from typing import Union, IO, Sequence
 from rdflib import Graph, URIRef, BNode, Literal
+from copy import copy
 from codemeta.common import AttribDict, license_to_spdx, SDO, CODEMETA_SOURCE, CODEMETA_LOCAL_SOURCE, SCHEMA_SOURCE, SCHEMA_LOCAL_SOURCE, STYPE_SOURCE, STYPE_LOCAL_SOURCE, IODATA_SOURCE, IODATA_LOCAL_SOURCE, init_context, REPOSTATUS_LOCAL_SOURCE, REPOSTATUS_SOURCE, get_subgraph, PREFER_URIREF_PROPERTIES_SIMPLE, TMPDIR
 
 def flatten_singletons(data): #TODO: no longer used, remove
@@ -101,103 +102,6 @@ def cleanup(data):
     else:
         return data
 
-
-
-
-#rdflib doesn't do 'framing' so we have to do it in this post-processing step:
-#source: Niklas Lindström, https://github.com/libris/lxltools/blob/489c66b3fef8850077f2e6b4ba009b91aa6bf79c/lddb/ld/frame.py
-#c.f. https://groups.google.com/g/rdflib-dev/c/U9Czox7kQL0?pli=1
-class AutoFrame:
-    def __init__(self, data, idref_properties=None):
-        self.context = data.get("@context")
-        self.graph_key = "@graph"
-        self.id_keys = ["@id",'id'] #schema/codemata map 'id' to '@id' so we check for both
-        self.rev_key = "@reverse"
-        self.embedded = set()
-        self.itemmap = {}
-        self.revmap = {}
-        self.reembed = True
-        self.pending_revs = []
-        if idref_properties:
-            data = self.expand_implicit_id_nodes(data,idref_properties)
-        for item in data.get(self.graph_key, ()):
-            for p, objs in item.items():
-                if p in self.id_keys:
-                    self.itemmap[objs] = item
-                else:
-                    if not isinstance(objs, list):
-                        objs = [objs]
-                    for o in objs:
-                        if not isinstance(o, dict):
-                            continue
-                        target_id = self.get_id_key(o)
-                        if target_id:
-                            self.revmap.setdefault(target_id, {}
-                                    ).setdefault(p, []).append(item)
-
-    def expand_implicit_id_nodes(self, data, idref_properties):
-        if isinstance(data, dict):
-            for k, v in data.items():
-                if k in idref_properties and isinstance(v, str) and v.startswith(("http","_","/")):
-                    data[k] = {"@id": v }
-                elif k in idref_properties and isinstance(v, list):
-                    data[k] = [ {"@id": e } if isinstance(e, str) and e.startswith(("http","_","/")) else self.expand_implicit_id_nodes(e, idref_properties) if isinstance(e, dict) else e for e in v ]
-                elif isinstance(v, dict):
-                    data[k] = self.expand_implicit_id_nodes(data[k], idref_properties)
-                elif isinstance(v, list):
-                    data[k] = [ self.expand_implicit_id_nodes(e, idref_properties) if isinstance(e,dict) else e for e in v ]
-        return data
-
-    def get_id_key(self, data):
-        if isinstance(data,dict):
-            for k in self.id_keys:
-                if k in data:
-                    return data[k]
-        return None
-
-    def run(self, main_id):
-        main_item = self.itemmap.get(main_id)
-        if not main_item:
-            return None
-        self.embed(main_id, main_item, set(), self.reembed)
-        self.add_reversed()
-        if self.context:
-            main_item['@context'] = self.context
-        return main_item
-
-    def embed(self, item_id, item, embed_chain, reembed):
-        self.embedded.add(item_id)
-        embed_chain.add(item_id)
-        for p, o in item.items():
-            item[p] = self.to_embedded(o, embed_chain, reembed)
-        revs = self.revmap.get(item_id)
-        if revs:
-            self.pending_revs.append((item, embed_chain, revs))
-
-    def add_reversed(self):
-        for item, embed_chain, revs in self.pending_revs:
-            for p, subjs in revs.items():
-                for subj in subjs:
-                    subj_id = self.get_id_key(subj)
-                    if subj_id and subj_id not in embed_chain:
-                        if subj_id not in self.embedded:
-                            item.setdefault(self.rev_key, {}
-                                    ).setdefault(p, []).append(subj)
-                            self.embed(subj_id, subj, set(embed_chain), False)
-
-    def to_embedded(self, o, embed_chain, reembed):
-        if isinstance(o, list):
-            return [self.to_embedded(lo, embed_chain, reembed) for lo in o]
-        if isinstance(o, dict):
-            o_id = self.get_id_key(o)
-            if o_id and o_id not in embed_chain and (
-                    reembed or o_id not in self.embedded):
-                obj = self.itemmap.get(o_id)
-                if obj:
-                    self.embed(o_id, obj, set(embed_chain), reembed)
-                    return obj
-        return o
-
 def find_main(data, res: Union[URIRef,None]):
     """Find the main item in the graph"""
     if '@graph' in data:
@@ -208,6 +112,70 @@ def find_main(data, res: Union[URIRef,None]):
     else:
         return data, None
 
+def expand_implicit_id_nodes(data, idref_properties):
+    """Turn nodes like `key: uri` into `key: { "@id": uri }`"""
+    if isinstance(data, dict):
+        for k, v in data.items():
+            if k in idref_properties and isinstance(v, str) and v.startswith(("http","_","/")):
+                data[k] = {"@id": v }
+            elif k in idref_properties and isinstance(v, list):
+                data[k] = [ {"@id": e } if isinstance(e, str) and e.startswith(("http","_","/")) else expand_implicit_id_nodes(e, idref_properties) if isinstance(e, dict) else e for e in v ]
+            elif isinstance(v, dict):
+                data[k] = expand_implicit_id_nodes(data[k], idref_properties)
+            elif isinstance(v, list):
+                data[k] = [ expand_implicit_id_nodes(e, idref_properties) if isinstance(e,dict) else e for e in v ]
+    return data
+
+def do_object_framing(data: dict, res_id: str):
+    """JSON-LD object framing. Rdflib's json-ld serialiser doesn't implement this so we do this ourselves"""
+    assert '@graph' in data
+    itemmap = {} #mapping from ids to python dicts
+    gather_items(data['@graph'], itemmap)
+    #print("DEBUG itemmap", repr(itemmap))
+    if res_id not in itemmap:
+        raise Exception("Resource not found in tree, framing not possible")
+    embed_items(itemmap[res_id], itemmap, {res_id,})
+    return itemmap[res_id]
+        
+def gather_items(data, itemmap: dict):
+    """Gather all items from a JSON-LD tree, auxiliary function for object framing"""
+    if isinstance(data, list): 
+        for item in data:
+            gather_items(item, itemmap)
+    elif isinstance(data, dict): 
+        for idkey in ('@id', 'id'):
+            if idkey in data and len(data) > 1 and isinstance(idkey, str):
+                item_id = data[idkey]
+                if idkey in itemmap:
+                    #print(f"DEBUG gathered {item_id} (duplicate)")
+                    itemmap[item_id].update(data)
+                else:
+                    #print(f"DEBUG gathered {item_id} (new)")
+                    itemmap[item_id] = data
+        for v in data.values():
+            gather_items(v, itemmap)
+
+def embed_items(data, itemmap: dict, history: set):
+    """Replace all references with items, auxiliary function for object framing. The history prevents circular references."""
+    if isinstance(data, list): 
+        for i, item in enumerate(data):
+            data[i], new_history = embed_items(item, itemmap, copy(history)) #recursion step
+            history |= new_history
+    elif isinstance(data, dict): 
+        for idkey in ('@id', 'id'):
+            if idkey in data and data[idkey] in itemmap and data[idkey] not in history:
+                #print(f"DEBUG embedded {idkey} (explicit)")
+                history.add(data[idkey])
+                return embed_items(itemmap[data[idkey]], itemmap, copy(history))
+        for k, v in data.items():
+            data[k], new_history = embed_items(v, itemmap, copy(history)) #recursion step
+            history |= new_history
+    elif isinstance(data, str) and data.startswith(("http","/","_")) and data in itemmap and data not in history: #this is probably a reference even though it's not explicit
+        #data is an URI reference we can resolve
+        history.add(data)
+        return itemmap[data], history
+    return data, history
+    
 
 def rewrite_context(context, addcontext = None) -> list:
     """Rewrite local contexts to their remote counterparts"""
@@ -235,7 +203,7 @@ def rewrite_context(context, addcontext = None) -> list:
     return context
 
 def serialize_to_jsonld(g: Graph, res: Union[Sequence,URIRef,None], includecontext: bool = False, addcontext = None) -> dict:
-    """Serializes the RDF graph to JSON, taking care of 'framing' for embedded nodes"""
+    """Serializes the RDF graph to JSON, taking care of 'object framing' for embedded nodes"""
 
     if res:
         #Get the subgraph that focusses on this specific resource (or multiple)
@@ -246,10 +214,12 @@ def serialize_to_jsonld(g: Graph, res: Union[Sequence,URIRef,None], includeconte
 
     data = json.loads(g.serialize(format='json-ld', auto_compact=False, context=[ x[1] for x in init_context(False, addcontext)]))
 
-    #rdflib doesn't do 'framing' so we have to do it in this post-processing step
-    #if we have a single resource
+    #rdflib doesn't do 'object framing' so we have to do it in this post-processing step
+    #if we have a single resource, it'll be the focus object the whole frame will be built around
     if res and (not isinstance(res, (list,tuple)) or len(res) == 1):
-        data = AutoFrame(data, idref_properties = PREFER_URIREF_PROPERTIES_SIMPLE if includecontext else None).run(str(res)) or data
+        if includecontext:
+            data = expand_implicit_id_nodes(data, PREFER_URIREF_PROPERTIES_SIMPLE)
+        data = do_object_framing(data, str(res))
 
         root, parent = find_main(data, res)
         if parent and len(data['@graph']) == 1 and res:
