@@ -69,14 +69,14 @@ REPOSTATUS_MAP = { #maps Python development status to repostatus.org vocabulary 
     "2 - pre-alpha": "concept",
     "3 - alpha": "wip",
     "4 - beta": "wip", #note, if --released is set this maps to "active" instead
-    "5 - production/stable": "active",
-    "6 - mature": "active",
+    "5 - production/stable": "active", #reasonable guess, but being production/stable doesn't guarantee repo is active (might be inactive)
+    "6 - mature": "active", #reasonable guess, but being mature doesn't guarantee repo is active (might be inactive)
     "7 - inactive": "unsupported",
 }
 
 TRL_MAP = { #maps Python development status to technology readiness levels (the mapping is debatable)
     "1 - planning": TRL.Stage1Planning,
-    "2 - pre-alpha": TRL.Stage1Planning,
+    "2 - pre-alpha": TRL.Stage1Planning, #we can't really distinguish between the TRL levels in stage 1
     "3 - alpha": TRL.Stage2ProofOfConcept,
     "4 - beta": TRL.Stage3Experimental,
     "5 - production/stable": TRL.Level8Complete,
