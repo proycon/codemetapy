@@ -6,6 +6,7 @@ from rdflib import Graph, URIRef, BNode, Literal
 from rdflib.namespace import RDF, SKOS, RDFS
 from typing import Union, IO, Optional, Sequence
 from itertools import chain
+from importlib.metadata import version as get_version
 from codemeta.common import AttribDict, REPOSTATUS, license_to_spdx, SDO, CODEMETA, SOFTWARETYPES, SOFTWAREIODATA, TRL, CODEMETAPY, SCHEMA_SOURCE, CODEMETA_SOURCE, SCHEMA_LOCAL_SOURCE, SCHEMA_SOURCE, CODEMETA_LOCAL_SOURCE, CODEMETA_SOURCE, STYPE_SOURCE, STYPE_LOCAL_SOURCE, init_context, SINGULAR_PROPERTIES, merge_graphs, get_subgraph, get_last_component, query
 from codemeta import __path__ as rootpath
 import codemeta.parsers.gitapi
@@ -205,7 +206,7 @@ def serialize_to_html( g: Graph, res: Union[Sequence,URIRef,None], args: AttribD
         else:
             index = get_index(g)
     template = env.get_template(template)
-    return template.render(g=g,res=res, SDO=SDO,CODEMETA=CODEMETA, CODEMETAPY=CODEMETAPY, RDF=RDF,RDFS=RDFS,STYPE=SOFTWARETYPES, SOFTWAREIODATA=SOFTWAREIODATA, REPOSTATUS=REPOSTATUS, SKOS=SKOS, TRL=TRL, get_triples=get_triples, get_target_platforms=get_target_platforms, type_label=type_label, css=args.css, contextgraph=contextgraph, URIRef=URIRef, get_badge=get_badge, now=datetime.now().strftime("%Y-%m-%d %H:%M:%S"), index=index, get_interface_types=get_interface_types,baseuri=args.baseuri,baseurl=args.baseurl, toolstore=args.toolstore, intro=args.intro, get_last_component=get_last_component, is_resource=is_resource, int=int, range=range, str=str, Literal=Literal, chain=chain, **kwargs)
+    return template.render(g=g,res=res, SDO=SDO,CODEMETA=CODEMETA, CODEMETAPY=CODEMETAPY, RDF=RDF,RDFS=RDFS,STYPE=SOFTWARETYPES, SOFTWAREIODATA=SOFTWAREIODATA, REPOSTATUS=REPOSTATUS, SKOS=SKOS, TRL=TRL, get_triples=get_triples, get_target_platforms=get_target_platforms, type_label=type_label, css=args.css, contextgraph=contextgraph, URIRef=URIRef, get_badge=get_badge, now=datetime.now().strftime("%Y-%m-%d %H:%M:%S"), index=index, get_interface_types=get_interface_types,baseuri=args.baseuri,baseurl=args.baseurl, toolstore=args.toolstore, intro=args.intro, get_last_component=get_last_component, is_resource=is_resource, int=int, range=range, str=str, Literal=Literal, get_version=get_version, chain=chain, **kwargs)
 
 
 
