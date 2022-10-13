@@ -289,7 +289,7 @@ def init_graph(no_cache=False, addcontext=None):
     g = Graph()
 
     #The context graph loads some additional linked data we may need for interpretation (it is not related to @context!),
-    #like the repostatus data. This data is never propagated to the output graph (g)
+    #This data is not propagated to the output graph (g) unless --includecontext is set
 
     contextgraph = Graph()
     for x in (g, contextgraph):
@@ -300,6 +300,7 @@ def init_graph(no_cache=False, addcontext=None):
     contextgraph.bind('spdx', SPDX)
     contextgraph.bind('skos', SKOS)
     contextgraph.bind('orcid', ORCID)
+    contextgraph.bind('trl', TRL)
 
     #add license names from our license map (faster/easier than ingesting the json-ld from https://github.com/spdx/license-list-data/)
     for (label, identifier) in LICENSE_MAP:
@@ -339,9 +340,12 @@ def license_to_spdx(value: Union[str,list,tuple]) -> Union[str,list]:
     """Attempts to converts a license name or acronym to a full SPDX URI (https://spdx.org/licenses/)"""
     if isinstance(value, (list,tuple)):
         return [ license_to_spdx(x) for x in value ]
-    if value.startswith("http://spdx.org") or value.startswith("https://spdx.org"):
+    if value.startswith("http://spdx.org"):
         #we're already good, nothing to do
         return value
+    if value.startswith("https://spdx.org"):
+        #we consistently opt for http:// in this implementation
+        return value.replace("https://","http://")
     for substr, license_uri in LICENSE_MAP:
         if value.find(substr) != -1:
             return license_uri
