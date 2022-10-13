@@ -69,7 +69,7 @@ def parse_nodejs(g: Graph, res: Union[URIRef, BNode], file: IO , crosswalk, args
             elif key == 'author':
                 #npm prescribes that author is only one person
                 if isinstance(value, dict) and 'name' in value:
-                    authors = add_authors(g, res, value['name'], True, value.get("email"), baseuri=args.baseuri)
+                    authors = add_authors(g, res, value['name'], single_author=True, mail=value.get("email"), baseuri=args.baseuri)
                     if authors and 'url' in value:
                         g.add((authors[0], SDO.url, Literal(value['url'])))
                 elif isinstance(value, str):
