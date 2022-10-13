@@ -56,7 +56,7 @@ REPOSTATUS_LOCAL_SOURCE = "file://" + os.path.join(TMPDIR, "repostatus.jsonld")
 COMMON_SOURCEREPOS = ["https://github.com/","http://github.com","https://gitlab.com/","http://gitlab.com/","https://codeberg.org/","http://codeberg.org", "https://git.sr.ht/", "https://bitbucket.org/", "https://bitbucket.com/"]
 
 
-ENTRYPOINT_CONTEXT = { #these are all custom extensions not in codemeta (yet), they are proposed in https://github.com/codemeta/codemeta/issues/183 but are obsolete in favour of the newer software types (see next declaration)
+ENTRYPOINT_CONTEXT = { #these are all custom extensions not in codemeta (yet), they were proposed in https://github.com/codemeta/codemeta/issues/183 but are obsolete in favour of the newer software types
     "entryPoints": { "@reverse": "schema:actionApplication" },
     "interfaceType": { "@id": "codemeta:interfaceType" }, #Type of the entrypoint's interface (e.g CLI, GUI, WUI, TUI, REST, SOAP, XMLRPC, LIB)
     "specification": { "@id": "codemeta:specification" , "@type":"@id"}, #A technical specification of the interface
@@ -71,7 +71,17 @@ REPOSTATUS_MAP = { #maps Python development status to repostatus.org vocabulary 
     "4 - beta": "wip", #note, if --released is set this maps to "active" instead
     "5 - production/stable": "active",
     "6 - mature": "active",
-    "7 - inactive": "inactive",
+    "7 - inactive": "unsupported",
+}
+
+TRL_MAP = { #maps Python development status to technology readiness levels (the mapping is debatable)
+    "1 - planning": TRL.Stage1Planning,
+    "2 - pre-alpha": TRL.Level2ConceptFormulated, #pick the latest stage from Stage1Planning for this one
+    "3 - alpha": TRL.Stage2ProofOfConcept,
+    "4 - beta": TRL.Stage3Experimental,
+    "5 - production/stable": TRL.Level8Complete,
+    "6 - mature": TRL.Level9Proven
+    #7 - inactive does not map to a TRL
 }
 
 LICENSE_MAP = [ #maps some common licenses to SPDX URIs, mapped with a substring match on first come first serve basis
@@ -406,6 +416,9 @@ def add_triple(g: Graph, res: Union[URIRef, BNode],key, value, args: AttribDict,
             f_add((res, CODEMETA.developmentStatus, getattr(REPOSTATUS, repostatus) ))
         else:
             f_add((res, CODEMETA.developmentStatus, Literal(value)))
+        if args.trl:
+            if value.strip().lower() in TRL_MAP:
+                f_add((res, TRL.technologyReadinessLevel, TRL_MAP[value.strip().lower()] ))
     elif key == "license": 
         if value == "UNKNOWN":
             #python distutils has a tendency to assign 'UNKNOWN', we don't use this value
