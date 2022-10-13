@@ -128,9 +128,11 @@ def expand_implicit_id_nodes(data, idref_properties):
 
 def do_object_framing(data: dict, res_id: str):
     """JSON-LD object framing. Rdflib's json-ld serialiser doesn't implement this so we do this ourselves"""
-    assert '@graph' in data
     itemmap = {} #mapping from ids to python dicts
-    gather_items(data['@graph'], itemmap)
+    if '@graph' in data:
+        gather_items(data['@graph'], itemmap)
+    else:
+        gather_items(data, itemmap)
     #print("DEBUG itemmap", repr(itemmap))
     if res_id not in itemmap:
         raise Exception("Resource not found in tree, framing not possible")
