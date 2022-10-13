@@ -108,6 +108,7 @@ def main():
     parser.add_argument('--interpreter', help="Start interactive python interpreter after loading the graph", action='store_true',required=False)
     parser.add_argument('--exitv', help="Set exit status according to validation result. Use with --validate", action='store_true',required=False)
     parser.add_argument('--textv', type=str, help="Set extra text to add to a validation report. Use with --validate", action='store',required=False)
+    parser.add_argument('--intro', type=str, help="Set extra text (HTML) to add to the index page as an introduction", action='store',required=False)
     parser.add_argument('--css',type=str, help="Associate a CSS stylesheet (URL) with the HTML output, multiple stylesheets can be separated by a comma", action='store',  required=False)
     parser.add_argument('--no-cache',dest="no_cache", help="Do not cache context files, force redownload", action='store_true',  required=False)
     parser.add_argument('--no-extras',dest="no_extras", help="Do not include dependencies that are marked as 'extras', applies only to Python", action='store_true',  required=False)

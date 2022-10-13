@@ -5,6 +5,7 @@
     </head>
     <body class="cards">
         {% include "header.html" %}
+        {% include "intro.html" %}
         {% for res, label in index %}
          {% for _, targetres in get_triples(g, res, SDO.targetProduct, abcsort=True) %}
            {% if ((targetres, RDF.type, SDO.WebApplication) in g or
