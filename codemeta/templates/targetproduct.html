@@ -90,6 +90,17 @@
             </dd>
             {% endif %}
 
+            {% if g.value(targetres, CODEMETA.developmentStatus) %}
+            <dt class="developmentStatus" title="Indication of the state of this software project regarding ongoing development and/or support">Development Status</dt>
+            <dd class="developmentStatus">
+                <ul>
+                    {% for _,_, devstatres in g.triples((targetres, CODEMETA.developmentStatus, None)) %}
+                    {% include 'developmentstatus.html' %}
+                    {% endfor %}
+                </ul>
+            </dd>
+            {% endif %}
+
             {% if (targetres, SDO.softwareHelp, None) in g or (targetres, SDO.documentation, None) in g  %}
             <dt class="documentation">Documentation</dt>
             <dd class="documentation">

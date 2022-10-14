@@ -39,11 +39,13 @@
         </ul>
     </td>
     <td class="developmentStatus">
-        {% if g.value(targetres, TRL.technologyReadinessLevel) and g.value(targetres, TRL.technologyReadinessLevel).startswith("http") %}
-            {% set trlres = URIRef(g.value(targetres, TRL.technologyReadinessLevel)) %}
-            {% set trl_id = trlres.split('#')[-1] %}
-            <img src="https://w3id.org/research-technology-readiness-levels/{{ trl_id }}.svg" title="{{ contextgraph.value(trlres, SKOS.prefLabel) }}: {{ contextgraph.value(trlres, SKOS.definition) }}" alt="{{ contextgraph.value(trlres, SKOS.prefLabel) }}: {{ contextgraph.value(trlres, SKOS.definition) }}"  />
-        {% endif %}
+        {% if (targetres, CODEMETA.developmentStatus, None) in g %}
+            <ul>
+                {% for _,_, devstatres in g.triples((targetres, CODEMETA.developmentStatus, None)) %}
+                {% include 'developmentstatus.html' %}
+                {% endfor %}
+            </ul>
+        {% else %}
     </td>
     <td class="maintainer">
         <ul>

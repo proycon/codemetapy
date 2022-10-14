@@ -154,34 +154,12 @@
         {% endif %}
 
         {% if g.value(sscres, CODEMETA.developmentStatus) %}
-        <dt class="developmentStatus" title="Indication of the state of this software project regarding ongoing development and support">Development Status</dt>
+        <dt class="developmentStatus" title="Indication of the state of this software project regarding ongoing development and/or support">Development Status</dt>
         <dd class="developmentStatus">
             <ul>
-                {% if g.value(sscres, CODEMETA.developmentStatus).find("repostatus") != -1 %}
-                    {% set repostatus = URIRef(g.value(sscres, CODEMETA.developmentStatus)) %}
-                    {% set repostatus_id = repostatus.split('#')[-1] %}
-                    <li>
-                        <a rel="codemeta:developmentStatus" href="{{ g.value(sscres, CODEMETA.developmentStatus) }}"><img src="https://www.repostatus.org/badges/latest/{{ repostatus_id }}.svg" title="{{ contextgraph.value(repostatus, SKOS.prefLabel) }}: {{ contextgraph.value(repostatus, SKOS.definition) }}" alt="{{ contextgraph.value(repostatus, SKOS.prefLabel) }}: {{ contextgraph.value(repostatus, SKOS.definition) }}"  /></a>
-                {% else %}
-                    <li>{{ g.value(sscres, CODEMETA.developmentStatus) }}
-                        <div class="warning"><strong>Warning:</strong> Status is not expressed in a known vocabulary</div>
-                    </li>
-                {% endif %}
-            </ul>
-        </dd>
-        {% endif %}
-
-        {% if g.value(sscres, TRL.technologyReadinessLevel) %}
-        <dt class="technologyReadinessLevel" title="Indication of the readiness of the technology of this software">Technology Readiness Level</dt>
-        <dd class="technologyReadinessLevel">
-            <ul>
-                {% if g.value(sscres, TRL.technologyReadinessLevel).startswith("http") %}
-                    {% set trlres = URIRef(g.value(sscres, TRL.technologyReadinessLevel)) %}
-                    {% set trl_id = trlres.split('#')[-1] %}
-                    <li>
-                    <img src="https://w3id.org/research-technology-readiness-levels/{{ trl_id }}.svg" title="{{ contextgraph.value(trlres, SKOS.prefLabel) }}: {{ contextgraph.value(trlres, SKOS.definition) }}" alt="{{ contextgraph.value(trlres, SKOS.prefLabel) }}: {{ contextgraph.value(trlres, SKOS.definition) }}"  />
-                    </li>
-                {% endif %}
+                {% for _,_, devstatres in g.triples((sscres, CODEMETA.developmentStatus, None)) %}
+                {% include 'developmentstatus.html' %}
+                {% endfor %}
             </ul>
         </dd>
         {% endif %}

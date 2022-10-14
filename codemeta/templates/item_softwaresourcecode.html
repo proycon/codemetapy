@@ -76,20 +76,28 @@
         </ul>
     </td>
     <td class="developmentStatus">
-        {% if (res, CODEMETA.developmentStatus, None) in g and g.value(res, CODEMETA.developmentStatus).find("repostatus") != -1 %}
-            {% set repostatus = URIRef(g.value(res, CODEMETA.developmentStatus)) %}
-            {% set repostatus_id = repostatus.split('#')[-1] %}
-                <a rel="codemeta:developmentStatus" href="{{ g.value(res, CODEMETA.developmentStatus) }}"><img src="https://www.repostatus.org/badges/latest/{{ repostatus_id }}.svg" title="{{ contextgraph.value(repostatus, SKOS.prefLabel) }}: {{ contextgraph.value(repostatus, SKOS.definition) }}" alt="{{ contextgraph.value(repostatus, SKOS.prefLabel) }}: {{ contextgraph.value(repostatus, SKOS.definition) }}"  /></a>
-        {% elif (res, CODEMETA.developmentStatus, None) in g %}
-            {{ g.value(res, CODEMETA.developmentStatus) }}
-        {% else  %}
+        {% if (res, CODEMETA.developmentStatus, None) in g %}
+            <ul>
+                {% for _,_, devstatres in g.triples((res, CODEMETA.developmentStatus, None)) %}
+                {% if str(devstatres).find("repostatus") != -1 %}
+                    {% set repostatus_id = devstatres.split('#')[-1] %}
+                    <li>
+                        <a rel="codemeta:developmentStatus" href="{{ devstatres }}"><img src="https://www.repostatus.org/badges/latest/{{ repostatus_id }}.svg" title="{{ contextgraph.value(devstatres, SKOS.prefLabel) }}: {{ contextgraph.value(devstatres, SKOS.definition) }}" alt="{{ contextgraph.value(devstatres, SKOS.prefLabel) }}: {{ contextgraph.value(devstatres, SKOS.definition) }}"  /></a>
+                    </li>
+                {% elif str(devstatres).find("research-technology-readiness-levels") != -1 %}
+                    {% set trl_id = devstatres.split('#')[-1] %}
+                    <li>
+                        <img src="https://w3id.org/research-technology-readiness-levels/{{ trl_id }}.svg" title="{{ contextgraph.value(devstatres, SKOS.prefLabel) }}: {{ contextgraph.value(devstatres, SKOS.definition) }}" alt="{{ contextgraph.value(devstatres, SKOS.prefLabel) }}: {{ contextgraph.value(devstatres, SKOS.definition) }}"  />
+                    </li>
+                {% else %}
+                    <li>{{ devstatres }}
+                        <div class="warning"><strong>Warning:</strong> Status is not expressed in a known vocabulary</div>
+                    </li>
+                {% endif %}
+                {% endfor %}
+            </ul>
+        {% else %}
             <span class="negative" title="No development status was provided nor could be extracted automatically"><i class="fa fa-question"></i> unknown</span>
-        {% endif %}
-
-        {% if g.value(res, TRL.technologyReadinessLevel) and g.value(res, TRL.technologyReadinessLevel).startswith("http") %}
-            {% set trlres = URIRef(g.value(res, TRL.technologyReadinessLevel)) %}
-            {% set trl_id = trlres.split('#')[-1] %}
-            <img src="https://w3id.org/research-technology-readiness-levels/{{ trl_id }}.svg" title="{{ contextgraph.value(trlres, SKOS.prefLabel) }}: {{ contextgraph.value(trlres, SKOS.definition) }}" alt="{{ contextgraph.value(trlres, SKOS.prefLabel) }}: {{ contextgraph.value(trlres, SKOS.definition) }}"  />
         {% endif %}
     
         {% if g.value(res, SDO.review) %}

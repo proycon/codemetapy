@@ -243,7 +243,7 @@ INTERFACE_CLUES_DEPS = {
 
 
 #properties that may only occur once, last one counts
-SINGULAR_PROPERTIES = ( SDO.name, SDO.version, SDO.description, CODEMETA.developmentStatus, SDO.dateCreated, SDO.dateModified, SDO.position )
+SINGULAR_PROPERTIES = ( SDO.name, SDO.version, SDO.description, SDO.dateCreated, SDO.dateModified, SDO.position )
 
 #properties that should prefer URIRef rather than Literal **if and only if** the value is a URI
 PREFER_URIREF_PROPERTIES = (SDO.url, SDO.license, SDO.codeRepository, CODEMETA.issueTracker, CODEMETA.contIntegration, CODEMETA.readme, CODEMETA.releaseNotes, SDO.softwareHelp)
@@ -399,6 +399,11 @@ def value_or_uri(value: str, baseuri: Optional[str]) -> str:
         return value.split("/")[-1]
     return value
 
+def delete_repostatus(g: Graph, res: Union[URIRef, BNode]):
+    """Delete any existing developmentStatus repostatus triples before adding a new one (there may be only one)"""
+    for _,_,o in g.triples((res, CODEMETA.developmentStatus, None)):
+        if str(o).find("repostatus") != -1:
+            g.remove((res,CODEMETA.developmentStatus, o))
 
 def add_triple(g: Graph, res: Union[URIRef, BNode],key, value, args: AttribDict, replace=False) -> bool:
     """Maps a key/value pair to an actual triple"""
@@ -410,6 +415,7 @@ def add_triple(g: Graph, res: Union[URIRef, BNode],key, value, args: AttribDict,
     if key == "developmentStatus":
         value = value_or_uri(value, args.baseuri)
         if value.strip().lower() in REPOSTATUS_MAP.values():
+            delete_repostatus(g, res)
             f_add((res, CODEMETA.developmentStatus, getattr(REPOSTATUS, value.strip().lower()) ))
         elif value.strip().lower() in REPOSTATUS_MAP:
             #map to repostatus vocabulary
@@ -417,12 +423,14 @@ def add_triple(g: Graph, res: Union[URIRef, BNode],key, value, args: AttribDict,
             if args.released and value.strip().lower().find("beta") and repostatus == "wip":
                 #beta maps to active if --released is set
                 repostatus = "active"
+            delete_repostatus(g, res)
             f_add((res, CODEMETA.developmentStatus, getattr(REPOSTATUS, repostatus) ))
         else:
+            delete_repostatus(g, res)
             f_add((res, CODEMETA.developmentStatus, Literal(value)))
         if args.trl:
             if value.strip().lower() in TRL_MAP:
-                f_add((res, TRL.technologyReadinessLevel, TRL_MAP[value.strip().lower()] ))
+                f_add((res, CODEMETA.developmentStatus, TRL_MAP[value.strip().lower()] ))
     elif key == "license": 
         if value == "UNKNOWN":
             #python distutils has a tendency to assign 'UNKNOWN', we don't use this value
