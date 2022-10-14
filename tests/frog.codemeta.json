@@ -147,7 +147,7 @@
 	"issueTracker": "https://github.com/LanguageMachines/frog/issues",
 	"contIntegration": "https://travis-ci.org/LanguageMachines/frog",
 	"releaseNotes": "https://github.com/LanguageMachines/frog/releases",
-	"developmentStatus": "https://www.repostatus.org/#active",
+	"developmentStatus": [ "https://www.repostatus.org/#active", "https://w3id.org/research-technology-readiness-levels#Level9Proven" ],
 	"keywords":  [ "nlp", "natural language processing", "pos", "lemma", "ner", "parser", "tagger", "part-of-speech tagging", "lemmatisation", "dependency parsing", "shallow parsing", "dutch" ],
     "referencePublication": [
 		{

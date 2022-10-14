@@ -246,7 +246,7 @@ INTERFACE_CLUES_DEPS = {
 SINGULAR_PROPERTIES = ( SDO.name, SDO.version, SDO.description, SDO.dateCreated, SDO.dateModified, SDO.position )
 
 #properties that should prefer URIRef rather than Literal **if and only if** the value is a URI
-PREFER_URIREF_PROPERTIES = (SDO.url, SDO.license, SDO.codeRepository, CODEMETA.issueTracker, CODEMETA.contIntegration, CODEMETA.readme, CODEMETA.releaseNotes, SDO.softwareHelp)
+PREFER_URIREF_PROPERTIES = (SDO.url, SDO.license, SDO.codeRepository, CODEMETA.developmentStatus, CODEMETA.issueTracker, CODEMETA.contIntegration, CODEMETA.readme, CODEMETA.releaseNotes, SDO.softwareHelp)
 PREFER_URIREF_PROPERTIES_SIMPLE = ('url','license', 'issueTracker', 'contIntegration', 'readme', 'releaseNotes', 'softwareHelp', 'developmentStatus', 'applicationCategory')
 
 def init_context(no_cache=False, addcontext = None):
@@ -413,6 +413,7 @@ def add_triple(g: Graph, res: Union[URIRef, BNode],key, value, args: AttribDict,
     else:
         f_add = g.add
     if key == "developmentStatus":
+        f_add = g.add
         value = value_or_uri(value, args.baseuri)
         if value.strip().lower() in REPOSTATUS_MAP.values():
             delete_repostatus(g, res)

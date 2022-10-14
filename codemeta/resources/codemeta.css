@@ -479,8 +479,9 @@ div.card img.thumbnail {
 li.maintainer {
     font-weight: bold;
 }
-
-
-
-
-
+div.card div.topbar div.warning {
+    display: none;
+}
+div.card div.topbar ul {
+    list-style: none;
+}

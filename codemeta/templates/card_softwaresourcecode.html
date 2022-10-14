@@ -11,19 +11,11 @@
         </div>
 
         <div class="developmentStatus" property="codemeta:developmentStatus">
-            {% if (res, CODEMETA.developmentStatus, None) in g and g.value(res, CODEMETA.developmentStatus).find("repostatus") != -1 %}
-                {% set repostatus = URIRef(g.value(res, CODEMETA.developmentStatus)) %}
-                {% set repostatus_id = repostatus.split('#')[-1] %}
-                    <a rel="codemeta:developmentStatus" href="{{ g.value(res, CODEMETA.developmentStatus) }}"><img src="https://www.repostatus.org/badges/latest/{{ repostatus_id }}.svg" title="{{ contextgraph.value(repostatus, SKOS.prefLabel) }}: {{ contextgraph.value(repostatus, SKOS.definition) }}" alt="{{ contextgraph.value(repostatus, SKOS.prefLabel) }}: {{ contextgraph.value(repostatus, SKOS.definition) }}"  /></a>
-            {% elif (res, CODEMETA.developmentStatus, None) in g %}
-                {{ g.value(res, CODEMETA.developmentStatus) }}
-            {% endif %}
-
-            {% if g.value(res, TRL.technologyReadinessLevel) and g.value(res, TRL.technologyReadinessLevel).startswith("http") %}
-                {% set trlres = URIRef(g.value(res, TRL.technologyReadinessLevel)) %}
-                {% set trl_id = trlres.split('#')[-1] %}
-                <br/><img src="https://w3id.org/research-technology-readiness-levels/{{ trl_id }}.svg" title="{{ contextgraph.value(trlres, SKOS.prefLabel) }}: {{ contextgraph.value(trlres, SKOS.definition) }}" alt="{{ contextgraph.value(trlres, SKOS.prefLabel) }}: {{ contextgraph.value(trlres, SKOS.definition) }}"  />
-            {% endif %}
+            <ul>
+            {% for _,_, devstatres in g.triples((res, CODEMETA.developmentStatus, None)) %}
+            {% include 'developmentstatus.html' %}
+            {% endfor %}
+            </ul>
         </div>
     </div>
 
