@@ -1,0 +1,15 @@
+                {% if str(devstatres).find("repostatus") != -1 %}
+                    {% set repostatus_id = devstatres.split('#')[-1] %}
+                    <li>
+                        <a rel="codemeta:developmentStatus" href="{{ devstatres }}"><img src="https://www.repostatus.org/badges/latest/{{ repostatus_id }}.svg" title="{{ contextgraph.value(devstatres, SKOS.prefLabel) }}: {{ contextgraph.value(devstatres, SKOS.definition) }}" alt="{{ contextgraph.value(devstatres, SKOS.prefLabel) }}: {{ contextgraph.value(devstatres, SKOS.definition) }}"  /></a>
+                    </li>
+                {% elif str(devstatres).find("research-technology-readiness-levels") != -1 %}
+                    {% set trl_id = devstatres.split('#')[-1] %}
+                    <li>
+                        <img src="https://w3id.org/research-technology-readiness-levels/{{ trl_id }}.svg" title="{{ contextgraph.value(devstatres, SKOS.prefLabel) }}: {{ contextgraph.value(devstatres, SKOS.definition) }}" alt="{{ contextgraph.value(devstatres, SKOS.prefLabel) }}: {{ contextgraph.value(devstatres, SKOS.definition) }}"  />
+                    </li>
+                {% else %}
+                    <li>{{ devstatres }}
+                        <div class="warning"><strong>Warning:</strong> Status is not expressed in a known vocabulary</div>
+                    </li>
+                {% endif %}
