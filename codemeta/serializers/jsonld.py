@@ -65,10 +65,21 @@ def sort_by_position(data):
             except TypeError: #in rare cases this might fail because of some inconsistency, return unsorted then
                 return [ sort_by_position(x) for x in data ]
     elif isinstance(data, dict):
-        for key, value in data.items():
-            data[key] = sort_by_position(value)
+        if 'rdf:first' in data:
+            #ordered rdf list
+            return list(rdf_list_to_normal_list(data))
+        else:
+            for key, value in data.items():
+                data[key] = sort_by_position(value)
     return data
 
+def rdf_list_to_normal_list(data):
+    if 'rdf:first' in data:
+        yield data['rdf:first']
+    if 'rdf:rest' in data:
+        assert isinstance(data['rdf:rest'], dict)
+        for e in rdf_list_to_normal_list(data['rdf:rest']):
+            yield e
 
 def normalize_schema_org(g: Graph):
     #there is debate on whether to use https of http for schema.org,
@@ -137,6 +148,9 @@ def do_object_framing(data: dict, res_id: str):
     if res_id not in itemmap:
         raise Exception("Resource not found in tree, framing not possible")
     embed_items(itemmap[res_id], itemmap, {res_id,})
+    if '@context' in data:
+        #preserve context
+        itemmap[res_id]['@context'] = data['@context']
     return itemmap[res_id]
         
 def gather_items(data, itemmap: dict):

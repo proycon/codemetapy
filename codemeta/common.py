@@ -9,7 +9,7 @@ from tempfile import gettempdir
 from rdflib import Graph, Namespace, URIRef, BNode, Literal
 from rdflib.namespace import RDF, RDFS, SKOS
 from rdflib.compare import graph_diff
-from typing import Union, IO, Sequence, Optional
+from typing import Union, IO, Sequence, Optional,Generator
 from collections import OrderedDict
 from nameparser import HumanName
 
@@ -245,6 +245,9 @@ INTERFACE_CLUES_DEPS = {
 #properties that may only occur once, last one counts
 SINGULAR_PROPERTIES = ( SDO.name, SDO.version, SDO.description, SDO.dateCreated, SDO.dateModified, SDO.position )
 
+#these will be treated as ordered lists
+ORDEREDLIST_PROPERTIES = ( SDO.author, SDO.contributor )
+
 #properties that should prefer URIRef rather than Literal **if and only if** the value is a URI
 PREFER_URIREF_PROPERTIES = (SDO.url, SDO.license, SDO.codeRepository, CODEMETA.developmentStatus, CODEMETA.issueTracker, CODEMETA.contIntegration, CODEMETA.readme, CODEMETA.releaseNotes, SDO.softwareHelp)
 PREFER_URIREF_PROPERTIES_SIMPLE = ('url','license', 'issueTracker', 'contIntegration', 'readme', 'releaseNotes', 'softwareHelp', 'developmentStatus', 'applicationCategory')
@@ -269,7 +272,11 @@ def init_context(no_cache=False, addcontext = None):
                 f.write(r.content.replace(b'"softwareRequirements": { "@id": "schema:softwareRequirements", "@type": "@id"},',b'"softwareRequirements": { "@id": "schema:softwareRequirements" },') \
                                            # ^-- rdflib gets confused by this definition in codemeta which we already
                                            #     have in schema .org(without an extra @type: @id), ensure the two are
-                                           #     equal (without the @type)
+                                           #     equal (without the @type),
+                                 .replace(b'"author": { "@id": "schema:author"},',b'"author": { "@id": "schema:author", "@container": "@list"},') \
+                                           # ^-- we treat authors as an ordered list (rdf:list), even though schema.org does not (this is also recommended by science-on-schema.org)
+                                 .replace(b'"contributor": { "@id": "schema:contributor"},',b'"contributor": { "@id": "schema:contributor", "@container": "@list"},') \
+                                           # ^-- (same for contributors)
                                  .replace(b'"referencePublication": { "@id": "codemeta:referencePublication", "@type": "@id"},',b'"referencePublication": { "@id": "codemeta:referencePublication" },'))
                                            # ^--- with rdflib @type: @id here, rdflib (and our code) doesn't embed the full referencePublication as we want. Trick the serialiser by rewriting this part of the context.
 
@@ -554,11 +561,53 @@ def add_authors(g: Graph, res: Union[URIRef, BNode], value, property=SDO.author,
             g.add((orgres, SDO.name, Literal(org.strip())))
             g.add((author, SDO.affiliation, orgres))
 
-        g.add((res, property, author))
+        if property in ORDEREDLIST_PROPERTIES:
+            add_to_ordered_list(g, res, property, author)
+        else:
+            g.add((res, property, author))
         authors.append(author) #return the nodes
 
     return authors
 
+def add_to_ordered_list(g: Graph, subject: Union[URIRef, BNode], property: URIRef, object: Union[URIRef, BNode, Literal]):
+    """Add an item to the end of an ordered list in RDF (rdf:first, rdf:next)"""
+    collection = g.value(subject, property)
+    if collection and isinstance(collection, (URIRef,BNode)) and (collection, RDF.first,None) in g:
+        while True:
+            end = g.value(collection, RDF.rest)
+            if end == RDF.nil or not end:
+                break
+            collection = end
+        if not end:
+            raise Exception(f"Unable to find end of ordered list {collection}")
+        g.remove((collection, RDF.rest, RDF.nil))
+        newnode = BNode()
+        g.add((newnode, RDF.first, object)) 
+        g.add((newnode, RDF.rest, RDF.nil)) 
+        g.add((collection, RDF.rest, newnode))
+    elif not collection:
+        collection = BNode()
+        g.add((subject,property, collection))
+        g.add((collection, RDF.first, object))
+        g.add((collection, RDF.rest, RDF.nil))
+
+def part_of_ordered_list(g: Graph, subject: Union[URIRef, BNode], property: URIRef, object: Union[URIRef, BNode, Literal]) -> bool:
+    """Check if an item is a member of an RDF ordered list (rdf:first, rdf:rest)"""
+    collection = g.value(subject, property)
+    while collection and isinstance(collection, (URIRef,BNode)):
+        if (collection, RDF.first, object) in g:
+            return True
+        collection = g.value(collection, RDF.rest)
+    return False
+
+def iter_ordered_list(g: Graph, subject: Union[URIRef, BNode], property: URIRef) -> Generator:
+    """Check if an item is a member of an RDF ordered list (rdf:first, rdf:rest). Returns triples"""
+    collection = g.value(subject, property)
+    while collection and isinstance(collection, (URIRef,BNode)):
+        object =  g.value(collection, RDF.first)
+        if object:
+            yield subject, property, object
+        collection = g.value(collection, RDF.rest)
 
 def parse_human_name(name):
     humanname = HumanName(name.strip())

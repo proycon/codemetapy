@@ -5,7 +5,7 @@ import os
 import unittest
 from rdflib import Graph, BNode, URIRef, Literal
 from rdflib.namespace import RDF
-from codemeta.common import CODEMETA, SDO, AttribDict, SOFTWARETYPES, SOFTWAREIODATA
+from codemeta.common import CODEMETA, SDO, AttribDict, SOFTWARETYPES, SOFTWAREIODATA, iter_ordered_list
 from codemeta.codemeta import build, serialize
 
 def debugout(g: Graph, s,p=None,o=None):
@@ -62,17 +62,16 @@ class BuildTest_Json(unittest.TestCase):
         self.assertIn( (self.res, SDO.dateCreated,Literal("2011-03-31T12:35:01Z+0000",datatype=URIRef('http://schema.org/Date'))), self.g)
 
     def test008_authors(self):
-        """Testing authors (not exhaustively)"""
-        authors = [ x[2] for x in self.g.triples((self.res, SDO.author, None)) ]
-        self.assertEqual(len(authors), 3, "Testing number of authors")
-        for x in authors:
-            self.assertIn( (x, RDF.type, SDO.Person), self.g, "Testing if author is a schema:Person")
-            self.assertIn( (x, SDO.givenName, None), self.g, "Testing if author has a givenName") #not testing actual value
-            self.assertIn( (x, SDO.familyName, None), self.g, "Testing if author has a familyName") #not testing actual value
-            self.assertIn( (x, SDO.email, None), self.g, "Testing if author has an email") #not testing actual value
+        """Testing authors (sorted rdf list!) (not exhaustively)"""
+        i = 0
+        for i, (_,_,o) in enumerate(iter_ordered_list(self.g, self.res, SDO.author)):
+            self.assertIn( (o, RDF.type, SDO.Person), self.g, "Testing if author is a schema:Person")
+            self.assertIn( (o, SDO.givenName, None), self.g, "Testing if author has a givenName") #not testing actual value
+            self.assertIn( (o, SDO.familyName, None), self.g, "Testing if author has a familyName") #not testing actual value
+            self.assertIn( (o, SDO.email, None), self.g, "Testing if author has an email") #not testing actual value
+        self.assertEqual(i+1, 3, "Testing number of authors")
 
         #testing one specific author
-        self.assertIn( (self.res,SDO.author, URIRef("https://orcid.org/0000-0002-1046-0006")), self.g, "Testing specific author")
         self.assertIn( (URIRef("https://orcid.org/0000-0002-1046-0006"), SDO.givenName, Literal("Maarten")), self.g, "Testing specific author's givenName")
         self.assertIn( (URIRef("https://orcid.org/0000-0002-1046-0006"), SDO.familyName, Literal("van Gompel")), self.g, "Testing specific author's familyName")
         self.assertIn( (URIRef("https://orcid.org/0000-0002-1046-0006"), SDO.email, Literal("proycon@anaproy.nl")), self.g, "Testing specific author's email")
@@ -193,12 +192,12 @@ class BuildTest_SetupPy(unittest.TestCase):
 
     def test008_authors(self):
         """Testing authors (not exhaustively)"""
-        authors = [ x[2] for x in self.g.triples((self.res, SDO.author, None)) ]
-        self.assertEqual(len(authors), 2, "Testing number of authors")
-        for x in authors:
-            self.assertIn( (x, RDF.type, SDO.Person), self.g, "Testing if author is a schema:Person")
-            self.assertIn( (x, SDO.givenName, None), self.g, "Testing if author has a givenName") #not testing actual value
-            self.assertIn( (x, SDO.familyName, None), self.g, "Testing if author has a familyName") #not testing actual value
+        i = 0
+        for i, (_,_,o) in enumerate(iter_ordered_list(self.g, self.res, SDO.author)):
+            self.assertIn( (o, RDF.type, SDO.Person), self.g, "Testing if author is a schema:Person")
+            self.assertIn( (o, SDO.givenName, None), self.g, "Testing if author has a givenName") #not testing actual value
+            self.assertIn( (o, SDO.familyName, None), self.g, "Testing if author has a familyName") #not testing actual value
+        self.assertEqual(i+1, 2, "Testing number of authors")
 
 
     def test100_serialisation_json(self):

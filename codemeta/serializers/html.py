@@ -7,7 +7,7 @@ from rdflib.namespace import RDF, SKOS, RDFS
 from typing import Union, IO, Optional, Sequence
 from itertools import chain
 from importlib.metadata import version as get_version
-from codemeta.common import AttribDict, REPOSTATUS, license_to_spdx, SDO, CODEMETA, SOFTWARETYPES, SOFTWAREIODATA, TRL, CODEMETAPY, SCHEMA_SOURCE, CODEMETA_SOURCE, SCHEMA_LOCAL_SOURCE, SCHEMA_SOURCE, CODEMETA_LOCAL_SOURCE, CODEMETA_SOURCE, STYPE_SOURCE, STYPE_LOCAL_SOURCE, init_context, SINGULAR_PROPERTIES, merge_graphs, get_subgraph, get_last_component, query
+from codemeta.common import AttribDict, REPOSTATUS, license_to_spdx, SDO, CODEMETA, SOFTWARETYPES, SOFTWAREIODATA, TRL, CODEMETAPY, SCHEMA_SOURCE, CODEMETA_SOURCE, SCHEMA_LOCAL_SOURCE, SCHEMA_SOURCE, CODEMETA_LOCAL_SOURCE, CODEMETA_SOURCE, STYPE_SOURCE, STYPE_LOCAL_SOURCE, init_context, SINGULAR_PROPERTIES, ORDEREDLIST_PROPERTIES, merge_graphs, get_subgraph, get_last_component, query, iter_ordered_list
 from codemeta import __path__ as rootpath
 import codemeta.parsers.gitapi
 from jinja2 import Environment, FileSystemLoader
@@ -18,20 +18,29 @@ def get_triples(g: Graph, res: Union[URIRef,BNode,None], prop, labelprop=(SDO.na
     havepos = False
     if not isinstance(labelprop, (tuple, list)):
         labelprop = (labelprop,)
-    for _,_, res2 in g.triples((res, prop, None)):
+    if res is not None and prop in ORDEREDLIST_PROPERTIES:
+        triples = iter_ordered_list(g, res, prop)
+    else:
+        triples = g.triples((res, prop, None))
+    for i, (_,_, res2) in enumerate(triples):
         if isinstance(res2, Literal) and str(res2).startswith(("http","_","/")) and (URIRef(res2),None,None) in g:
             #if a literals referers to an existing URI in the graph, treat it as a URIRef instead
             res2 = URIRef(str(res2))
         if isinstance(res2, Literal):
             results.append( (res2, res2, 9999, 9999) )
         else:
-            pos = g.value(res2, SDO.position)
-            if pos is not None:
-                havepos = True
-            elif isinstance(pos, int):
-                pass
-            elif isinstance(pos, str):
-                pos = int(pos) if pos.isnumeric() else 9999
+            if prop in ORDEREDLIST_PROPERTIES:
+                #already returned in order
+                pos = i
+            else:
+                #follow schema:position if available
+                pos = g.value(res2, SDO.position)
+                if pos is not None:
+                    havepos = True
+                elif isinstance(pos, int):
+                    pass
+                elif isinstance(pos, str):
+                    pos = int(pos) if pos.isnumeric() else 9999
             label = None
             for p in labelprop:
                 label = g.value(res2, p)
