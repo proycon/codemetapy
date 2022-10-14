@@ -13,6 +13,7 @@ import codemeta.parsers.gitapi
 from jinja2 import Environment, FileSystemLoader
 
 def get_triples(g: Graph, res: Union[URIRef,BNode,None], prop, labelprop=(SDO.name,RDFS.label, SKOS.prefLabel), abcsort=False, contextgraph: Optional[Graph] = None):
+    """Get all triples for a particular resource and properties, also returns labels which are looked for in the contextgraph when needed, and handles sorting"""
     results = []
     havepos = False
     if not isinstance(labelprop, (tuple, list)):
