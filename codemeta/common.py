@@ -740,6 +740,9 @@ def get_subgraph(g: Graph, reslist: Sequence[Union[URIRef,BNode]], subgraph: Uni
             if isinstance(obj, (URIRef, BNode)) and obj not in history:
                 history.add(obj)
                 get_subgraph(g, [obj], subgraph, history)
+            elif isinstance(obj, Literal) and str(obj).startswith(("http","_","/")) and (URIRef(obj),None,None) in g and URIRef(obj) not in history: #incldue with things that are likely references but ended up as a Literal by mistake
+                history.add(URIRef(obj))
+                get_subgraph(g, [URIRef(obj)], subgraph, history)
 
     return subgraph
 

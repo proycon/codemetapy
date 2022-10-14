@@ -18,6 +18,9 @@ def get_triples(g: Graph, res: Union[URIRef,BNode,None], prop, labelprop=(SDO.na
     if not isinstance(labelprop, (tuple, list)):
         labelprop = (labelprop,)
     for _,_, res2 in g.triples((res, prop, None)):
+        if isinstance(res2, Literal) and str(res2).startswith(("http","_","/")) and (URIRef(res2),None,None) in g:
+            #if a literals referers to an existing URI in the graph, treat it as a URIRef instead
+            res2 = URIRef(str(res2))
         if isinstance(res2, Literal):
             results.append( (res2, res2, 9999, 9999) )
         else:
