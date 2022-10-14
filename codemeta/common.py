@@ -5,6 +5,7 @@ import requests
 import random
 import re
 from collections import Counter
+from tempfile import gettempdir
 from rdflib import Graph, Namespace, URIRef, BNode, Literal
 from rdflib.namespace import RDF, RDFS, SKOS
 from rdflib.compare import graph_diff
@@ -44,8 +45,7 @@ IODATA_SOURCE = "https://w3id.org/software-iodata"
 
 REPOSTATUS_SOURCE = "https://raw.githubusercontent.com/jantman/repostatus.org/master/badges/latest/ontology.jsonld"
 
-
-TMPDIR  = os.environ.get("TMPDIR","/tmp")
+TMPDIR  = os.environ.get("TMPDIR",gettempdir())
 
 SCHEMA_LOCAL_SOURCE = "file://" + os.path.join(TMPDIR, "schemaorgcontext.jsonld")
 CODEMETA_LOCAL_SOURCE = "file://" + os.path.join(TMPDIR, "codemeta.jsonld")
