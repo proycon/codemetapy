@@ -785,6 +785,9 @@ def merge_graphs(g: Graph ,g2: Graph, map_uri_from=None, map_uri_to=None, args: 
             for (s2,p2,o2) in g.triples((s,p,None)):
                 g.remove((s2,p2,o2))
                 removed += 1
+        elif p == CODEMETA.developmentStatus and str(o).find("repostatus") != -1 and isinstance(s, (URIRef, BNode)):
+            #ensure there is only one repostatus
+            delete_repostatus(g, s)
         g.add((s,p,o))
         i += 1
     l = len(g2)
