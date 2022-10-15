@@ -64,6 +64,14 @@ ENTRYPOINT_CONTEXT = { #these are all custom extensions not in codemeta (yet), t
 }
 
 
+DEVIANT_CONTEXT = { #Extra *internal* context that enforces some implementation-specific differences and solves conflicts, this context is ALWAYS assumed on parsing, and ALWAYS passed to the serialiser (but NEVER propagated to final output, it is stripped again on final context rewrite) 
+    #"softwareRequirements":{ "@id": "schema:softwareRequirements"}, #schema does not add @type=@id, codemeta does....    for some reason I don't understand we must explicitly omit it or serialisation fails, however setting it here doesn't work either
+    #"referencePublication":{ "@id": "codemeta:referencePublication"}, #schema does not add @type=@id, codemeta does....  for some reason I don't understand we must explicitly omit it or serialisation fails, however setting it here doesn't work either
+    "author": {"@id": "schema:author", "@container": "@list" },  #we treat authors as an ordered list (rdf:list), even though schema.org does not (this is also recommended by science-on-schema.org)
+    "contributor": {"@id": "schema:contributor", "@container": "@list" },  #we treat contributors as an ordered list (rdf:list), even though schema.org does not (this is also recommended by science-on-schema.org)
+}
+
+
 REPOSTATUS_MAP = { #maps Python development status to repostatus.org vocabulary (the mapping is debatable)
     "1 - planning": "concept",
     "2 - pre-alpha": "concept",
@@ -252,11 +260,23 @@ ORDEREDLIST_PROPERTIES = ( SDO.author, SDO.contributor )
 PREFER_URIREF_PROPERTIES = (SDO.url, SDO.license, SDO.codeRepository, CODEMETA.developmentStatus, CODEMETA.issueTracker, CODEMETA.contIntegration, CODEMETA.readme, CODEMETA.releaseNotes, SDO.softwareHelp)
 PREFER_URIREF_PROPERTIES_SIMPLE = ('url','license', 'issueTracker', 'contIntegration', 'readme', 'releaseNotes', 'softwareHelp', 'developmentStatus', 'applicationCategory')
 
-def init_context(no_cache=False, addcontext = None):
+class AttribDict(dict):
+    """Simple dictionary that is addressable via attributes"""
+    def __init__(self, d: dict):
+        self.__dict__ = d
+
+    def __getattr__(self, key):
+        if key in self:
+            return self[key]
+        return None
+
+def init_context(args: AttribDict):
+    """Initialized the context, ensures all context JSONLDs are downloaded and local filesystem references are used instead"""
+
     sources = [ (CODEMETA_LOCAL_SOURCE, CODEMETA_SOURCE), (SCHEMA_LOCAL_SOURCE, SCHEMA_SOURCE), (STYPE_LOCAL_SOURCE, STYPE_SOURCE), (IODATA_LOCAL_SOURCE, IODATA_SOURCE), (REPOSTATUS_LOCAL_SOURCE, REPOSTATUS_SOURCE) ]
     
-    if addcontext:
-        for remote_url in addcontext:
+    if args.addcontext:
+        for remote_url in args.addcontext:
             if not remote_url.startswith("http"):
                 raise Exception(f"Explicitly added context (--addcontext) must be a remote URL, got {remote_url} instead")
             local = "file://" + os.path.join(TMPDIR, os.path.basename(remote_url))
@@ -264,21 +284,29 @@ def init_context(no_cache=False, addcontext = None):
 
     for local, remote in sources:
         localfile = local.replace("file://","")
-        if not os.path.exists(localfile) or no_cache:
+        if not os.path.exists(localfile) or args.no_cache:
             print(f"Downloading context from {remote}", file=sys.stderr)
             r = requests.get(remote, headers={ "Accept": "application/json+ld;q=1.0,application/json;q=0.9,text/plain;q=0.5" })
             r.raise_for_status()
             with open(localfile, 'wb') as f:
+                # The replace business is a very ugly hack that modifies the actual jsonld context because
+                # we don't rdflib's json-ld serialiser gets confused by this definition in codemeta which we already
+                # have in schema.org (without an extra @type: @id), the version WITH @type: @id leads
+                # to softwareRequirements/referencePublication not being properly serialised (their nodes, often blank nodes, are fully are missing somehow)
+                # I couldn't solve this by loading a custom context (DEVIANT_CONTEXT) either so we resort to modifying the file (unfortunately)
                 f.write(r.content.replace(b'"softwareRequirements": { "@id": "schema:softwareRequirements", "@type": "@id"},',b'"softwareRequirements": { "@id": "schema:softwareRequirements" },') \
-                                           # ^-- rdflib gets confused by this definition in codemeta which we already
-                                           #     have in schema .org(without an extra @type: @id), ensure the two are
-                                           #     equal (without the @type),
-                                 .replace(b'"author": { "@id": "schema:author"},',b'"author": { "@id": "schema:author", "@container": "@list"},') \
-                                           # ^-- we treat authors as an ordered list (rdf:list), even though schema.org does not (this is also recommended by science-on-schema.org)
-                                 .replace(b'"contributor": { "@id": "schema:contributor"},',b'"contributor": { "@id": "schema:contributor", "@container": "@list"},') \
-                                           # ^-- (same for contributors)
                                  .replace(b'"referencePublication": { "@id": "codemeta:referencePublication", "@type": "@id"},',b'"referencePublication": { "@id": "codemeta:referencePublication" },'))
-                                           # ^--- with rdflib @type: @id here, rdflib (and our code) doesn't embed the full referencePublication as we want. Trick the serialiser by rewriting this part of the context.
+                #                          # ^--- with rdflib @type: @id here, rdflib (and our code) doesn't embed the full softwareRequirements/referencePublication as we want.
+                #                          # ^-- rdflib gets confused by this definition in codemeta which we already
+                #                          #     have in schema .org(without an extra @type: @id), ensure the two are
+                #                          #     equal (without the @type),
+                #                .replace(b'"author": { "@id": "schema:author"},',b'"author": { "@id": "schema:author", "@container": "@list"},') \
+                #                          # ^-- we treat authors as an ordered list (rdf:list), even though schema.org does not (this is also recommended by science-on-schema.org)
+                #                .replace(b'"contributor": { "@id": "schema:contributor"},',b'"contributor": { "@id": "schema:contributor", "@container": "@list"},') \
+                #                          # ^-- (same for contributors)
+                #                .replace(b'"referencePublication": { "@id": "codemeta:referencePublication", "@type": "@id"},',b'"referencePublication": { "@id": "codemeta:referencePublication" },'))
+                #                          # ^--- with rdflib @type: @id here, rdflib (and our code) doesn't embed the full referencePublication as we want. Trick the serialiser by rewriting this part of the context.
+
 
     return sources
 
@@ -288,10 +316,10 @@ def bind_graph(g: Graph):
     g.bind('stype', SOFTWARETYPES)
     g.bind('iodata', SOFTWAREIODATA)
 
-def init_graph(no_cache=False, addcontext=None):
+def init_graph(args: AttribDict):
     """Initializes the RDF graph, the context and the prefixes"""
 
-    context = init_context(no_cache, addcontext)
+    context_sources = init_context(args)
 
     g = Graph()
 
@@ -327,21 +355,12 @@ def init_graph(no_cache=False, addcontext=None):
     contextgraph.add((SDO.WebPage, RDFS.label, Literal("Webpage")))
     contextgraph.add((SDO.WebPage, RDFS.comment, Literal("A very particular page on the web")))
 
-    for local, _remote in context:
+    for local, _ in context_sources:
         with open(local.replace("file://",""),'rb') as f:
             contextgraph.parse(data=json.load(f), format="json-ld")
 
     return g, contextgraph
 
-class AttribDict(dict):
-    """Simple dictionary that is addressable via attributes"""
-    def __init__(self, d: dict):
-        self.__dict__ = d
-
-    def __getattr__(self, key):
-        if key in self:
-            return self[key]
-        return None
 
 def license_to_spdx(value: Union[str,list,tuple]) -> Union[str,list]:
     """Attempts to converts a license name or acronym to a full SPDX URI (https://spdx.org/licenses/)"""
@@ -803,17 +822,18 @@ def getstream(source: str):
     return open(source,'r',encoding='utf-8')
 
 
-def remap_uri(g: Graph, map_uri_from, map_uri_to, args: Optional[AttribDict] = None) -> Graph:
-    """Remap URIRefs and return a new graph. Only handles subjects and objects."""
-    res = URIRef(map_uri_from)
-    if (res, None, None) in g or (None,None,res) in g:
-        g2 = Graph()
-        bind_graph(g2)
-        #pylint: disable=W1114 #arguments are not out of order here
-        merge_graphs(g2, g, map_uri_from, map_uri_to, args)
-        return g2
-    #nothing to do, return input as-is
-    return g
+def remap_uri(g: Graph, from_uri, to_uri):
+    """Changes URIs (in-graph)"""
+    if not isinstance(from_uri, URIRef):
+        from_uri = URIRef(from_uri)
+    elif not isinstance(to_uri, URIRef):
+        to_uri = URIRef(to_uri)
+    for s,p,o in g.triples((from_uri,None,None)):
+        g.remove((s,p,o))
+        g.add((to_uri,p,o))
+    for s,p,o in g.triples((None,None,from_uri)):
+        g.remove((s,p,o))
+        g.add((s,p,to_uri))
 
 def merge_graphs(g: Graph ,g2: Graph, map_uri_from=None, map_uri_to=None, args: Optional[AttribDict] = None):
     """Merge two graphs (g2 into g), but taking care to replace certain properties that are known to take a single value, and mapping URIs where needed"""
@@ -894,7 +914,7 @@ def generate_uri(identifier: Union[str,None] = None, baseuri: Union[str,None] = 
     if prefix and prefix[-1] not in ('/','#'):
         prefix += '/'
     if not baseuri:
-        baseuri = "/" #relative URI! (no authority part)
+        baseuri = "file:///" #relative URI! (authority part file:// to be compatible with what rdflib assumes by default)
     elif baseuri[-1] not in ('/','#'):
         baseuri += '/'
     return baseuri + prefix + identifier

@@ -4,7 +4,7 @@ import os.path
 from typing import Union, IO, Sequence
 from rdflib import Graph, URIRef, BNode, Literal
 from copy import copy
-from codemeta.common import AttribDict, license_to_spdx, SDO, CODEMETA_SOURCE, CODEMETA_LOCAL_SOURCE, SCHEMA_SOURCE, SCHEMA_LOCAL_SOURCE, STYPE_SOURCE, STYPE_LOCAL_SOURCE, IODATA_SOURCE, IODATA_LOCAL_SOURCE, init_context, REPOSTATUS_LOCAL_SOURCE, REPOSTATUS_SOURCE, get_subgraph, PREFER_URIREF_PROPERTIES_SIMPLE, TMPDIR
+from codemeta.common import AttribDict, license_to_spdx, SDO, CODEMETA_SOURCE, CODEMETA_LOCAL_SOURCE, SCHEMA_SOURCE, SCHEMA_LOCAL_SOURCE, STYPE_SOURCE, STYPE_LOCAL_SOURCE, IODATA_SOURCE, IODATA_LOCAL_SOURCE, init_context, REPOSTATUS_LOCAL_SOURCE, REPOSTATUS_SOURCE, get_subgraph, PREFER_URIREF_PROPERTIES_SIMPLE, TMPDIR, DEVIANT_CONTEXT
 
 def flatten_singletons(data): #TODO: no longer used, remove
     """Recursively flattens singleton ``key: { "@id": uri }`` instances to ``key: uri``"""
@@ -51,7 +51,7 @@ def alt_sort_key(data) -> str:
     return "~" #just a high alphanumeric character so it ends up after normal (ascii) stuff
 
 
-def sort_by_position(data):
+def sort_by_position(data: Union[list,dict,tuple,str]) -> Union[list,dict,str]:
     """If list items have a position (schema:position) index, make sure to use it for sorting. If not, sort alphabetically of name of id"""
     if isinstance(data, (list, tuple)):
         if any( isinstance(x, dict) and 'position' in x for x in data ):
@@ -76,30 +76,19 @@ def sort_by_position(data):
 def rdf_list_to_normal_list(data):
     if 'rdf:first' in data:
         yield data['rdf:first']
-    if 'rdf:rest' in data:
+    if 'rdf:rest' in data and data['rdf:rest']:
         assert isinstance(data['rdf:rest'], dict)
         for e in rdf_list_to_normal_list(data['rdf:rest']):
             yield e
 
-def normalize_schema_org(g: Graph):
-    #there is debate on whether to use https of http for schema.org,
-    #codemeta 2.0 uses http still in their context so we force that here too
-    #(https://schema.org/docs/faq.html#19)
-    for s, p, o in g.triples():
-        if str(s).startswith("https://schema.org"):
-            g.remove((s, p, o))
-            g.add((URIRef(str(s).replace("https", "http")), p, o))
 
-        if str(p).startswith("https://schema.org"):
-            g.remove((s, p, o))
-            g.add((s, URIRef(str(p).replace("https", "http")), p, o))
-
-        if str(o).startswith("https://schema.org"):
-            g.remove((s, p, o))
-            g.add((s, p, URIRef(str(o).replace("https", "http"))))
-
-def cleanup(data):
-    """Recursively removes namespace prefixes from dictionary keys and use @id and @type rather than the id/type aliases"""
+def cleanup(data: Union[dict,list,tuple,str]) -> Union[dict,list,str]:
+    """This cleans up the serialisation:
+       * It Recursively removes namespace prefixes from dictionary keys
+       * It removes the IDs of all blank nodes (making them blank again)
+       * It enforces @id and @type rather than the id/type aliases
+       * It removes file:// prefixes from URIs
+    """
     if isinstance(data, dict):
         if 'id' in data:
             data['@id'] = data['id']
@@ -107,6 +96,11 @@ def cleanup(data):
         if 'type' in data:
             data['@type'] = data['type']
             del data['type']
+        if '@id' in data:
+            if data['@id'].startswith('_') and len(data) > 1:
+                del data['@id']
+            elif data['@id'].startswith('file://'):
+                data['@id'] = data['@id'][7:]
         return { key.replace('schema:','').replace('http://schema.org/','').replace('codemeta:','').replace('stypes:','') : cleanup(value) for key, value in data.items() }
     elif isinstance(data, (list,tuple)):
         return [ cleanup(x) for x in data ]
@@ -146,7 +140,7 @@ def do_object_framing(data: dict, res_id: str):
         gather_items(data, itemmap)
     #print("DEBUG itemmap", repr(itemmap))
     if res_id not in itemmap:
-        raise Exception("Resource not found in tree, framing not possible")
+        raise Exception(f"Resource {res_id} not found in tree, framing not possible")
     embed_items(itemmap[res_id], itemmap, {res_id,})
     if '@context' in data:
         #preserve context
@@ -180,17 +174,30 @@ def embed_items(data, itemmap: dict, history: set):
     elif isinstance(data, dict): 
         for idkey in ('@id', 'id'):
             if idkey in data and data[idkey] in itemmap and data[idkey] not in history:
-                #print(f"DEBUG embedded {idkey} (explicit)")
+                #print(f"DEBUG embedded {data[idkey]} (explicit)")
                 history.add(data[idkey])
                 return embed_items(itemmap[data[idkey]], itemmap, copy(history))
         for k, v in data.items():
             data[k], new_history = embed_items(v, itemmap, copy(history)) #recursion step
             history |= new_history
-    elif isinstance(data, str) and data.startswith(("http","/","_")) and data in itemmap and data not in history: #this is probably a reference even though it's not explicit
+    elif isinstance(data, str) and data.startswith(("http","file://","/","_")) and data in itemmap and data not in history: #this is probably a reference even though it's not explicit
         #data is an URI reference we can resolve
         history.add(data)
         return itemmap[data], history
     return data, history
+
+def hide_ordered_lists(data: Union[dict,list,tuple,str]) -> Union[dict,list,str]:
+    """Hide explicit @list nodes, on read-in they will be assumed agained via the (manipulated) context"""
+    if isinstance(data, dict):
+        if '@list' in data:
+            return hide_ordered_lists(data['@list'])
+        else:
+            for k, v in data.items():
+                data[k] = hide_ordered_lists(v)
+    elif isinstance(data, (list,tuple)):
+        return [ hide_ordered_lists(v) for v in data ]
+    return data
+
     
 
 def rewrite_context(context, addcontext = None) -> list:
@@ -216,40 +223,54 @@ def rewrite_context(context, addcontext = None) -> list:
                         context[i] = remote_url
     elif isinstance(context, str):
         context = rewrite_context([context])
+
+    if context and context[-1] == DEVIANT_CONTEXT:
+        #we strip the internal 'deviant' context so it's never explicitly outputted
+        context = context[:-1]
     return context
 
-def serialize_to_jsonld(g: Graph, res: Union[Sequence,URIRef,None], includecontext: bool = False, addcontext = None) -> dict:
+def serialize_to_jsonld(g: Graph, res: Union[Sequence,URIRef,None], args: AttribDict) -> dict:
     """Serializes the RDF graph to JSON, taking care of 'object framing' for embedded nodes"""
 
-    if res:
-        #Get the subgraph that focusses on this specific resource (or multiple)
-        if isinstance(res, (list,tuple)):
-            g = get_subgraph(g, res)
-        else:
-            g = get_subgraph(g, [res])
+    #if res:
+    #    #Get the subgraph that focusses on this specific resource (or multiple)
+    #    if isinstance(res, (list,tuple)):
+    #        g = get_subgraph(g, res)
+    #    else:
+    #        g = get_subgraph(g, [res])
 
-    data = json.loads(g.serialize(format='json-ld', auto_compact=False, context=[ x[1] for x in init_context(False, addcontext)]))
+
+    #                                              v--- the internal 'deviant' context is required for the serialisation to work, it will be stripped later in rewrite_context()
+    context =[ x[0] for x in init_context(args)] + [DEVIANT_CONTEXT] 
+    data = json.loads(g.serialize(format='json-ld', auto_compact=True, context=context))
 
     #rdflib doesn't do 'object framing' so we have to do it in this post-processing step
     #if we have a single resource, it'll be the focus object the whole frame will be built around
     if res and (not isinstance(res, (list,tuple)) or len(res) == 1):
-        if includecontext:
+        assert isinstance(res, URIRef)
+        if args.includecontext:
             data = expand_implicit_id_nodes(data, PREFER_URIREF_PROPERTIES_SIMPLE)
         data = do_object_framing(data, str(res))
+        # Hide explicit @list nodes, on read-in they will be assumed agained via the (manipulated) context
+        data = hide_ordered_lists(data)
+        assert isinstance(data, dict)
 
         root, parent = find_main(data, res)
         if parent and len(data['@graph']) == 1 and res:
             #No need for @graph if it contains only one item now:
+            assert isinstance(root, dict)
             parent.update(root)
             del data['@graph']
             root = parent
+        data = sort_by_position(data)
 
-    data = sort_by_position(data)
+    assert isinstance(data, dict)
     if '@context' in data:
-        data['@context'] = rewrite_context(data['@context'], addcontext)
+        #remap local context references to URLs
+        data['@context'] = rewrite_context(data['@context'], args.addcontext)
 
-    #we may have some lingering prefixes which we don't need, cleanup:
+    #we may have some lingering prefixes which we don't need and we want @id and @type instead of 'id' and 'type', cleanup:
     data = cleanup(data)
 
-
+    assert isinstance(data, dict)
     return data

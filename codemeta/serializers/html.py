@@ -12,6 +12,8 @@ from codemeta import __path__ as rootpath
 import codemeta.parsers.gitapi
 from jinja2 import Environment, FileSystemLoader
 
+assert isinstance(rootpath, (list,tuple)) and len(rootpath) > 0
+
 def get_triples(g: Graph, res: Union[URIRef,BNode,None], prop, labelprop=(SDO.name,RDFS.label, SKOS.prefLabel), abcsort=False, contextgraph: Optional[Graph] = None):
     """Get all triples for a particular resource and properties, also returns labels which are looked for in the contextgraph when needed, and handles sorting"""
     results = []
@@ -186,12 +188,8 @@ def get_target_platforms(g: Graph, res: Union[URIRef,None]):
         
     
 
-def serialize_to_html( g: Graph, res: Union[Sequence,URIRef,None], args: AttribDict, contextgraph: Graph, sparql_query: Optional[str] = None,  **kwargs) -> dict:
+def serialize_to_html( g: Graph, res: Union[Sequence,URIRef,None], args: AttribDict, contextgraph: Graph, sparql_query: Optional[str] = None,  **kwargs) -> str:
     """Serialize to HTML with RDFa"""
-    if res and not isinstance(res, (list,tuple)):
-        #Get the subgraph that focusses on this specific resource
-        g = get_subgraph(g, [res])
-
     env = Environment( loader=FileSystemLoader(os.path.join(rootpath[0], 'templates')), autoescape=True, trim_blocks=True, lstrip_blocks=True)
     if res and not isinstance(res, (list,tuple)):
         if (res, RDF.type, SDO.SoftwareSourceCode) in g:

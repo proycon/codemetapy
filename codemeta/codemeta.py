@@ -28,7 +28,7 @@ from rdflib.namespace import RDF
 from rdflib.plugins.shared.jsonld.context import Context
 import rdflib.plugins.serializers.jsonld
 
-from codemeta.common import init_graph, init_context, CODEMETA, AttribDict, getstream, SDO, reconcile, add_triple, generate_uri, remap_uri, query, enrich
+from codemeta.common import init_graph, CODEMETA, AttribDict, getstream, SDO, reconcile, add_triple, generate_uri, remap_uri, query, enrich
 import codemeta.crosswalk
 import codemeta.parsers.python
 import codemeta.parsers.debian
@@ -161,10 +161,10 @@ def main():
 
 
 
-def serialize(g: Graph, res: Union[Sequence,URIRef,BNode,None], args: AttribDict, contextgraph: Union[Graph,None] = None, sparql_query: Optional[str] = None, **kwargs) -> Graph:
+def serialize(g: Graph, res: Union[Sequence,URIRef,BNode,None], args: AttribDict, contextgraph: Union[Graph,None] = None, sparql_query: Optional[str] = None, **kwargs) -> str:
     if args.output == "json":
         if sparql_query: res = [ x[0]  for x in query(g, sparql_query) ]
-        doc = serialize_to_jsonld(g, res, args.includecontext, args.addcontext)
+        doc = serialize_to_jsonld(g, res, args)
         if args.outputfile and args.outputfile != "-":
             with open(args.outputfile,'w',encoding='utf-8') as fp:
                 fp.write(json.dumps(doc, indent=4, ensure_ascii=False, sort_keys=True))
@@ -179,6 +179,8 @@ def serialize(g: Graph, res: Union[Sequence,URIRef,BNode,None], args: AttribDict
         else:
             return doc
     elif args.output == "html":
+        if not isinstance(contextgraph, Graph):
+            raise Exception("No contextgraph provided, required for HTML serialisation")
         doc = serialize_to_html(g, res, args, contextgraph, sparql_query,  **kwargs) #note: sparql query is applied in serialization function if needed
         if args.outputfile and args.outputfile != "-":
             with open(args.outputfile,'w',encoding='utf-8') as fp:
@@ -193,7 +195,7 @@ def read(**kwargs) -> Tuple[Graph, Union[URIRef,None], AttribDict, Graph]:
 
     args = AttribDict(kwargs)
 
-    g, contextgraph = init_graph(args.no_cache, args.addcontext)
+    g, contextgraph = init_graph(args)
 
     if not args.inputsources:
         raise Exception("No inputsources specified")
@@ -281,13 +283,15 @@ def build(**kwargs) -> Tuple[Graph, URIRef, AttribDict, Graph]:
         else:
             raise Exception("No input files specified (use - for stdin)")
 
-    g, contextgraph = init_graph(args.no_cache, args.addcontext)
+    g, contextgraph = init_graph(args)
 
     seturi = False #indicates whether we have set a final URI
 
 
     if args.baseuri:
         args.baseuri = args.baseuri.strip('" ')
+    else:
+        print("You did not specify a --baseuri, setting a base uri is recommended", file=sys.stderr)
 
     if args.baseuri and args.identifier:
         #Explicit identifier and baseuri passed, authoritative
@@ -399,7 +403,7 @@ def build(**kwargs) -> Tuple[Graph, URIRef, AttribDict, Graph]:
 
     if uri != str(res):
         print(f"Remapping URI: {res} -> {uri}",file=sys.stderr)
-        g = remap_uri(g, str(res), uri, args)
+        remap_uri(g, res, uri)
         res = URIRef(uri)
 
     #Test and fix conflicts in the graph (and report them)
