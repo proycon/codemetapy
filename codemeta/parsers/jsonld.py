@@ -116,9 +116,6 @@ def parse_jsonld_data(g: Graph, res: Union[BNode, URIRef,None], data: dict, args
         #rewrite context using the local schemas (also adds DEVIANT_CONTEXT)
         data['@context'] = rewrite_context(data['@context'], args)
 
-    #convert schemeless *absolute* URLs (//, otherwise rdflib will interpret them as local). URLs starting with a single slash will be left untouched
-    #data = rewrite_schemeless_uri(data)
-
     founduri = find_main_id(data)
     if not founduri and isinstance(res, URIRef):
         #JSON-LD doesn't specify an ID at all, inject one prior to parsing with rdflib
@@ -135,25 +132,6 @@ def parse_jsonld_data(g: Graph, res: Union[BNode, URIRef,None], data: dict, args
     if founduri and founduri != str(res):
         #change URI of main resource
         remap_uri(g, founduri, str(res))
-
-    #g2 = Graph()
-    ##and parse with rdflib
-    #g2.parse(data=reserialised_data, format="json-ld", location=args.baseuri)
-    ##, context=[ x[0] for x in init_context(False, args.addcontext) ]) 
-
-    ##give all blank nodes a stub URI (i.e. skolemize) to facilitate merging
-    #g3 = Graph()
-    #bind_graph(g3)
-    #if args.baseuri:
-    #    authority = args.baseuri
-    #    if authority[-1] != "/": authority += "/"
-    #    basepath = "stub/"
-    #else:
-    #    authority = "/"
-    #    basepath = "stub/"
-    #g3 = g2.skolemize(authority=authority, basepath=basepath)
-
-   #merge_graphs(g,g3, map_uri_from=founduri, map_uri_to=str(res) if res else None, args=args)
 
     if not founduri and (res, SDO.identifier, None) in g and args.baseuri:
         return generate_uri(g.value(res, SDO.identifier), args.baseuri)
