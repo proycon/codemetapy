@@ -1,10 +1,12 @@
 import sys
 import json
 import os.path
-from typing import Union, IO, Sequence
+from typing import Union, IO, Sequence, Optional
 from rdflib import Graph, URIRef, BNode, Literal
 from copy import copy
-from codemeta.common import AttribDict, license_to_spdx, SDO, CODEMETA_SOURCE, CODEMETA_LOCAL_SOURCE, SCHEMA_SOURCE, SCHEMA_LOCAL_SOURCE, STYPE_SOURCE, STYPE_LOCAL_SOURCE, IODATA_SOURCE, IODATA_LOCAL_SOURCE, init_context, REPOSTATUS_LOCAL_SOURCE, REPOSTATUS_SOURCE, get_subgraph, PREFER_URIREF_PROPERTIES_SIMPLE, TMPDIR, DEVIANT_CONTEXT
+from codemeta.common import AttribDict, license_to_spdx, SDO, CODEMETA_SOURCE, CODEMETA_LOCAL_SOURCE, SCHEMA_SOURCE, SCHEMA_LOCAL_SOURCE, STYPE_SOURCE, STYPE_LOCAL_SOURCE, IODATA_SOURCE, IODATA_LOCAL_SOURCE, init_context, REPOSTATUS_LOCAL_SOURCE, REPOSTATUS_SOURCE, get_subgraph, PREFER_URIREF_PROPERTIES_SIMPLE, TMPDIR, DEVIANT_CONTEXT, ORDEREDLIST_PROPERTIES
+
+ORDEREDLIST_PROPERTIES_NAMES = (os.path.basename(x) for x in ORDEREDLIST_PROPERTIES)
 
 def flatten_singletons(data): #TODO: no longer used, remove
     """Recursively flattens singleton ``key: { "@id": uri }`` instances to ``key: uri``"""
@@ -85,7 +87,7 @@ def rdf_list_to_normal_list(data):
 def cleanup(data: Union[dict,list,tuple,str]) -> Union[dict,list,str]:
     """This cleans up the serialisation:
        * It Recursively removes namespace prefixes from dictionary keys
-       * It removes the IDs of all blank nodes (making them blank again)
+       * It removes the IDs of all former blank nodes (stubs) (making them blank again)
        * It enforces @id and @type rather than the id/type aliases
        * It removes file:// prefixes from URIs
     """
@@ -97,13 +99,15 @@ def cleanup(data: Union[dict,list,tuple,str]) -> Union[dict,list,str]:
             data['@type'] = data['type']
             del data['type']
         if '@id' in data:
-            if data['@id'].startswith('_') and len(data) > 1:
+            if (data['@id'].startswith('_') or data['@id'].startswith("file:///stub")) and len(data) > 1:
                 del data['@id']
             elif data['@id'].startswith('file://'):
                 data['@id'] = data['@id'][7:]
         return { key.replace('schema:','').replace('http://schema.org/','').replace('codemeta:','').replace('stypes:','') : cleanup(value) for key, value in data.items() }
     elif isinstance(data, (list,tuple)):
         return [ cleanup(x) for x in data ]
+    elif isinstance(data,str) and data.startswith('file://'):
+        return data[7:]
     else:
         return data
 
@@ -131,7 +135,7 @@ def expand_implicit_id_nodes(data, idref_properties):
                 data[k] = [ expand_implicit_id_nodes(e, idref_properties) if isinstance(e,dict) else e for e in v ]
     return data
 
-def do_object_framing(data: dict, res_id: str):
+def do_object_framing(data: dict, res_id: str, history: set = set(), preserve_context: bool = True):
     """JSON-LD object framing. Rdflib's json-ld serialiser doesn't implement this so we do this ourselves"""
     itemmap = {} #mapping from ids to python dicts
     if '@graph' in data:
@@ -141,8 +145,9 @@ def do_object_framing(data: dict, res_id: str):
     #print("DEBUG itemmap", repr(itemmap))
     if res_id not in itemmap:
         raise Exception(f"Resource {res_id} not found in tree, framing not possible")
-    embed_items(itemmap[res_id], itemmap, {res_id,})
-    if '@context' in data:
+    history.add(res_id)
+    embed_items(itemmap[res_id], itemmap, history)
+    if '@context' in data and preserve_context:
         #preserve context
         itemmap[res_id]['@context'] = data['@context']
     return itemmap[res_id]
@@ -186,17 +191,50 @@ def embed_items(data, itemmap: dict, history: set):
         return itemmap[data], history
     return data, history
 
-def hide_ordered_lists(data: Union[dict,list,tuple,str]) -> Union[dict,list,str]:
-    """Hide explicit @list nodes, on read-in they will be assumed agained via the (manipulated) context"""
+#def embed_ordered_lists(data: dict) -> Union[dict,list,str]:
+#   """This is a form of object framing that handles (only known!) ordered lists and ensures they are specified in-line and not stand-off"""
+#   itemmap = {} #mapping from ids to python dicts
+#   if '@graph' in data:
+#       gather_items(data['@graph'], itemmap)
+#   else:
+#       gather_items(data, itemmap)
+
+#   if isinstance(data, dict):
+#       for k, v in data.items():
+#           if k in ORDEREDLIST_PROPERTIES_NAMES:
+#               l = []
+#               remove = []
+#               collection = v
+#               while collection and '@id' in collection:
+#                   object = itemmap['@id']
+#                   isinstance(object, dict)
+#                   remove.append(object)
+#                   if object.get('rdf:first'):
+#                       l.append(object['rdf:first'])
+#                   collection = object.get('rdf:rest',None)
+
+#               if '@graph' in data:
+#                   #remove the stand-off items
+#                   for x in remove:
+#                       data['@graph'].delete(x)
+
+#               data[k] = l
+#           elif isinstance(v, dict):
+#               data[k] = embed
+                
+
+def hide_ordered_lists(data: Union[dict,list,tuple,str], key: Optional[str] = None) -> Union[dict,list,str]:
+    """Hide explicit @list nodes on known ordered list properties, on read-in they will be assumed agained via the (manipulated) context"""
     if isinstance(data, dict):
-        if '@list' in data:
+        if '@list' in data and key in ORDEREDLIST_PROPERTIES_NAMES:
             return hide_ordered_lists(data['@list'])
         else:
             for k, v in data.items():
-                data[k] = hide_ordered_lists(v)
+                data[k] = hide_ordered_lists(v, k)
     elif isinstance(data, (list,tuple)):
         return [ hide_ordered_lists(v) for v in data ]
     return data
+
 
     
 
@@ -263,6 +301,16 @@ def serialize_to_jsonld(g: Graph, res: Union[Sequence,URIRef,None], args: Attrib
             del data['@graph']
             root = parent
         data = sort_by_position(data)
+    else:
+        #we have a graph of multiple resources, structure is mostly stand-off, so we do object framing on each SoftwareSourceCode instance 
+        new_graph = []
+        for item in data['@graph']:
+            if isinstance(item, dict) and item.get('@type', item.get('type',None)) == 'SoftwareSourceCode':
+                item_id = item.get('@id', item.get('id', None))
+                if item_id:
+                    new_graph.append(do_object_framing(data, item_id, preserve_context=False))
+        data['@graph'] = new_graph
+        data = hide_ordered_lists(data)
 
     assert isinstance(data, dict)
     if '@context' in data:
