@@ -65,8 +65,8 @@ ENTRYPOINT_CONTEXT = { #these are all custom extensions not in codemeta (yet), t
 
 
 DEVIANT_CONTEXT = { #Extra *internal* context that enforces some implementation-specific differences and solves conflicts, this context is ALWAYS assumed on parsing, and ALWAYS passed to the serialiser (but NEVER propagated to final output, it is stripped again on final context rewrite) 
-    #"softwareRequirements":{ "@id": "schema:softwareRequirements"}, #schema does not add @type=@id, codemeta does....    for some reason I don't understand we must explicitly omit it or serialisation fails, however setting it here doesn't work either
-    #"referencePublication":{ "@id": "codemeta:referencePublication"}, #schema does not add @type=@id, codemeta does....  for some reason I don't understand we must explicitly omit it or serialisation fails, however setting it here doesn't work either
+    "softwareRequirements":{ "@id": "schema:softwareRequirements","@type":"@id"}, #schema does not add @type=@id, codemeta does....   
+    "referencePublication":{ "@id": "codemeta:referencePublication","@type":"@id"}, #schema does not add @type=@id, codemeta does....
     "author": {"@id": "schema:author", "@container": "@list" },  #we treat authors as an ordered list (rdf:list), even though schema.org does not (this is also recommended by science-on-schema.org)
     "contributor": {"@id": "schema:contributor", "@container": "@list" },  #we treat contributors as an ordered list (rdf:list), even though schema.org does not (this is also recommended by science-on-schema.org)
 }
@@ -289,23 +289,7 @@ def init_context(args: AttribDict):
             r = requests.get(remote, headers={ "Accept": "application/json+ld;q=1.0,application/json;q=0.9,text/plain;q=0.5" })
             r.raise_for_status()
             with open(localfile, 'wb') as f:
-                # The replace business is a very ugly hack that modifies the actual jsonld context because
-                # we don't rdflib's json-ld serialiser gets confused by this definition in codemeta which we already
-                # have in schema.org (without an extra @type: @id), the version WITH @type: @id leads
-                # to softwareRequirements/referencePublication not being properly serialised (their nodes, often blank nodes, are fully are missing somehow)
-                # I couldn't solve this by loading a custom context (DEVIANT_CONTEXT) either so we resort to modifying the file (unfortunately)
-                f.write(r.content.replace(b'"softwareRequirements": { "@id": "schema:softwareRequirements", "@type": "@id"},',b'"softwareRequirements": { "@id": "schema:softwareRequirements" },') \
-                                 .replace(b'"referencePublication": { "@id": "codemeta:referencePublication", "@type": "@id"},',b'"referencePublication": { "@id": "codemeta:referencePublication" },'))
-                #                          # ^--- with rdflib @type: @id here, rdflib (and our code) doesn't embed the full softwareRequirements/referencePublication as we want.
-                #                          # ^-- rdflib gets confused by this definition in codemeta which we already
-                #                          #     have in schema .org(without an extra @type: @id), ensure the two are
-                #                          #     equal (without the @type),
-                #                .replace(b'"author": { "@id": "schema:author"},',b'"author": { "@id": "schema:author", "@container": "@list"},') \
-                #                          # ^-- we treat authors as an ordered list (rdf:list), even though schema.org does not (this is also recommended by science-on-schema.org)
-                #                .replace(b'"contributor": { "@id": "schema:contributor"},',b'"contributor": { "@id": "schema:contributor", "@container": "@list"},') \
-                #                          # ^-- (same for contributors)
-                #                .replace(b'"referencePublication": { "@id": "codemeta:referencePublication", "@type": "@id"},',b'"referencePublication": { "@id": "codemeta:referencePublication" },'))
-                #                          # ^--- with rdflib @type: @id here, rdflib (and our code) doesn't embed the full referencePublication as we want. Trick the serialiser by rewriting this part of the context.
+                f.write(r.content)
 
 
     return sources
