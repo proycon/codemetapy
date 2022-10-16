@@ -107,7 +107,7 @@ def skolemize(g: Graph, baseuri: Optional[str] = None):
             g.add((s,p,o))
 
 
-def parse_jsonld_data(g: Graph, res: Union[BNode, URIRef,None], data: dict, args: AttribDict) -> Union[str,None]:
+def parse_jsonld_data(g: Graph, res: Union[BNode, URIRef,None], data: dict, args: AttribDict, baseuri: Optional[str] = None) -> Union[str,None]:
     #preprocess json
     if '@context' not in data:
         data['@context'] = [ x[0] for x in init_context(args) ] + [DEVIANT_CONTEXT]
@@ -127,7 +127,7 @@ def parse_jsonld_data(g: Graph, res: Union[BNode, URIRef,None], data: dict, args
     reserialised_data: str = json.dumps(data, indent=4)
 
     #parse as RDF, add to main graph, and skolemize (turn blank nodes into URIs)
-    skolemize(g.parse(data=reserialised_data, format="json-ld", publicID=args.baseuri), args.baseuri)
+    skolemize(g.parse(data=reserialised_data, format="json-ld", publicID=baseuri if baseuri else args.baseuri), args.baseuri)
 
     if not founduri and (res, SDO.identifier, None) in g and args.baseuri:
         return generate_uri(g.value(res, SDO.identifier), args.baseuri)

@@ -65,6 +65,16 @@ def parse_clam(soup):
 def detect_sso_middleware(r: requests.Response):
     return r.history and 'location' in r.history[-1].headers and r.history[-1].headers['location'].lower().find("shibboleth") != -1
 
+def add_missing_url_scheme(data, original_url: str):
+    """Add URL scheme when missing"""
+    if isinstance(data, dict):
+        return {k: add_missing_url_scheme(v, original_url) for k, v in data.items()}
+    elif isinstance(data, (list,tuple)):
+        return [ add_missing_url_scheme(v, original_url) for v in data ]
+    elif isinstance(data, str) and data.startswith("//"):
+        return original_url.split("/")[0] + data
+    return data
+
 def parse_web(g: Graph, res: Union[URIRef, BNode], url, args: AttribDict) -> Iterator[Union[URIRef,BNode,None]]:
     r = requests.get(url, headers={ "Accept": "application/json+ld;q=1.0,application/json;q=0.9,application/x-yaml;q=0.8,application/xml;q=0.7;text/html;q=0.6;text/plain;q=0.1" })
     r.raise_for_status()
@@ -95,7 +105,7 @@ def parse_web(g: Graph, res: Union[URIRef, BNode], url, args: AttribDict) -> Ite
         if scriptblock:
             #Does the site provide proper JSON-LD metadata itself?
             print("    Found a json-ld script block",file=sys.stderr)
-            data = json.loads("".join(scriptblock.contents))
+            data = json.loads("".join(scriptblock.contents))            
         else:
             print("    Parsing site metadata",file=sys.stderr)
             name = get_meta(soup, "schema:name", "og:site_name", "og:title", "twitter:title")
@@ -131,10 +141,10 @@ def parse_web(g: Graph, res: Union[URIRef, BNode], url, args: AttribDict) -> Ite
             if v: g.add((targetres, SDO.description, Literal(v)))
 
             v = get_meta(soup, "schema:url")
-            if v: g.add((targetres, SDO.url, Literal(v)))
+            if v: g.add((targetres, SDO.url, Literal(add_missing_url_scheme(v,url))))
 
             v = get_meta(soup, "schema:thumbnailUrl", "og:image", "twitter:image", "thumbnail")
-            if v: g.add((targetres, SDO.thumbnailUrl, Literal(v)))
+            if v: g.add((targetres, SDO.thumbnailUrl, Literal(add_missing_url_scheme(v,url))))
 
             v = get_meta(soup, "schema:author", "author")
             if v: add_authors(g, targetres, v, baseuri=args.baseuri)
@@ -188,6 +198,7 @@ def parse_web(g: Graph, res: Union[URIRef, BNode], url, args: AttribDict) -> Ite
                 targetres = URIRef(generate_uri(baseuri=args.baseuri,prefix="webapplication"))
             else:
                 targetres = res
+            data = add_missing_url_scheme(data, url)
             parse_jsonld_data(g, targetres, data, args)
             yield targetres
         elif datatype == 'openapi':
