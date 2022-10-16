@@ -1,8 +1,7 @@
 #!/usr/bin/env python3
 
-"""This script converts software metadata
-from PyPI/distutils into a generic codemata form (https://codemeta.github.io/)
-can be extended for other input types too."""
+"""This library and command-line-tool converts software metadata from various metadata schemas to a generic form using codemeta (https://codemeta.github.io/) and schema.org . It also provides numerous utility functions for working with codemeta."""
+
 
 # Maarten van Gompel
 # CLST, Radboud University Nijmegen
