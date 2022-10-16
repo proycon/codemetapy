@@ -808,9 +808,10 @@ def getstream(source: str):
 
 def remap_uri(g: Graph, from_uri, to_uri):
     """Changes URIs (in-graph)"""
+    assert from_uri is not None and to_uri is not None
     if not isinstance(from_uri, URIRef):
         from_uri = URIRef(from_uri)
-    elif not isinstance(to_uri, URIRef):
+    if not isinstance(to_uri, URIRef):
         to_uri = URIRef(to_uri)
     for s,p,o in g.triples((from_uri,None,None)):
         g.remove((s,p,o))

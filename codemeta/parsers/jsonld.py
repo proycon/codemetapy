@@ -129,10 +129,6 @@ def parse_jsonld_data(g: Graph, res: Union[BNode, URIRef,None], data: dict, args
     #parse as RDF, add to main graph, and skolemize (turn blank nodes into URIs)
     skolemize(g.parse(data=reserialised_data, format="json-ld", publicID=args.baseuri), args.baseuri)
 
-    if founduri and founduri != str(res):
-        #change URI of main resource
-        remap_uri(g, founduri, str(res))
-
     if not founduri and (res, SDO.identifier, None) in g and args.baseuri:
         return generate_uri(g.value(res, SDO.identifier), args.baseuri)
     elif founduri and not founduri.startswith("undefined:"):

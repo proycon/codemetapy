@@ -244,13 +244,6 @@ def rewrite_context(context, addcontext = None) -> list:
 def serialize_to_jsonld(g: Graph, res: Union[Sequence,URIRef,None], args: AttribDict) -> dict:
     """Serializes the RDF graph to JSON, taking care of 'object framing' for embedded nodes"""
 
-    #if res:
-    #    #Get the subgraph that focusses on this specific resource (or multiple)
-    #    if isinstance(res, (list,tuple)):
-    #        g = get_subgraph(g, res)
-    #    else:
-    #        g = get_subgraph(g, [res])
-
 
     #                                              v--- the internal 'deviant' context is required for the serialisation to work, it will be stripped later in rewrite_context()
     context =[ x[0] for x in init_context(args)] + [DEVIANT_CONTEXT] 
@@ -278,6 +271,8 @@ def serialize_to_jsonld(g: Graph, res: Union[Sequence,URIRef,None], args: Attrib
     else:
         #we have a graph of multiple resources, structure is mostly stand-off: we do object framing on each SoftwareSourceCode instance (this does lead to some redundancy)
         new_graph = []
+        if args.includecontext:
+            data = expand_implicit_id_nodes(data, PREFER_URIREF_PROPERTIES_SIMPLE)
         for item in data['@graph']:
             if isinstance(item, dict) and item.get('@type', item.get('type',None)) == 'SoftwareSourceCode':
                 item_id = item.get('@id', item.get('id', None))
