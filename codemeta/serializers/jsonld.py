@@ -6,7 +6,7 @@ from rdflib import Graph, URIRef, BNode, Literal
 from copy import copy
 from codemeta.common import AttribDict, license_to_spdx, SDO, CODEMETA_SOURCE, CODEMETA_LOCAL_SOURCE, SCHEMA_SOURCE, SCHEMA_LOCAL_SOURCE, STYPE_SOURCE, STYPE_LOCAL_SOURCE, IODATA_SOURCE, IODATA_LOCAL_SOURCE, init_context, REPOSTATUS_LOCAL_SOURCE, REPOSTATUS_SOURCE, get_subgraph, PREFER_URIREF_PROPERTIES_SIMPLE, TMPDIR, DEVIANT_CONTEXT, ORDEREDLIST_PROPERTIES
 
-ORDEREDLIST_PROPERTIES_NAMES = (os.path.basename(x) for x in ORDEREDLIST_PROPERTIES)
+ORDEREDLIST_PROPERTIES_NAMES = list(os.path.basename(x) for x in ORDEREDLIST_PROPERTIES)
 
 def flatten_singletons(data): #TODO: no longer used, remove
     """Recursively flattens singleton ``key: { "@id": uri }`` instances to ``key: uri``"""
@@ -162,10 +162,10 @@ def gather_items(data, itemmap: dict):
             if idkey in data and len(data) > 1 and isinstance(idkey, str):
                 item_id = data[idkey]
                 if idkey in itemmap:
-                    #print(f"DEBUG gathered {item_id} (duplicate)")
+                    #print(f"DEBUG gathered {item_id} (duplicate)",file=sys.stderr)
                     itemmap[item_id].update(data)
                 else:
-                    #print(f"DEBUG gathered {item_id} (new)")
+                    #print(f"DEBUG gathered {item_id} (new)",file=sys.stderr)
                     itemmap[item_id] = data
         for v in data.values():
             gather_items(v, itemmap)
@@ -179,16 +179,21 @@ def embed_items(data, itemmap: dict, history: set):
     elif isinstance(data, dict): 
         for idkey in ('@id', 'id'):
             if idkey in data and data[idkey] in itemmap and data[idkey] not in history:
-                #print(f"DEBUG embedded {data[idkey]} (explicit)")
+                #print(f"DEBUG embedded {data[idkey]} (explicit)", file=sys.stderr)
                 history.add(data[idkey])
                 return embed_items(itemmap[data[idkey]], itemmap, copy(history))
+            elif idkey in data and data[idkey] not in itemmap:
+                #print(f"DEBUG could not embed {data[idkey]}, not in graph", file=sys.stderr)
+                pass
         for k, v in data.items():
             data[k], new_history = embed_items(v, itemmap, copy(history)) #recursion step
             history |= new_history
     elif isinstance(data, str) and data.startswith(("http","file://","/","_")) and data in itemmap and data not in history: #this is probably a reference even though it's not explicit
         #data is an URI reference we can resolve
         history.add(data)
-        return itemmap[data], history
+        #print(f"DEBUG embedded {data} (implicit)", file=sys.stderr)
+        data, new_history = embed_items(itemmap[data], itemmap, copy(history))
+        history |= new_history
     return data, history
 
 
