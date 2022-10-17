@@ -146,7 +146,19 @@ class BuildTest_Json(unittest.TestCase):
         data = json.loads(s)
         self.assertIn(SCHEMA_SOURCE, data['@context'], "Testing schema.org in context")
         self.assertIn(CODEMETA_SOURCE, data['@context'], "Testing codemeta in context")
+        self.assertEqual(data['name'], "Frog", "Testing schema:name")
+        self.assertEqual(data['@type'], "SoftwareSourceCode", "Testing type")
+        self.assertTrue('description' in data,  "Testing schema:description")
+        self.assertEqual(data['url'], "https://languagemachines.github.io/frog", "Testing schema:url")
+        self.assertEqual(data['codeRepository'], "https://github.com/LanguageMachines/frog", "Testing schema:codeRepository")
         self.assertIsInstance(data['author'], list, "Testing whether authors are in a list")
+        self.assertTrue( all(isinstance(x, dict) and x['@type'] == "Person" for x in data['author']), "Testing whether all authors are schema:Person")
+        self.assertIsInstance(data['developmentStatus'], list, "Testing whether we have two development statusses in a list")
+        self.assertTrue( all(isinstance(x, dict) and x['@type'] == "SoftwareApplication" for x in data['softwareRequirements']), "Testing softwareRequirements")
+        self.assertTrue( all(isinstance(x, dict) and x['@type'] in ("CommandLineApplication","SoftwareLibrary") for x in data['targetProduct']), "Testing targetProducts")
+        self.assertTrue( all(isinstance(x, dict) and x['@type'] in ("ScholarlyArticle","TechArticle") and isinstance(x['author'],list) and x['isPartOf']['@type'] == "PublicationIssue" for x in data['referencePublication']), "Testing referencePublication")
+        self.assertEqual(data['softwareHelp']['@id'], "https://frognlp.readthedocs.io", "Testing softwareHelp ID")
+        self.assertEqual(data['softwareHelp']['url'], "https://frognlp.readthedocs.io", "Testing softwareHelp URL")
 
 
     def test100_serialisation_turtle(self):
