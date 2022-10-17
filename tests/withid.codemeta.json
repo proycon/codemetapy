@@ -1,0 +1,11 @@
+{
+    "@context": [
+        "https://doi.org/10.5063/schema/codemeta-2.0",
+        "http://schema.org"
+    ],
+    "@id": "http://example.org/test",
+    "@type": "SoftwareSourceCode",
+    "identifier": "test",
+    "name": "test",
+    "version": "0.1"
+}

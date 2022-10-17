@@ -2,7 +2,7 @@ import sys
 import json
 from rdflib import Graph, URIRef, BNode, Literal
 from typing import Union, IO, Optional
-from codemeta.common import PREFER_URIREF_PROPERTIES_SIMPLE, AttribDict, REPOSTATUS, license_to_spdx, SDO, SCHEMA_SOURCE, CODEMETA_SOURCE, SCHEMA_LOCAL_SOURCE, SCHEMA_SOURCE, CODEMETA_LOCAL_SOURCE, CODEMETA_SOURCE, STYPE_SOURCE, STYPE_LOCAL_SOURCE, IODATA_SOURCE, IODATA_LOCAL_SOURCE, init_context, SINGULAR_PROPERTIES, merge_graphs, generate_uri, bind_graph, DEVIANT_CONTEXT, remap_uri
+from codemeta.common import PREFER_URIREF_PROPERTIES_SIMPLE, AttribDict, REPOSTATUS, license_to_spdx, SDO, SCHEMA_SOURCE, CODEMETA_SOURCE, SCHEMA_LOCAL_SOURCE, SCHEMA_SOURCE, CODEMETA_LOCAL_SOURCE, CODEMETA_SOURCE, STYPE_SOURCE, STYPE_LOCAL_SOURCE, IODATA_SOURCE, IODATA_LOCAL_SOURCE, init_context, SINGULAR_PROPERTIES, merge_graphs, generate_uri, bind_graph, DEVIANT_CONTEXT
 
 
 def rewrite_context(context: Union[list,str], args: AttribDict) -> list:
@@ -76,12 +76,14 @@ def find_main_id(data: dict)  -> Union[str,None]:
 def inject_uri(data: dict, res: URIRef):
     if '@graph' in data and len(data['@graph']) == 1:
         data['@graph'][0]["@id"] = str(res)
-        print(f"    Injected URI {res}",file=sys.stderr)
+        if 'id' in data['@graph'][0]: del data['@graph'][0]['id']
+        print(f"    Injected (possibly temporary) URI {res}",file=sys.stderr)
     elif '@graph' in data and len(data['@graph']) == 0:
         print("    NOTE: Graph is empty!",file=sys.stderr)
     elif '@graph' not in data:
         data["@id"] = str(res)
-        print(f"    Injected URI {res}",file=sys.stderr)
+        if 'id' in data: del data['id']
+        print(f"    Injected (possibly temporary) URI {res}",file=sys.stderr)
     else:
         raise Exception("JSON-LD file does not describe a single resource (did you mean to use --graph instead?)")
 
@@ -117,11 +119,11 @@ def parse_jsonld_data(g: Graph, res: Union[BNode, URIRef,None], data: dict, args
         data['@context'] = rewrite_context(data['@context'], args)
 
     founduri = find_main_id(data)
-    if not founduri and isinstance(res, URIRef):
-        #JSON-LD doesn't specify an ID at all, inject one prior to parsing with rdflib
-        inject_uri(data, res)
     if founduri:
         print(f"    Found main resource with URI {founduri}",file=sys.stderr)
+    if isinstance(res, URIRef) and founduri != str(res):
+        #we're handling a single resource. Inject our own URI prior to parsing with rdflib
+        inject_uri(data, res)
 
     #reserialize after edits
     reserialised_data: str = json.dumps(data, indent=4)
@@ -129,7 +131,4 @@ def parse_jsonld_data(g: Graph, res: Union[BNode, URIRef,None], data: dict, args
     #parse as RDF, add to main graph, and skolemize (turn blank nodes into URIs)
     skolemize(g.parse(data=reserialised_data, format="json-ld", publicID=baseuri if baseuri else args.baseuri), args.baseuri)
 
-    if not founduri and (res, SDO.identifier, None) in g and args.baseuri:
-        return generate_uri(g.value(res, SDO.identifier), args.baseuri)
-    elif founduri and not founduri.startswith("undefined:"):
-        return founduri #return preferred uri
+    return founduri #return found uri (if any)

@@ -84,7 +84,7 @@ def rdf_list_to_normal_list(data):
             yield e
 
 
-def cleanup(data: Union[dict,list,tuple,str]) -> Union[dict,list,str]:
+def cleanup(data: Union[dict,list,tuple,str], baseuri: Optional[str] = None) -> Union[dict,list,str]:
     """This cleans up the serialisation:
        * It Recursively removes namespace prefixes from dictionary keys
        * It removes the IDs of all former blank nodes (stubs) (making them blank again)
@@ -99,13 +99,11 @@ def cleanup(data: Union[dict,list,tuple,str]) -> Union[dict,list,str]:
             data['@type'] = data['type']
             del data['type']
         if '@id' in data:
-            if (data['@id'].startswith('_') or data['@id'].startswith("file:///stub")) and len(data) > 1:
+            if (data['@id'].startswith('_') or data['@id'].startswith("file://") or (baseuri and data['@id'].startswith(baseuri + "stub/"))) and len(data) > 1:
                 del data['@id']
-            elif data['@id'].startswith('file://'):
-                data['@id'] = data['@id'][7:]
-        return { key.replace('schema:','').replace('http://schema.org/','').replace('codemeta:','').replace('stypes:','') : cleanup(value) for key, value in data.items() }
+        return { key.replace('schema:','').replace('http://schema.org/','').replace('codemeta:','').replace('stypes:','') : cleanup(value, baseuri) for key, value in data.items() }
     elif isinstance(data, (list,tuple)):
-        return [ cleanup(x) for x in data ]
+        return [ cleanup(x, baseuri) for x in data ]
     elif isinstance(data,str) and data.startswith('file://'):
         return data[7:]
     else:
@@ -288,7 +286,7 @@ def serialize_to_jsonld(g: Graph, res: Union[Sequence,URIRef,None], args: Attrib
         data['@context'] = rewrite_context(data['@context'], args.addcontext)
 
     #we may have some lingering prefixes which we don't need and we want @id and @type instead of 'id' and 'type', cleanup:
-    data = cleanup(data)
+    data = cleanup(data, args.baseuri)
 
     assert isinstance(data, dict)
     return data

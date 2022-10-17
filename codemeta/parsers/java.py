@@ -33,10 +33,9 @@ def parse_author(g, res, node, property=SDO.author):
     return add_authors(g, res, author_name, property=property, single_author=True, mail=author_mail, url=author_url,org=org)
 
 
-def parse_java(g: Graph, res: Union[URIRef, BNode], file: IO , crosswalk, args: AttribDict) -> Union[str,None]:
+def parse_java(g: Graph, res: Union[URIRef, BNode], file: IO , crosswalk, args: AttribDict):
     data = lxml.etree.parse(file)
 
-    prefuri = None
     root = data.getroot()
     if root.tag != "{" + POM_NAMESPACE + "}project":
         raise Exception(f"Expected root tag 'project' in {POM_NAMESPACE} namespace, got {root.tag} instead")
@@ -71,14 +70,12 @@ def parse_java(g: Graph, res: Union[URIRef, BNode], file: IO , crosswalk, args: 
             for key2, node2 in parse_node(node):
                 if key2 == "url" and '$' not in node2.text: #only if there are no variables in the url!
                     add_triple(g,res, "codeRepository", node2.text, args)
-                    prefuri = node2.text
         elif key == "repositories":
             for key2, node2 in parse_node(node):
                 if key2 == "repository":
                     for key3, node3 in parse_node(node2):
                         if key3 == "url" and '$' not in node3.text: #only if there are no variables in the url!
                             add_triple(g,res, "repository", node3.text, args)
-                            prefuri = node3.text
         elif key == "properties":
             for key2, node2 in parse_node(node):
                 if key2 == "java.version":
@@ -142,5 +139,3 @@ def parse_java(g: Graph, res: Union[URIRef, BNode], file: IO , crosswalk, args: 
 
     if group_id and artifact_id:
         add_triple(g, res, "identifier", group_id + "." + artifact_id, args)
-
-    return prefuri

@@ -19,10 +19,10 @@ def parse_sourcerepo(value):
     value = value.replace("git://","https://").replace("git+ssh://","https://") #always prefer https in URLs
     return value
 
-def parse_nodejs(g: Graph, res: Union[URIRef, BNode], file: IO , crosswalk, args: AttribDict) -> Union[str,None]:
+def parse_nodejs(g: Graph, res: Union[URIRef, BNode], file: IO , crosswalk, args: AttribDict):
     data = json.load(file)
-    prefuri = None
     iswebapp = False
+    foundrepo = False
     for key, value in data.items():
         if key.lower() in crosswalk[CWKey.NODEJS]:
             if key == 'bugs':
@@ -53,17 +53,16 @@ def parse_nodejs(g: Graph, res: Union[URIRef, BNode], file: IO , crosswalk, args
                 if isinstance(value, str):
                     value = parse_sourcerepo(value)
                     add_triple(g, res, "codeRepository", value, args)
-                    prefuri = value
+                    foundrepo = True
                 elif isinstance(value, dict) and 'url' in value:
                     value = parse_sourcerepo(value['url'])
                     add_triple(g, res, "codeRepository", value, args)
-                    prefuri = value
+                    foundrepo = True
             elif key == 'homepage':
                 for sourcerepo in COMMON_SOURCEREPOS:
-                    if value.startswith(sourcerepo) and not prefuri:
+                    if value.startswith(sourcerepo) and not foundrepo:
                         #catch if we're describing the source code repo instead
                         add_triple(g, res, "codeRepository", value, args)
-                        prefuri = value
                         break
                 add_triple(g, res, "url", value, args)
             elif key == 'author':
@@ -125,5 +124,3 @@ def parse_nodejs(g: Graph, res: Union[URIRef, BNode], file: IO , crosswalk, args
         g.add((sapp, SDO.name, Literal(data['name']))) #from parent
         g.add((sapp, SDO.version, Literal(data['version']))) #from parent
         g.add((res, SDO.targetProduct, sapp))
-
-    return prefuri

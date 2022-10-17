@@ -23,7 +23,7 @@ import distutils.cmd #note: will be removed in python 3.12! TODO constraint <= 3
 #pylint: disable=C0413
 
 from rdflib import Graph, BNode, URIRef, Literal
-from rdflib.namespace import RDF
+from rdflib.namespace import RDF, OWL
 from rdflib.plugins.shared.jsonld.context import Context
 import rdflib.plugins.serializers.jsonld
 
@@ -116,6 +116,7 @@ def main():
     parser.add_argument('--released', help="Signal that this software is released, this affects whether development status maps to either WIP or active", action='store_true')
     parser.add_argument('--trl', help="Attempt to add technology readiness level based on the vocabulary used by the CLARIAH project", action='store_true')
     parser.add_argument('--title', type=str, help="Title to add when generating HTML pages", action='store')
+    parser.add_argument('--identifier-from-file', dest='identifier_from_file', help="Derive the identifier from the filename/module name passed to codemetapy, not from the metadata itself", action='store_true',required=False)
     parser.add_argument('inputsources', nargs='*', help='Input sources, the nature of the source depends on the type, often a file (or use - for standard input, /dev/null to start from scratch without external input), set -i accordingly with the types (must contain as many items as passed!)')
 
     for key, prop in sorted(props.items()):
@@ -284,73 +285,58 @@ def build(**kwargs) -> Tuple[Graph, URIRef, AttribDict, Graph]:
 
     g, contextgraph = init_graph(args)
 
-    seturi = False #indicates whether we have set a final URI
-
 
     if args.baseuri:
         args.baseuri = args.baseuri.strip('" ')
     else:
-        print("You did not specify a --baseuri, setting a base uri is recommended", file=sys.stderr)
+        print("Note: You did not specify a --baseuri so we will not provide identifiers (IRIs) for your SoftwareSourceCode resources (and others)", file=sys.stderr)
 
-    if args.baseuri and args.identifier:
-        #Explicit identifier and baseuri passed, authoritative
-        identifier = args.identifier.strip('" ')
-        uri = generate_uri(identifier, args.baseuri)
-        print(f"URI set based on explicit identifier: {uri}",file=sys.stderr)
-        seturi = True
-    elif args.codeRepository:
-        #Use the one from the codeRepository that was explicitly passed
-        uri = args.codeRepository.strip('"')
-        print(f"URI derived from explicitly passed codeRepository: {uri}",file=sys.stderr)
-        seturi = True
+    #Generate a temporary ID to use for the SoftwareSourceCode resource
+    #The ID will be overwritten with a more fitting one upon serialisation
+    if args.identifier:
+        identifier = args.identifier.strip('"')
     else:
-        #Generate a temporary ID to use for the SoftwareSourceCode resource
-        #The ID will be overwritten with a more fitting one upon serialisation
-        if args.identifier:
-            identifier = args.identifier.strip('"')
-        else:
-            identifier = os.path.basename(inputsources[0][0]).lower()
-        if identifier:
-            identifier = identifier.replace(".codemeta.json","").replace("codemeta.json","")
-            identifier = identifier.replace(".pom.xml","").replace("pom.xml","")
-            identifier = identifier.replace(".package.json","").replace("package.json","")
-        uri = generate_uri(identifier, args.baseuri)
-        print(f"URI automatically generated, may be overriden later: {uri}",file=sys.stderr)
-        seturi = False #this URI is not authoritative and will be overwritten later
+        identifier = os.path.basename(inputsources[0][0]).lower()
+    if identifier:
+        identifier = identifier.replace(".codemeta.json","").replace("codemeta.json","")
+        identifier = identifier.replace(".pom.xml","").replace("pom.xml","")
+        identifier = identifier.replace(".package.json","").replace("package.json","")
+    uri = generate_uri(identifier, args.baseuri)
+    print(f"Initial URI automatically generated, may be overriden later: {uri}",file=sys.stderr)
 
     #add the root resource
     res = URIRef(uri)
     g.add((res, RDF.type, SDO.SoftwareSourceCode))
 
 
+    founduris = [] #stores all fully qualified URIs we find fot the main resource
+
     l = len(inputsources)
     for i, (source, inputtype) in enumerate(inputsources):
         print(f"Processing source #{i+1} of {l}",file=sys.stderr)
-        prefuri = None #preferred URI returned by the parsing method
           
         if inputtype == "null":
             print(f"Starting from scratch, using command line parameters to build",file=sys.stderr)
-            if hasattr(args, "codeRepository"):
-                prefuri = getattr(args, "codeRepository")
         elif inputtype == "python":
             print(f"Obtaining python package metadata for: {source}",file=sys.stderr)
             #source is a name of a package or path to a pyproject.toml file
-            prefuri = codemeta.parsers.python.parse_python(g, res, source, crosswalk, args)
+            codemeta.parsers.python.parse_python(g, res, source, crosswalk, args)
         elif inputtype == "debian":
             print(f"Parsing debian package from {source}",file=sys.stderr)
             aptlines = getstream(source).read().split("\n")
-            prefuri = codemeta.parsers.debian.parse_debian(g, res, aptlines, crosswalk, args)
+            codemeta.parsers.debian.parse_debian(g, res, aptlines, crosswalk, args)
         elif inputtype == "nodejs":
             print(f"Parsing npm package.json from {source}",file=sys.stderr)
             f = getstream(source)
-            prefuri = codemeta.parsers.nodejs.parse_nodejs(g, res, f, crosswalk, args)
+            codemeta.parsers.nodejs.parse_nodejs(g, res, f, crosswalk, args)
         elif inputtype == "java":
             print(f"Parsing java/maven pom.xml from {source}",file=sys.stderr)
             f = getstream(source)
-            prefuri = codemeta.parsers.java.parse_java(g, res, f, crosswalk, args)
+            codemeta.parsers.java.parse_java(g, res, f, crosswalk, args)
         elif inputtype == "json":
             print(f"Parsing json-ld file from {source}",file=sys.stderr)
-            prefuri = codemeta.parsers.jsonld.parse_jsonld(g, res, getstream(source), args)
+            founduri = codemeta.parsers.jsonld.parse_jsonld(g, res, getstream(source), args)
+            if founduri and founduri not in founduris: founduris.append(founduri)
         elif inputtype == "web":
             print(f"Fallback: Obtaining metadata from remote URL {source}",file=sys.stderr)
             found = False
@@ -369,7 +355,7 @@ def build(**kwargs) -> Tuple[Graph, URIRef, AttribDict, Graph]:
                 inputtype = codemeta.parsers.gitapi.get_repo_kind(source)
             if inputtype:
                 print(f"Querying GitAPI parser for {source}",file=sys.stderr)
-                prefuri = codemeta.parsers.gitapi.parse(g, res, source, inputtype ,args)
+                codemeta.parsers.gitapi.parse(g, res, source, inputtype ,args)
             else:
                 raise ValueError(f"Unable to disambiguate gitapi type")
         elif inputtype in ('authors', 'contributors','maintainers'):
@@ -385,12 +371,6 @@ def build(**kwargs) -> Tuple[Graph, URIRef, AttribDict, Graph]:
             raise ValueError(f"Unknown input type: {inputtype}")
 
 
-        #Set preferred URL if we haven't found a URI yet
-        if prefuri and not seturi:
-            uri = prefuri
-            print(f"    Setting preferred URI to {uri} based on source {source}",file=sys.stderr)
-            seturi = True
-
     #Process command-line arguments last
     for key in props:
         if hasattr(args, key):
@@ -399,9 +379,28 @@ def build(**kwargs) -> Tuple[Graph, URIRef, AttribDict, Graph]:
             if value:
                 add_triple(g, res, key, value, args, replace=True)
 
-
-    if uri != str(res):
-        print(f"Remapping URI: {res} -> {uri}",file=sys.stderr)
+    if founduris and not args.baseuri:
+        #restore the exact original URI because we did not set a baseuri
+        founduri = founduris[0]
+        print(f"Remapping URI to found URI: {res} -> {founduri}",file=sys.stderr)
+        remap_uri(g, res, founduri)
+        res = URIRef(founduri)
+    elif args.baseuri:
+        for founduri in founduris:
+            if not founduri.startswith("file://"): #non-local ones only
+                #we've rewritten the URI, add the old one via owl:sameAS
+                g.add((res, OWL.sameAs, URIRef(founduri)))
+        assert isinstance(identifier, str) #we have an identifier from before, derived from the filename
+        if not args.identifier and not args.identifier_from_file:
+            #see if we can find a better one from the data itself:
+            for _,_,o in g.triples((res, SDO.identifier,None)):
+                if not str(o).startswith(("http://","https://")) and not ':' in str(o):
+                    identifier = str(o).strip("/ ")
+                    break
+        version = g.value(res,SDO.version)
+        if not version: version = "snapshot" #if we find no version, we append /snapshot to the URI as a version component, usually referring to the git master/main branch but not any specific version
+        uri = args.baseuri + identifier + "/" + str(version)
+        print(f"Remapping URI to (possibly) new identifier and version component: {res} -> {uri}",file=sys.stderr)
         remap_uri(g, res, uri)
         res = URIRef(uri)
 

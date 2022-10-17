@@ -2,10 +2,10 @@ import sys
 from typing import Union
 from rdflib import Graph, URIRef, BNode, Literal
 from rdflib.namespace import RDF
-from codemeta.common import AttribDict, add_triple, CODEMETA, SOFTWARETYPES, add_authors, SDO, COMMON_SOURCEREPOS, SOFTWARETYPES, generate_uri
+from codemeta.common import AttribDict, add_triple, CODEMETA, SOFTWARETYPES, SDO, SOFTWARETYPES, generate_uri
 from codemeta.crosswalk import readcrosswalk, CWKey
 
-def parse_debian(g: Graph, res: Union[URIRef, BNode], lines, crosswalk, args: AttribDict) -> Union[str,None]:
+def parse_debian(g: Graph, res: Union[URIRef, BNode], lines, crosswalk, args: AttribDict):
     """Parses apt show output and converts to codemeta"""
     if crosswalk is None:
         _, crosswalk = readcrosswalk((CWKey.DEBIAN,))

@@ -5,7 +5,7 @@ import os
 import unittest
 import json
 from rdflib import Graph, BNode, URIRef, Literal
-from rdflib.namespace import RDF
+from rdflib.namespace import RDF, OWL
 from codemeta.common import CODEMETA, SDO, AttribDict, SOFTWARETYPES, SOFTWAREIODATA, iter_ordered_list, SCHEMA_SOURCE, CODEMETA_SOURCE
 from codemeta.codemeta import build, serialize
 
@@ -416,6 +416,50 @@ class BuildTest_Enrich(unittest.TestCase):
         self.assertIsInstance( self.g, Graph )
         self.assertIsInstance( self.res, URIRef)
         self.assertIn( (self.res, RDF.type, SDO.SoftwareSourceCode), self.g)
+
+class BuildTest_RetainId(unittest.TestCase):
+    """Build codemeta.json from existing codemeta.json with absolute identifier (no baseuri set)"""
+
+    def setUp(self):
+        #relies on automatically guessing the type
+        self.g, self.res, self.args, self.contextgraph = build(inputsources=["withid.codemeta.json"])
+
+    def test001_maintain_id(self):
+        """Testing whether ID is retained properly"""
+        self.assertIsInstance( self.g, Graph )
+        self.assertIsInstance( self.res, URIRef)
+        self.assertEqual( URIRef("http://example.org/test"), self.res, "Testing whether resource is as expected")
+        self.assertIn( (URIRef("http://example.org/test"), None,None), self.g)
+
+class BuildTest_NewId(unittest.TestCase):
+    """Build codemeta.json from existing codemeta.json with identifier"""
+
+    def setUp(self):
+        #relies on automatically guessing the type
+        self.g, self.res, self.args, self.contextgraph = build(inputsources=["withid.codemeta.json"],baseuri="https://tools.clariah.nl/")
+
+    def test001_new_id(self):
+        """Testing whether ID is retained properly"""
+        self.assertIsInstance( self.g, Graph )
+        self.assertIsInstance( self.res, URIRef)
+        self.assertEqual( URIRef("https://tools.clariah.nl/test/0.1"), self.res, "Testing whether resource is as expected")
+        self.assertIn( (URIRef("https://tools.clariah.nl/test/0.1"), None,None), self.g)
+        self.assertIn( (self.res,OWL.sameAs,URIRef("http://example.org/test")), self.g, "Test if old URI is referenced via owl:sameAs")
+
+class BuildTest_NewId2(unittest.TestCase):
+    """Build codemeta.json from existing codemeta.json, but do not use found identifier, force identifier from file"""
+
+    def setUp(self):
+        #relies on automatically guessing the type
+        self.g, self.res, self.args, self.contextgraph = build(inputsources=["withid.codemeta.json"],baseuri="https://tools.clariah.nl/", identifier_from_file=True)
+
+    def test001_new_id(self):
+        """Testing whether ID is retained properly"""
+        self.assertIsInstance( self.g, Graph )
+        self.assertIsInstance( self.res, URIRef)
+        self.assertEqual( URIRef("https://tools.clariah.nl/withid/0.1"), self.res, "Testing whether resource is as expected")
+        self.assertIn( (URIRef("https://tools.clariah.nl/withid/0.1"), None,None), self.g)
+        self.assertIn( (self.res,OWL.sameAs,URIRef("http://example.org/test")), self.g, "Test if old URI is referenced via owl:sameAs")
 
 if __name__ == '__main__':
     unittest.main()

@@ -65,13 +65,12 @@ def parsedependency(s: str):
     return identifier, version.strip("[]() -.,:")
 
 #pylint: disable=W0621
-def parse_python(g: Graph, res: Union[URIRef, BNode], packagename: str, crosswalk, args: AttribDict) -> Union[str,None]:
+def parse_python(g: Graph, res: Union[URIRef, BNode], packagename: str, crosswalk, args: AttribDict):
     """Parses python package metadata and converts it to codemeta
 
     Parameters:
     * `packagename` - Either 1) a name of a package that is installed or available in the current working directory, or 2) path to a pyproject.toml file 
     """
-    prefuri = None
     if crosswalk is None:
         _, crosswalk = readcrosswalk((CWKey.PYPI,))
     if args.exactplatformversion:
@@ -174,7 +173,7 @@ def parse_python(g: Graph, res: Union[URIRef, BNode], packagename: str, crosswal
         for value in pkg.requires:
             add_dependency(g, res, value, args)
 
-    prefuri = test_and_set_identifier(g, res, prefuri, args)
+    test_and_set_identifier(g, res, args)
 
     if args.with_stypes:
         found = False
@@ -195,7 +194,6 @@ def parse_python(g: Graph, res: Union[URIRef, BNode], packagename: str, crosswal
         test_and_set_library(g, res, packagename, found, args)
 
     if prevdir: os.chdir(prevdir)
-    return prefuri
 
 #pylint: disable=W0621
 def add_dependency(g: Graph, res: Union[URIRef, BNode], value: str, args: AttribDict):
@@ -257,11 +255,8 @@ def test_and_set_library(g: Graph, res: Union[URIRef, BNode], packagename: str, 
         else:
             g.add((targetproduct, SDO.runtimePlatform, Literal("Python 3")))
 
-def test_and_set_identifier(g: Graph, res: Union[URIRef, BNode], prefuri: Union[str,None], args: AttribDict) -> Union[str,None]:
+def test_and_set_identifier(g: Graph, res: Union[URIRef, BNode], args: AttribDict):
     """ensure 'identifier' is always set"""
     name = g.value(res, SDO.name)
     if name and (res, SDO.identifier, None) not in g:
-        g.set((res, SDO.identifier, Literal(name.lower())))
-    if args.baseuri:
-        prefuri = args.baseuri + name.lower()
-    return prefuri
+        g.set((res, SDO.identifier, Literal(str(name).lower())))
