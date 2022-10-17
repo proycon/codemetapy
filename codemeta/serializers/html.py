@@ -6,7 +6,10 @@ from rdflib import Graph, URIRef, BNode, Literal
 from rdflib.namespace import RDF, SKOS, RDFS
 from typing import Union, IO, Optional, Sequence
 from itertools import chain
-from importlib.metadata import version as get_version
+if sys.version_info.minor < 8:
+    from importlib_metadata import version as get_version #backported
+else:
+    from importlib.metadata import version as get_version
 from codemeta.common import AttribDict, REPOSTATUS, license_to_spdx, SDO, CODEMETA, SOFTWARETYPES, SOFTWAREIODATA, TRL, CODEMETAPY, SCHEMA_SOURCE, CODEMETA_SOURCE, SCHEMA_LOCAL_SOURCE, SCHEMA_SOURCE, CODEMETA_LOCAL_SOURCE, CODEMETA_SOURCE, STYPE_SOURCE, STYPE_LOCAL_SOURCE, init_context, SINGULAR_PROPERTIES, ORDEREDLIST_PROPERTIES, merge_graphs, get_subgraph, get_last_component, query, iter_ordered_list
 from codemeta import __path__ as rootpath
 import codemeta.parsers.gitapi
