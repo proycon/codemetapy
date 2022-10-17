@@ -3,9 +3,10 @@
 import sys
 import os
 import unittest
+import json
 from rdflib import Graph, BNode, URIRef, Literal
 from rdflib.namespace import RDF
-from codemeta.common import CODEMETA, SDO, AttribDict, SOFTWARETYPES, SOFTWAREIODATA, iter_ordered_list
+from codemeta.common import CODEMETA, SDO, AttribDict, SOFTWARETYPES, SOFTWAREIODATA, iter_ordered_list, SCHEMA_SOURCE, CODEMETA_SOURCE
 from codemeta.codemeta import build, serialize
 
 def debugout(g: Graph, s,p=None,o=None):
@@ -141,7 +142,12 @@ class BuildTest_Json(unittest.TestCase):
 
     def test100_serialisation_json(self):
         """Test json serialisation"""
-        serialize(self.g, self.res, AttribDict({ "output": "json" }), self.contextgraph)
+        s = serialize(self.g, self.res, AttribDict({ "output": "json" }), self.contextgraph)
+        data = json.loads(s)
+        self.assertIn(SCHEMA_SOURCE, data['@context'], "Testing schema.org in context")
+        self.assertIn(CODEMETA_SOURCE, data['@context'], "Testing codemeta in context")
+        self.assertIsInstance(data['author'], list, "Testing whether authors are in a list")
+
 
     def test100_serialisation_turtle(self):
         """Test json serialisation"""
