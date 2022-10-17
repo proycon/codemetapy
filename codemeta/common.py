@@ -37,9 +37,8 @@ ORCID = Namespace("http://orcid.org/")
 
 CODEMETAPY = Namespace("https://github.com/proycon/codemetapy/") #An extra internal namespace, usually not used for any serialisations
 
-SCHEMA_SOURCE = "https://raw.githubusercontent.com/schemaorg/schemaorg/main/data/releases/14.0/schemaorgcontext.jsonld" #schema.org itself doesn't seem to do proper content negotation (or rdflib chokes on it), so we grab the 'latest' release from github instead
-CODEMETA_SOURCE = "https://raw.githubusercontent.com/codemeta/codemeta/2.0/codemeta.jsonld"
-#^-- target of https://doi.org/10.5063/schema/codemeta-2.0, prefer github because that at least serves things reliably for both rdflib and the JsonLD playground
+SCHEMA_SOURCE = "https://schema.org" #even though URL is https:// the RDF IRIs are all http://!
+CODEMETA_SOURCE = "https://doi.org/10.5063/schema/codemeta-2.0"
 STYPE_SOURCE = "https://w3id.org/software-types"
 IODATA_SOURCE = "https://w3id.org/software-iodata"
 
@@ -284,13 +283,20 @@ def init_context(args: AttribDict):
 
     for local, remote in sources:
         localfile = local.replace("file://","")
+        if remote in ("http://schema.org", "https://schema.org","http://schema.org/", "https://schema.org/"):
+            #schema.org does not do content negotation properly, instead it provides a link via a HEAD request, we don't support this but fake this step manually:
+            remote = "https://schema.org/docs/jsonldcontext.json"
         if not os.path.exists(localfile) or args.no_cache:
             print(f"Downloading context from {remote}", file=sys.stderr)
-            r = requests.get(remote, headers={ "Accept": "application/json+ld;q=1.0,application/json;q=0.9,text/plain;q=0.5" })
+            if remote.find("doi.org") != -1:
+                #if we use application/ld+json on doi.org URL we get metadata of the DOI resource itself rather than the jsonld it references (relevant for codemeta)
+                accept = "application/json;q=0.9,text/plain;q=0.5"
+            else:
+                accept = "application/ld+json;q=1.0;application/json;q=0.9,text/plain;q=0.5"
+            r = requests.get(remote, headers={ "Accept": accept})
             r.raise_for_status()
             with open(localfile, 'wb') as f:
                 f.write(r.content)
-
 
     return sources
 
