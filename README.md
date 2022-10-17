@@ -93,12 +93,24 @@ as many as you want. The number of input types specifies must correspond
 exactly to the number of input sources (the positional arguments).
 
 
-
 ## Some notes on Vocabulary
 
 For `codemeta:developmentStatus`, codemetapy attempts to
 assign full [repostatus](https://www.repostatus.org/) URIs whenever
 possible For `schema:license`, full [SPDX](https://spdx.org) URIs are used where possible.
+
+## Identifiers
+
+We distinguish two types of identifiers, first there is the URI or [IRI](https://www.w3.org/TR/rdf11-concepts/#section-IRIs) 
+that identifies RDF resources. It is a globally unique identifier and often looks like a URL. 
+
+Codemetapy will assign new URIs for resources if and only if you pass a base URI using ``--baseuri``. Moreover, if you set this, codemetapy will *forcibly* set URIs over any existing ones, effectively assigning new identifiers. The previous identifier will then be covered via the `owl:sameAs` property instead. This allows you to ownership of all URIs.  Internally, codemetapy will create URIs for everything even if you don't specified a base URI (even for blank nodes), but these URIs are stripped again upon serialisation to JSON-LD.
+
+The second identifier is the [schema:identifier](https://schema.org/identifier), of which there may even be multiple.
+Codemetapy typically expects such an identifier to be a simple unspaced string holding a name for software. For example, a Python package name would make a good identifier. If this property is present, codemetapy will use it when generating URIs.
+The `schema:identifier` property can be contrasted with `schema:name`, which is the human readable form of the name and may be more elaborate.
+The identifier is typically also used for other identifiers (such as DOIs, ISBNs, etc), which may come in forms such as ``doi:10.5281/zenodo.6882966`` or as a URL like `https://doi.org/10.5281/zenodo.6882966`.
+
 
 ## Software Types and services
 

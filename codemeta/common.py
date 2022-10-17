@@ -893,6 +893,13 @@ def handle_rel_uri(value, baseuri: Optional[str] =None, prop = None):
     return value
 
 
+def urijoin(*args) -> str:
+    s = ""
+    for arg in args:
+        if s and s[-1] != "/": s += "/"
+        s += arg
+    return s
+
 def generate_uri(identifier: Union[str,None] = None, baseuri: Union[str,None] = None, prefix: str= ""):
     """Generate an URI (aka IRI)"""
     if not identifier:

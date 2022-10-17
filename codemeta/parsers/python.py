@@ -224,7 +224,8 @@ def add_entrypoint(g: Graph, res: Union[URIRef, BNode], name: str, module_name: 
             description = module.__doc__
         except:
             pass
-    targetproduct = URIRef(generate_uri(name, baseuri=args.baseuri,prefix=get_last_component(str(interfacetype)).lower()))
+    version = g.value(res,SDO.version) or "snapshot"
+    targetproduct = URIRef(generate_uri(name, baseuri=args.baseuri,prefix=get_last_component(str(interfacetype)).lower()) + "/" + str(version))
     g.add((targetproduct, RDF.type, interfacetype))
     g.add((targetproduct, SDO.name, Literal(name)))
     if description:
@@ -242,8 +243,8 @@ def test_and_set_library(g: Graph, res: Union[URIRef, BNode], packagename: str, 
     islibrary = False
     isweb = False
     for (_,_, cat) in g.triples((res, SDO.applicationCategory,None)):
-        islibrary = islibrary or cat.lower().find("libraries") != -1
-        isweb = isweb or cat.lower().find("internet") != -1 or cat.lower().find("web") != -1 or cat.lower().find("www") != -1
+        islibrary = islibrary or str(cat).lower().find("libraries") != -1
+        isweb = isweb or str(cat).lower().find("internet") != -1 or str(cat).lower().find("web") != -1 or str(cat).lower().find("www") != -1
 
     if (not found_entrypoints and not isweb) or islibrary:
         targetproduct = URIRef(generate_uri(packagename, baseuri=args.baseuri,prefix="softwarelibrary"))
