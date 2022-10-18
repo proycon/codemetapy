@@ -132,6 +132,11 @@ def main():
     if args.baseuri and not args.baseurl:
         args.baseurl = args.baseuri
 
+    if args.trl:
+        if args.addcontext is None: args.addcontext = []
+        if "https://w3id.org/research-technology-readiness-levels" not in args.addcontext:
+            args.addcontext.append("https://w3id.org/research-technology-readiness-levels")
+
     valid = False
     if args.graph:
         #join multiple inputs into a larger graph
@@ -332,6 +337,8 @@ def build(**kwargs) -> Tuple[Graph, URIRef, AttribDict, Graph]:
 
     if args.baseuri:
         args.baseuri = args.baseuri.strip('" ')
+        if args.baseuri[-1] not in ('/','#','?'):
+            args.baseuri += "/"
     else:
         print("Note: You did not specify a --baseuri so we will not provide identifiers (IRIs) for your SoftwareSourceCode resources (and others)", file=sys.stderr)
 
