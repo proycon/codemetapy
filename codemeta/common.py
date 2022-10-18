@@ -867,6 +867,15 @@ def compose_postprocess(g: Graph, oldgraph: Graph, res: URIRef):
         for _,_,o in oldgraph.triples((res, CODEMETA.developmentStatus, None)):
             g.remove((res, CODEMETA.developmentStatus, o))
 
+    #ensure there is only one TRL item
+    count = 0
+    for _,_,o in g.triples((res, CODEMETA.developmentStatus, None)):
+        if str(o).startswith(TRL) or str(o).strip().lower() in TRL_MAP.values():
+            count += 1
+    if count > 1:
+        for _,_,o in oldgraph.triples((res, CODEMETA.developmentStatus, None)):
+            g.remove((res, CODEMETA.developmentStatus, o))
+
 
 def handle_rel_uri(value, baseuri: Optional[str] =None, prop = None):
     """Handle relative URIs (lacking a scheme and authority part).
