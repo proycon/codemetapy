@@ -404,6 +404,18 @@ class BuildTest_Combine(unittest.TestCase):
         self.assertIn( (grandparent, RDF.type, SDO.Organization), self.g)
         self.assertIn( (grandparent, SDO.name, Literal("Radboud University")), self.g)
 
+class BuildTest_CombineRepostatus(unittest.TestCase):
+    """Combine two repostatuses for the same resource"""
+
+    def setUp(self):
+        #relies on automatically guessing the types
+        self.g, self.res, self.args, self.contextgraph = build(inputsources=["withoutid.codemeta.json", "withid.codemeta.json"])
+
+    def test001_combine_repostatus(self):
+        """Testing whether second repostatus overwrites the first one"""
+        self.assertIn( (self.res, CODEMETA.developmentStatus, URIRef("https://www.repostatus.org/#inactive")), self.g)
+        self.assertNotIn( (self.res, CODEMETA.developmentStatus, URIRef("https://www.repostatus.org/#active")), self.g)
+
 class BuildTest_Enrich(unittest.TestCase):
     """Build codemeta.json from existing codemeta.json (basically a parse, validation/reconciliation and reserialisation)"""
 
