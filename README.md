@@ -109,7 +109,17 @@ Codemetapy will assign new URIs for resources if and only if you pass a base URI
 The second identifier is the [schema:identifier](https://schema.org/identifier), of which there may even be multiple.
 Codemetapy typically expects such an identifier to be a simple unspaced string holding a name for software. For example, a Python package name would make a good identifier. If this property is present, codemetapy will use it when generating URIs.
 The `schema:identifier` property can be contrasted with `schema:name`, which is the human readable form of the name and may be more elaborate.
-The identifier is typically also used for other identifiers (such as DOIs, ISBNs, etc), which may come in forms such as ``doi:10.5281/zenodo.6882966`` or as a URL like `https://doi.org/10.5281/zenodo.6882966`.
+The identifier is typically also used for other identifiers (such as DOIs, ISBNs, etc), which should come in the following form:
+
+```json
+"identifier:" {
+    "@type": "PropertyValue",
+    "propertyID": "doi",
+    "value": "10.5281/zenodo.6882966"
+}
+```
+
+But short-hand forms such as ``doi:10.5281/zenodo.6882966`` or as a URL like `https://doi.org/10.5281/zenodo.6882966` are also recognised by this library.
 
 
 ## Software Types and services

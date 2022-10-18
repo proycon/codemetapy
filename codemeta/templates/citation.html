@@ -1,0 +1,41 @@
+<div class="reference">
+     <ul>
+     {% for label, aures in get_triples(g, sscres, SDO.author) %}
+     <li>
+         {% include 'reference_author.html' %}
+     </li>
+     {% endfor %}
+     </ul>
+
+    {% if g.value(sscres, SDO.dateModified) %}
+    (<span>{{ str(g.value( sscres , SDO.dateModified))[0:4] }}</span>)
+    {% endif %}
+
+    {% set doi = get_doi(g,sscres) %}
+
+    {% if doi %}
+    <a href="https://doi.org/{{ doi }}">
+    {% elif g.value(sscres, SDO.url) %}
+    <a href="{{ g.value(sscres, SDO.url) }}">
+    {% elif g.value(sscres, SDO.codeRepository) %}
+    <a href="{{ g.value(sscres, SDO.codeRepository) }}">
+    {% else %}
+    <a>
+    {% endif %}
+    <strong>{{ g.value(sscres, SDO.name) }} {% if g.value(sscres, SDO.version) %}{{ g.value(sscres, SDO.version) }}{% endif %}</strong>
+    </a>
+    .
+
+    {% if g.value(sscres, SDO.producer)  %}
+    <ul>
+     {% for label, pores in get_triples(g, sscres, SDO.producer) %}
+         <li>{% include 'reference_author.html' %}</li>
+     {% endfor %}
+    </ul>
+    .
+    {% endif %}
+
+    {% if doi %}
+    DOI: <a href="https://doi.org/{{ doi }}">{{ doi }}</a>
+    {% endif %}
+</div>

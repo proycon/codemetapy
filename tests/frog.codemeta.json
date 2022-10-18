@@ -6,7 +6,14 @@
         "https://w3id.org/software-iodata"
     ],
     "@type": "SoftwareSourceCode",
-    "identifier": "frog",
+    "identifier": [ 
+        "frog",
+        {
+            "@type": "PropertyValue",
+            "propertyID": "doi",
+            "value": "10.5281/zenodo.6882966"
+        }
+    ],
     "name": "Frog",
     "version": "0.26",
     "description": "Frog is an integration of memory-based natural language processing (NLP) modules developed for Dutch. It performs automatic linguistic enrichment such as part of speech tagging, lemmatisation, named entity recognition, shallow parsing, dependency parsing and morphological analysis. All NLP modules are based on TiMBL.",

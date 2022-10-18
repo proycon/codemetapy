@@ -203,7 +203,6 @@ def reidentify(g: Graph, res: Union[URIRef,BNode], identifier: Optional[str], fo
             if not founduri.startswith("file://"): #non-local ones only
                 #we've rewritten the URI, add the old one via owl:sameAs
                 g.add((res, OWL.sameAs, URIRef(founduri)))
-        assert isinstance(identifier, str) #we have an identifier from before, derived from the filename
         if not args.identifier and not args.identifier_from_file:
             #see if we can find a better one from the data itself:
             identifier = get_identifier(g, res) or identifier

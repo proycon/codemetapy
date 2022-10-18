@@ -893,6 +893,30 @@ def handle_rel_uri(value, baseuri: Optional[str] =None, prop = None):
     return value
 
 
+def get_doi(g: Graph, res: Union[URIRef,BNode]) -> Optional[str]:
+    """Get the DOI for a resource, looks in various places"""
+    #DOI in URI?
+    if str(res).startswith("https://doi.org/"):
+        return str(res)[len("https://doi.org/"):]
+    elif str(res).startswith("http://doi.org/"):
+        return str(res)[len("http://doi.org/"):]
+    #DOI in schema:identifier?
+    for _,_,o in g.triples((res,SDO.identifier,None)):
+        #as URL
+        if str(o).startswith("https://doi.org/"):
+            return str(o)[len("https://doi.org/"):]
+        elif str(o).startswith("http://doi.org/"):
+            return str(o)[len("http://doi.org/"):]
+        elif str(o).lower().startswith("doi:"):
+            return str(o)[len("doi:"):]
+        elif isinstance(o, (URIRef,BNode)) and (o,RDF.type,SDO.PropertyValue) in g and str(g.value(o,SDO.propertyID)) in ("doi","DOI"):
+            #as PropertyValue (recommended)
+            doi = g.value(o,SDO.value)
+            if doi:
+                return str(doi)
+    return None
+
+
 def urijoin(*args) -> str:
     s = ""
     for arg in args:

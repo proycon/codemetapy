@@ -75,6 +75,19 @@
     </div>
     {% endif %}
 
+    <h3>Citation</h3>
+
+    <p>
+    {% if g.value(sscres, CODEMETA.referencePublication) or g.value(sscres, SDO.citation) %}
+    Please use one of the above reference publications to cite the software, if you want to cite the software directly, you can use the following citation generated from the metadata:
+    {% else %}
+    You can cite this software using the following citation generated from its metadata:
+    {% endif %}
+    </p>
+
+    {% include 'citation.html' %}
+
+
     <div class="log">
         {% if (res, CODEMETAPY.errors, None) in g and int(g.value(res, CODEMETAPY.errors)) > 0 %}
         <span class="negative" title="There were problems harvesting this metadata, please inspect the log"><i class="fa fa-bug"></i>  There were {{ g.value(res, CODEMETAPY.errors) }} error(s) harvesting this metadata, please inspect the log.</span><br/>
@@ -447,6 +460,13 @@
         </dd>
         {% endif %}
 
+        {% set doi = get_doi(g, sscres) %}
+        {% if doi %}
+        <dt class="doi" title="Digital Object Identifier">DOI</dt>
+        <dd class="doi">
+            <a href="https://doi.org/{{doi}}">{{doi}}</a>
+        </dd>
+        {% endif %}
 
      </dl>
     </div>

@@ -18,7 +18,7 @@
 {% if g.value(ref, SDO.url) %}
 <a href="{{ g.value(ref, SDO.url) }}" rel="schema:url">
 {% endif %}
-<span property="schema:name">{{ g.value(ref, SDO.name) }}</span>
+<span property="schema:name"><strong>{{ g.value(ref, SDO.name) }}</strong></span>
 {% if g.value(ref, SDO.url) %}
 </a>
 {% endif %}
@@ -42,10 +42,10 @@
 , <span property="schema:pagination" title="page number where this publication ends">{{ g.value(ref, SDO.pagination) }}</span>
 {% endif %}
 
-{% if ref.find("doi.org") != -1 %}
-, <a property="schema:identifier" href="{{ ref }}" title="The DOI identifier">{{ ref }}</a>
-{% elif ref.find("doi:") != -1 %}
-, <span property="schema:identifier" title="The DOI identifier">{{ ref }}</a>
+
+{% set doi = get_doi(g,ref) %}
+{% if doi %}
+DOI: <a href="https://doi.org/{{ doi }}" property="schema:identifier">{{ doi }}</a>
 {% endif %}
 
 </div>
