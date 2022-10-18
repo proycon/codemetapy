@@ -37,7 +37,7 @@ class BuildTest_Json(unittest.TestCase):
     def test003_urlref(self):
         """Testing some common URL References"""
         self.assertIn( (self.res, SDO.codeRepository, URIRef("https://github.com/LanguageMachines/frog")), self.g)
-        self.assertIn( (self.res, SDO.license, URIRef("https://spdx.org/licenses/GPL-3.0-only")), self.g)
+        self.assertIn( (self.res, SDO.license, URIRef("http://spdx.org/licenses/GPL-3.0-only")), self.g)
         self.assertIn( (self.res, SDO.url, URIRef("https://languagemachines.github.io/frog")), self.g)
 
     def test004_codemeta_urlref(self):
