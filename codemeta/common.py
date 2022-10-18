@@ -583,6 +583,9 @@ def add_to_ordered_list(g: Graph, subject: Union[URIRef, BNode], property: URIRe
     collection = g.value(subject, property)
     if collection and isinstance(collection, (URIRef,BNode)) and (collection, RDF.first,None) in g:
         while True:
+            if (collection, RDF.first, object) in g:
+                #item already exists, nothing to add
+                return False
             end = g.value(collection, RDF.rest)
             if end == RDF.nil or not end:
                 break
@@ -594,11 +597,14 @@ def add_to_ordered_list(g: Graph, subject: Union[URIRef, BNode], property: URIRe
         g.add((newnode, RDF.first, object)) 
         g.add((newnode, RDF.rest, RDF.nil)) 
         g.add((collection, RDF.rest, newnode))
+        return True
     elif not collection:
         collection = BNode()
         g.add((subject,property, collection))
         g.add((collection, RDF.first, object))
         g.add((collection, RDF.rest, RDF.nil))
+        return True
+    return False
 
 def part_of_ordered_list(g: Graph, subject: Union[URIRef, BNode], property: URIRef, object: Union[URIRef, BNode, Literal]) -> bool:
     """Check if an item is a member of an RDF ordered list (rdf:first, rdf:rest)"""
@@ -848,6 +854,12 @@ def merge_graphs(g: Graph ,g2: Graph, map_uri_from=None, map_uri_to=None, args: 
             for (s2,p2,o2) in g.triples((s,p,None)):
                 g.remove((s2,p2,o2))
                 removed += 1
+        elif p in ORDEREDLIST_PROPERTIES:
+            #append items from ordered list in g2 to g (if they don't exist yet)
+            for s2,p2,o2 in iter_ordered_list(g2, s, p):
+                add_to_ordered_list(g,s2,p2,o2)
+        elif p in (RDF.first, RDF.rest):
+            continue #skip, already handled recursively by the previous block
         elif p == CODEMETA.developmentStatus and str(o).find("repostatus") != -1 and isinstance(s, (URIRef, BNode)):
             #ensure there is only one repostatus
             delete_repostatus(g, s)
