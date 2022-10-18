@@ -6,6 +6,16 @@
     "@id": "http://example.org/test",
     "@type": "SoftwareSourceCode",
     "identifier": "test",
+    "author": [
+        {
+            "@type":"Person",
+            "name": "John Doe"
+        },
+        {
+            "@type":"Person",
+            "name": "Jane Doe"
+        }
+    ],
     "name": "test",
     "version": "0.1",
     "developmentStatus": "https://www.repostatus.org/#active"

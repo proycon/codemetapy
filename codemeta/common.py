@@ -578,14 +578,30 @@ def add_authors(g: Graph, res: Union[URIRef, BNode], value, property=SDO.author,
 
     return authors
 
-def add_to_ordered_list(g: Graph, subject: Union[URIRef, BNode], property: URIRef, object: Union[URIRef, BNode, Literal]):
+def add_to_ordered_list(g: Graph, subject: Union[URIRef, BNode], property: URIRef, object: Union[URIRef, BNode, Literal], identifying_properties: list = [SDO.name,SDO.email]):
     """Add an item to the end of an ordered list in RDF (rdf:first, rdf:next)"""
     collection = g.value(subject, property)
+
+    #make an invetory of property that might identify the object
+    idpropmap = {}
+    for prop in identifying_properties:
+        if isinstance(object, (URIRef, BNode)):
+            v = g.value(object,prop)
+            if v:
+                idpropmap[prop] = v
+
     if collection and isinstance(collection, (URIRef,BNode)) and (collection, RDF.first,None) in g:
         while True:
             if (collection, RDF.first, object) in g:
                 #item already exists, nothing to add
                 return False
+            testobject = g.value(collection, RDF.first)
+            if isinstance(testobject, (URIRef, BNode)):
+                for prop, value in idpropmap.items():
+                    v = g.value(testobject,prop)
+                    if v and v == value:
+                        #item already exists, nothing to add
+                        return False
             end = g.value(collection, RDF.rest)
             if end == RDF.nil or not end:
                 break
@@ -890,6 +906,26 @@ def compose_postprocess(g: Graph, oldgraph: Graph, res: URIRef):
             if str(o).startswith(TRL) or str(o).strip().lower() in TRL_MAP.values():
                 g.remove((res, CODEMETA.developmentStatus, o))
 
+    #when two ordered lists (rdf:List) are combined, the items of the new list need to be appended to the old list
+    #instead we got two separate ordered lists, resolve this:
+    q = """
+    SELECT ?s ?prop ?l1 ?l2 WHERE {
+        ?s ?prop ?l1 .
+        ?s ?prop ?l2 .
+        ?l1 rdf:first ?x .
+        ?l2 rdf:first ?y .
+        FILTER (?l1 != ?l2 )
+    }
+    """
+    for result in g.query(q):
+        if (result.s, result.prop, result.l1) in oldgraph:
+            oldlist = result.l1
+        else:
+            oldlist = result.l2
+        g.remove((result.s, result.prop, oldlist))
+        for s,p,o in iter_ordered_list(oldgraph, result.s, result.prop):
+            add_to_ordered_list(g, s,p,o)
+                
 
 def handle_rel_uri(value, baseuri: Optional[str] =None, prop = None):
     """Handle relative URIs (lacking a scheme and authority part).
