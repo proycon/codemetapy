@@ -856,6 +856,18 @@ def merge_graphs(g: Graph ,g2: Graph, map_uri_from=None, map_uri_to=None, args: 
     l = len(g2)
     print(f"    Merged {i} of {l} triples, removed {removed} superseded values, remapped {remapped} uris",file=sys.stderr)
 
+
+def compose_postprocess(g: Graph, oldgraph: Graph, res: URIRef):
+    #ensure there is only one repostatus item
+    count = 0
+    for _,_,o in g.triples((res, CODEMETA.developmentStatus, None)):
+        if str(o).startswith(REPOSTATUS) or str(o).strip().lower() in REPOSTATUS_MAP.values():
+            count += 1
+    if count > 1:
+        for _,_,o in oldgraph.triples((res, CODEMETA.developmentStatus, None)):
+            g.remove((res, CODEMETA.developmentStatus, o))
+
+
 def handle_rel_uri(value, baseuri: Optional[str] =None, prop = None):
     """Handle relative URIs (lacking a scheme and authority part).
        Also handles some properties that are sometimes given literal values

@@ -27,7 +27,7 @@ from rdflib.namespace import RDF, OWL
 from rdflib.plugins.shared.jsonld.context import Context
 import rdflib.plugins.serializers.jsonld
 
-from codemeta.common import init_graph, CODEMETA, AttribDict, getstream, SDO, reconcile, add_triple, generate_uri, remap_uri, query, enrich
+from codemeta.common import init_graph, CODEMETA, AttribDict, getstream, SDO, reconcile, add_triple, generate_uri, remap_uri, query, enrich, compose_postprocess
 import codemeta.crosswalk
 import codemeta.parsers.python
 import codemeta.parsers.debian
@@ -365,6 +365,8 @@ def build(**kwargs) -> Tuple[Graph, URIRef, AttribDict, Graph]:
     l = len(inputsources)
     for i, (source, inputtype) in enumerate(inputsources):
         print(f"Processing source #{i+1} of {l}",file=sys.stderr)
+
+        oldgraph = copy.deepcopy(g)
           
         if inputtype == "null":
             print(f"Starting from scratch, using command line parameters to build",file=sys.stderr)
@@ -421,6 +423,7 @@ def build(**kwargs) -> Tuple[Graph, URIRef, AttribDict, Graph]:
         elif inputtype is not None:
             raise ValueError(f"Unknown input type: {inputtype}")
 
+        compose_postprocess(g, oldgraph, res)
 
     #Process command-line arguments last
     for key in props:

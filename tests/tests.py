@@ -413,8 +413,8 @@ class BuildTest_CombineRepostatus(unittest.TestCase):
 
     def test001_combine_repostatus(self):
         """Testing whether second repostatus overwrites the first one"""
-        self.assertIn( (self.res, CODEMETA.developmentStatus, URIRef("https://www.repostatus.org/#inactive")), self.g)
-        self.assertNotIn( (self.res, CODEMETA.developmentStatus, URIRef("https://www.repostatus.org/#active")), self.g)
+        self.assertIn( (self.res, CODEMETA.developmentStatus, URIRef("https://www.repostatus.org/#active")), self.g)
+        self.assertNotIn( (self.res, CODEMETA.developmentStatus, URIRef("https://www.repostatus.org/#inactive")), self.g)
 
 class BuildTest_Enrich(unittest.TestCase):
     """Build codemeta.json from existing codemeta.json (basically a parse, validation/reconciliation and reserialisation)"""
