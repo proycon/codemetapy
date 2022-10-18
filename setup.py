@@ -21,7 +21,7 @@ setup(
     description = ("Generate and manage CodeMeta software metadata"),
     license = "GPL-3.0-only",
     keywords = [ "software metadata", "codemeta", "schema.org", "rdf", "linked data"],
-    url = "https://github.com/proycon/codemeta",
+    url = "https://github.com/proycon/codemetapy",
     packages=['codemeta', 'codemeta.parsers','codemeta.serializers'],
     long_description=read('README.md'),
     long_description_content_type='text/markdown',
