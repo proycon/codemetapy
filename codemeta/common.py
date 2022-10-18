@@ -582,7 +582,7 @@ def add_to_ordered_list(g: Graph, subject: Union[URIRef, BNode], property: URIRe
     """Add an item to the end of an ordered list in RDF (rdf:first, rdf:next)"""
     collection = g.value(subject, property)
 
-    #make an invetory of property that might identify the object
+    #make an invetory of property that might identify the object, so we don't add it twice
     idpropmap = {}
     for prop in identifying_properties:
         if isinstance(object, (URIRef, BNode)):
