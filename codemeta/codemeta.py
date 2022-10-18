@@ -190,6 +190,41 @@ def serialize(g: Graph, res: Union[Sequence,URIRef,BNode,None], args: AttribDict
     else:
         raise Exception("No such output type: ", args.output)
 
+def reidentify(g: Graph, res: Union[URIRef,BNode], identifier: Optional[str], founduris: list, args: AttribDict) -> Union[URIRef,BNode]:
+    """Reassign a new URI for the resource, or assign an original found one. The former will include a version component"""
+    if founduris and not args.baseuri:
+        #restore the exact original URI because we did not set a baseuri
+        founduri = founduris[0]
+        print(f"Remapping URI to found URI: {res} -> {founduri}",file=sys.stderr)
+        remap_uri(g, res, founduri)
+        res = URIRef(founduri)
+    elif args.baseuri:
+        for founduri in founduris:
+            if not founduri.startswith("file://"): #non-local ones only
+                #we've rewritten the URI, add the old one via owl:sameAs
+                g.add((res, OWL.sameAs, URIRef(founduri)))
+        assert isinstance(identifier, str) #we have an identifier from before, derived from the filename
+        if not args.identifier and not args.identifier_from_file:
+            #see if we can find a better one from the data itself:
+            identifier = get_identifier(g, res) or identifier
+        if not identifier: 
+            if g.value(res, SDO.name):
+                identifier = str(g.value(res, SDO.name)).strip().lower().replace(" ","-").replace(":","-")
+            else:
+                identifier = "N" + "%032x" % random.getrandbits(128)
+        version = g.value(res,SDO.version)
+        if not version: version = "snapshot" #if we find no version, we append /snapshot to the URI as a version component, usually referring to the git master/main branch but not any specific version
+        uri = args.baseuri + identifier + "/" + str(version)
+        print(f"Remapping URI to (possibly) new identifier and version component: {res} -> {uri}",file=sys.stderr)
+        remap_uri(g, res, uri)
+        res = URIRef(uri)
+    return res
+
+def get_identifier(g: Graph, res: Union[URIRef,BNode])  -> Optional[str]:
+    for _,_,o in g.triples((res, SDO.identifier,None)):
+        if not str(o).startswith(("http://","https://")) and not ':' in str(o):
+            return str(o).strip("/ ")
+
 def read(**kwargs) -> Tuple[Graph, Union[URIRef,None], AttribDict, Graph]:
     """Read multiple resources together in a codemeta graph, and either output it all or output a selection"""
 
@@ -203,6 +238,16 @@ def read(**kwargs) -> Tuple[Graph, Union[URIRef,None], AttribDict, Graph]:
     for source in args.inputsources:
         print(f"Adding json-ld file from {source} to graph",file=sys.stderr)
         codemeta.parsers.jsonld.parse_jsonld(g, None, getstream(source), args)
+
+    #remap resource identifiers (URIs) when needed
+    for s,_,_ in g.triples((None, RDF.type,SDO.SoftwareSourceCode)):
+        if isinstance(s, (URIRef,BNode)):
+            identifier = get_identifier(g,s)
+            if isinstance(s, URIRef) and str(s).startswith("http"):
+                founduris = [str(s)]
+            else:
+                founduris = []
+            s = reidentify(g, s, identifier, founduris, args)
 
     if args.select:
         res = URIRef(args.select)
@@ -379,30 +424,8 @@ def build(**kwargs) -> Tuple[Graph, URIRef, AttribDict, Graph]:
             if value:
                 add_triple(g, res, key, value, args, replace=True)
 
-    if founduris and not args.baseuri:
-        #restore the exact original URI because we did not set a baseuri
-        founduri = founduris[0]
-        print(f"Remapping URI to found URI: {res} -> {founduri}",file=sys.stderr)
-        remap_uri(g, res, founduri)
-        res = URIRef(founduri)
-    elif args.baseuri:
-        for founduri in founduris:
-            if not founduri.startswith("file://"): #non-local ones only
-                #we've rewritten the URI, add the old one via owl:sameAS
-                g.add((res, OWL.sameAs, URIRef(founduri)))
-        assert isinstance(identifier, str) #we have an identifier from before, derived from the filename
-        if not args.identifier and not args.identifier_from_file:
-            #see if we can find a better one from the data itself:
-            for _,_,o in g.triples((res, SDO.identifier,None)):
-                if not str(o).startswith(("http://","https://")) and not ':' in str(o):
-                    identifier = str(o).strip("/ ")
-                    break
-        version = g.value(res,SDO.version)
-        if not version: version = "snapshot" #if we find no version, we append /snapshot to the URI as a version component, usually referring to the git master/main branch but not any specific version
-        uri = args.baseuri + identifier + "/" + str(version)
-        print(f"Remapping URI to (possibly) new identifier and version component: {res} -> {uri}",file=sys.stderr)
-        remap_uri(g, res, uri)
-        res = URIRef(uri)
+    #Reassign a new URI to the resource (if needed)
+    res = reidentify(g,res, identifier, founduris, args)
 
     #Test and fix conflicts in the graph (and report them)
     reconcile(g, res, args)
