@@ -865,7 +865,8 @@ def compose_postprocess(g: Graph, oldgraph: Graph, res: URIRef):
             count += 1
     if count > 1:
         for _,_,o in oldgraph.triples((res, CODEMETA.developmentStatus, None)):
-            g.remove((res, CODEMETA.developmentStatus, o))
+            if str(o).startswith(REPOSTATUS) or str(o).strip().lower() in REPOSTATUS_MAP.values():
+                g.remove((res, CODEMETA.developmentStatus, o))
 
     #ensure there is only one TRL item
     count = 0
@@ -874,7 +875,8 @@ def compose_postprocess(g: Graph, oldgraph: Graph, res: URIRef):
             count += 1
     if count > 1:
         for _,_,o in oldgraph.triples((res, CODEMETA.developmentStatus, None)):
-            g.remove((res, CODEMETA.developmentStatus, o))
+            if str(o).startswith(TRL) or str(o).strip().lower() in TRL_MAP.values():
+                g.remove((res, CODEMETA.developmentStatus, o))
 
 
 def handle_rel_uri(value, baseuri: Optional[str] =None, prop = None):
