@@ -76,7 +76,6 @@ class BuildTest_Json(unittest.TestCase):
         self.assertIn( (URIRef("https://orcid.org/0000-0002-1046-0006"), SDO.givenName, Literal("Maarten")), self.g, "Testing specific author's givenName")
         self.assertIn( (URIRef("https://orcid.org/0000-0002-1046-0006"), SDO.familyName, Literal("van Gompel")), self.g, "Testing specific author's familyName")
         self.assertIn( (URIRef("https://orcid.org/0000-0002-1046-0006"), SDO.email, Literal("proycon@anaproy.nl")), self.g, "Testing specific author's email")
-        self.assertIn( (URIRef("https://orcid.org/0000-0002-1046-0006"), SDO.position, Literal(3)), self.g, "Testing specific author's position")
 
     def test009_producer(self):
         """Testing producer (not exhaustively)"""
