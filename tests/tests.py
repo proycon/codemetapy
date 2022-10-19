@@ -360,7 +360,7 @@ class BuildTest_Web_JSONLD(unittest.TestCase):
         self.assertIn( (service, SDO.url, URIRef("https://www.delpher.nl/")), self.g)
         self.assertIn( (service, SDO.potentialAction, None), self.g) #not testing value
 
-class BuildTest_Combine(unittest.TestCase):
+class BuildTest_Compose(unittest.TestCase):
     """Combine two inputs for the same resource"""
 
     def setUp(self):
@@ -404,23 +404,25 @@ class BuildTest_Combine(unittest.TestCase):
         self.assertIn( (grandparent, RDF.type, SDO.Organization), self.g)
         self.assertIn( (grandparent, SDO.name, Literal("Radboud University")), self.g)
 
-class BuildTest_Combine2(unittest.TestCase):
+class BuildTest_Compose2(unittest.TestCase):
     """Combine multiple resources"""
 
     def setUp(self):
         #relies on automatically guessing the types
         self.g, self.res, self.args, self.contextgraph = build(inputsources=["withoutid.codemeta.json", "withid.codemeta.json"])
 
-    def test001_combine_repostatus(self):
+    def test001_compose_repostatus(self):
         """Testing whether second repostatus overwrites the first one"""
         self.assertIn( (self.res, CODEMETA.developmentStatus, URIRef("https://www.repostatus.org/#active")), self.g)
         self.assertNotIn( (self.res, CODEMETA.developmentStatus, URIRef("https://www.repostatus.org/#inactive")), self.g)
 
-    def test002_combine_orderedlist(self):
+    def test002_compose_orderedlist(self):
+        """Testing whether second ordered list overwrites the first one"""
         self.assertEqual( len(list(self.g.triples((self.res, SDO.author, None)))), 1)
         for i, (_,_,o) in enumerate(iter_ordered_list(self.g, self.res, SDO.author)):
             self.assertIn( (o, RDF.type, SDO.Person), self.g, "Testing if author is a schema:Person")
-        self.assertEqual(i+1, 3, "Testing number of authors")
+            self.assertTrue( (o, SDO.name, Literal("John Doe")) or (o, SDO.name, Literal("Jane Doe")), "Testing if author should be in list")
+        self.assertEqual(i+1, 2, "Testing number of authors")
 
 
 class BuildTest_Enrich(unittest.TestCase):

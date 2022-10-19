@@ -666,37 +666,11 @@ def reconcile(g: Graph, res: URIRef, args: AttribDict):
     if (res, SDO.license, None) not in g:
         print(f"{HEAD} license not set",file=sys.stderr)
 
-    status = g.value(res, CODEMETA.developmentStatus)
-    if status and not status.startswith("http"):
-        if status.lower() in REPOSTATUS_MAP.values():
-            print(f"{HEAD} automatically converting status to repostatus URI",file=sys.stderr)
-            g.set((res, CODEMETA.developmentStatus, URIRef("https://www.repostatus.org/#" + status.lower())))
-        else:
-            print(f"{HEAD} status is not expressed using repostatus vocabulary: {status}",file=sys.stderr)
-            g.set((res, CODEMETA.developmentStatus, Literal(status)))
-
-    license = g.value(res, SDO.license)
-    if license and not license.startswith("http"):
-        license = license_to_spdx(license)
-        if license.startswith("http"):
-            print(f"{HEAD} automatically converting license to spdx URI",file=sys.stderr)
-            g.set((res, SDO.license, URIRef(license)))
-        else:
-            g.set((res, SDO.license, Literal(license)))
-
-
-
-    #Convert Literal to URIRef for certain properties
-    for prop in PREFER_URIREF_PROPERTIES:
-        for _,_,obj in g.triples((res, prop, None)):
-            if obj and isinstance(obj, Literal):
-                if str(obj).startswith("http"):
-                    g.set((res, prop, URIRef(str(obj))))
-                elif str(obj).startswith("//"): #if absolute url is missing a schema, assume HTTPS
-                    g.set((res, prop, URIRef("https:" + str(obj))))
-                else:
-                    continue
-                g.remove((res,prop,obj))
+    #rewrite technology readiness level to developmentStatus
+    for s,p,o in g.triples((res, TRL.technologyReadinessLevel, None)):
+        if str(o).startswith(TRL):
+            g.remove((s,p,o))
+            g.add((s,CODEMETA.developmentStatus,o))
 
     if (res, SDO.targetProduct, None) not in g:
         #we have no target products, that means we have no associated interface types,
@@ -848,121 +822,74 @@ def remap_uri(g: Graph, from_uri, to_uri):
         g.remove((s,p,o))
         g.add((s,p,to_uri))
 
-def merge_graphs(g: Graph ,g2: Graph, map_uri_from=None, map_uri_to=None, args: Optional[AttribDict] = None):
-    """Merge two graphs (g2 into g), but taking care to replace certain properties that are known to take a single value, and mapping URIs where needed"""
-    i = 0
-    remapped = 0
-    removed = 0
-    both, first, second = graph_diff(g, g2)
-    for (s,p,o) in second:
-        s = handle_rel_uri(s, args.baseuri)
-        p = handle_rel_uri(p, args.baseuri)
-        o = handle_rel_uri(o, args.baseuri, prop=p)
-        if map_uri_from and map_uri_to:
-            if s == URIRef(map_uri_from):
-                s = URIRef(map_uri_to)
-                remapped += 1
-            if o == URIRef(map_uri_from):
-                remapped += 1
-                o = URIRef(map_uri_to)
-        if p in SINGULAR_PROPERTIES:
-            #remove existing triples in the graph
-            for (s2,p2,o2) in g.triples((s,p,None)):
-                g.remove((s2,p2,o2))
-                removed += 1
-        elif p in ORDEREDLIST_PROPERTIES:
-            #append items from ordered list in g2 to g (if they don't exist yet)
-            for s2,p2,o2 in iter_ordered_list(g2, s, p):
-                add_to_ordered_list(g,s2,p2,o2)
-        elif p in (RDF.first, RDF.rest):
-            continue #skip, already handled recursively by the previous block
-        elif p == CODEMETA.developmentStatus and str(o).find("repostatus") != -1 and isinstance(s, (URIRef, BNode)):
-            #ensure there is only one repostatus
-            delete_repostatus(g, s)
-        g.add((s,p,o))
-        i += 1
-    l = len(g2)
-    print(f"    Merged {i} of {l} triples, removed {removed} superseded values, remapped {remapped} uris",file=sys.stderr)
 
+def compose(g: Graph, newgraph: Graph, res: URIRef, args: AttribDict):
+    """Merges two graphs that cover the same resource (= metadata composition). Later properties will overwrite earlier ones. Newgraph will be merged into g at the end of this process."""
+   
+    IDENTIFIER = g.value(res, SDO.identifier) or newgraph.value(res, SDO.identifier)
+    if not IDENTIFIER: IDENTIFIER = str(res)
+    HEAD = f"[CODEMETA COMPOSITION ({IDENTIFIER})]"
 
-def compose_postprocess(g: Graph, oldgraph: Graph, res: URIRef):
-    #ensure there is only one repostatus item
-    count = 0
-    for _,_,o in g.triples((res, CODEMETA.developmentStatus, None)):
-        if str(o).startswith(REPOSTATUS) or str(o).strip().lower() in REPOSTATUS_MAP.values():
-            count += 1
-    if count > 1:
-        for _,_,o in oldgraph.triples((res, CODEMETA.developmentStatus, None)):
-            if str(o).startswith(REPOSTATUS) or str(o).strip().lower() in REPOSTATUS_MAP.values():
-                g.remove((res, CODEMETA.developmentStatus, o))
+    #Later properties always override earlier properties (they are overwritten and not merged!)
+    for s,p,o in newgraph.triples((res,None,None)):
+        if (s,p,None) in g:
+            for s,p,o_old in g.triples((res,p,None)):
+                if (s,p,o_old) not in newgraph:
+                    print(f"{HEAD} overriding old {p} ({o_old} -> {o})",file=sys.stderr)
+                    g.remove((s,p,o_old))
 
-    #ensure there is only one TRL item
-    count = 0
-    for _,_,o in g.triples((res, CODEMETA.developmentStatus, None)):
-        if str(o).startswith(TRL) or str(o).strip().lower() in TRL_MAP.values():
-            count += 1
-    if count > 1:
-        for _,_,o in oldgraph.triples((res, CODEMETA.developmentStatus, None)):
-            if str(o).startswith(TRL) or str(o).strip().lower() in TRL_MAP.values():
-                g.remove((res, CODEMETA.developmentStatus, o))
+    #some correcting operations on the newgraph
 
-    #when two ordered lists (rdf:List) are combined, the items of the new list need to be appended to the old list
-    #instead we got two separate ordered lists, resolve this:
-    q = """
-    SELECT ?s ?prop ?l1 ?l2 WHERE {
-        ?s ?prop ?l1 .
-        ?s ?prop ?l2 .
-        ?l1 rdf:first ?x .
-        ?l2 rdf:first ?y .
-        FILTER (?l1 != ?l2 )
-    }
-    """
-    for result in g.query(q):
-        if (result.s, result.prop, result.l1) in oldgraph:
-            oldlist = result.l1
-        else:
-            oldlist = result.l2
-        g.remove((result.s, result.prop, oldlist))
-        for s,p,o in iter_ordered_list(oldgraph, result.s, result.prop):
-            add_to_ordered_list(g, s,p,o)
-                
+    #when developmentStatus is a repostatus id, convert it to the full URI
+    for _,_,status in newgraph.triples((res, CODEMETA.developmentStatus,None)):
+        status = correct_wrong_uri(g, res, CODEMETA.developmentStatus, status, args.baseuri)
+        if str(status).lower() in REPOSTATUS_MAP.values():
+            print(f"{HEAD} automatically converting status {status} to repostatus URI",file=sys.stderr)
+            newgraph.remove((res, CODEMETA.developmentstatus, status))
+            newgraph.set((res, CODEMETA.developmentStatus, URIRef("https://www.repostatus.org/#" + str(status).lower())))
 
-def handle_rel_uri(value, baseuri: Optional[str] =None, prop = None):
-    """Handle relative URIs (lacking a scheme and authority part).
-       Also handles some properties that are sometimes given literal values
-       rather than URIs (in violation of the codemeta specification)."""
-
-    #if prop is set, then value is the object
-
-    if isinstance(value, URIRef) and str(value).startswith("file:///"):
-        if prop == CODEMETA.developmentStatus:
-            #map to repostatus
-            value = value_or_uri(value.replace("file://",""), baseuri)
-            if value.strip().lower() in REPOSTATUS_MAP.values():
-                return getattr(REPOSTATUS, value.strip().lower())
-            elif value.strip().lower() in REPOSTATUS_MAP:
-                #map to repostatus vocabulary
-                repostatus = REPOSTATUS_MAP[value.strip().lower()]
-                return getattr(REPOSTATUS, repostatus)
+    #attempt to convert licenses to a full spdx.org URI
+    for _,_,o in newgraph.triples((res, SDO.license,None)):
+        license = correct_wrong_uri(g, res, SDO.license, o, args.baseuri)
+        if license and isinstance(license, Literal) and not str(license).startswith("http"):
+            newgraph.remove((res, SDO.license,license))
+            license = license_to_spdx(license)
+            if str(license).startswith("http"):
+                print(f"{HEAD} automatically converting license to spdx URI",file=sys.stderr)
+                newgraph.add((res, SDO.license, URIRef(str(license))))
             else:
-                #This is not a URI but a string literal
-                return Literal(value)
-        elif prop == SDO.license:
-            #map to spdx
-            value = value_or_uri(str(value).replace("file://",""), baseuri)
-            value = license_to_spdx(value)
-            if value.find('spdx') != -1:
-                return URIRef(value)
-            else:
-                return Literal(value)
-        else:
-            #this is the normal case where we strip and map the file:// prefix rdflib assigns to make relative URIs absolute
-            if baseuri:
-                return URIRef(str(value).replace("file:///",  baseuri + ("/" if baseuri[-1] not in ("/","#") else "" )))
-            else:
-                return URIRef(str(value).replace("file:///","/"))
-    return value
+                newgraph.add((res, SDO.license, Literal(license)))
+        elif isinstance(license, (Literal,URIRef)) and str(license).startswith("https://spdx.org"):
+            #map to HTTP
+            print(f"{HEAD} automatically converting spdx license URI from https:// to http:///",file=sys.stderr)
+            remap_uri(newgraph, license, URIRef(str(license).replace("https://","http://")))
 
+    #Convert Literal to URIRef for certain properties
+    for prop in PREFER_URIREF_PROPERTIES:
+        for _,_,obj in newgraph.triples((res, prop, None)):
+            correct_wrong_uri(newgraph, res, prop, obj, args.baseuri)
+
+    #there must be NO blank nodes anymore at this point!!! They might collide
+    g += newgraph
+    print(f"{HEAD} processed {len(newgraph)} new triples, total is now {len(g)}",file=sys.stderr)
+
+def correct_wrong_uri(g:Graph, res: URIRef, prop: URIRef, obj: Union[URIRef,Literal], baseuri: Union[str,None]) -> Union[URIRef,Literal]:
+    """Certain Literals should be URIRefs when possible, and some URIRefs are misinterpreted by rdflib and should be Literals"""
+    new_obj = obj
+    if isinstance(obj, URIRef) and prop in (SDO.license, SDO.developmentStatus):
+        if baseuri and str(obj).startswith(baseuri): #got misassigned to baseuri (rdflib might do this if it expects a @type=@id)
+            new_obj =  Literal(str(obj)[len(baseuri):])
+        if str(obj).startswith("file://"): #got misassigned to file:// (rdflib might do this if it expects a @type=@id)
+            new_obj =  Literal(str(obj)[len("file://"):])
+    if prop in PREFER_URIREF_PROPERTIES:
+        if isinstance(obj, Literal) and str(obj).startswith("http"):
+            new_obj =  URIRef(str(obj))
+        elif isinstance(obj, Literal) and str(obj).startswith("//"): #if absolute url is missing a schema, assume HTTPS
+            new_obj =  URIRef("https:" + str(obj))
+    if new_obj != obj:
+        g.remove((res,prop,obj))
+        g.add((res,prop,new_obj))
+    return new_obj
 
 def get_doi(g: Graph, res: Union[URIRef,BNode]) -> Optional[str]:
     """Get the DOI for a resource, looks in various places"""

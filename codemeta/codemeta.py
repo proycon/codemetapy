@@ -27,7 +27,7 @@ from rdflib.namespace import RDF, OWL
 from rdflib.plugins.shared.jsonld.context import Context
 import rdflib.plugins.serializers.jsonld
 
-from codemeta.common import init_graph, CODEMETA, AttribDict, getstream, SDO, reconcile, add_triple, generate_uri, remap_uri, query, enrich, compose_postprocess
+from codemeta.common import init_graph, CODEMETA, AttribDict, getstream, SDO, reconcile, add_triple, generate_uri, remap_uri, query, enrich, compose, bind_graph
 import codemeta.crosswalk
 import codemeta.parsers.python
 import codemeta.parsers.debian
@@ -264,7 +264,7 @@ def read(**kwargs) -> Tuple[Graph, Union[URIRef,None], AttribDict, Graph]:
 
 
 def build(**kwargs) -> Tuple[Graph, URIRef, AttribDict, Graph]:
-    """Build a codemeta graph for a single resource"""
+    """Build a codemeta graph for a single resource, may be composed from different sources"""
     args = AttribDict(kwargs)
 
     inputsources = []
@@ -366,34 +366,37 @@ def build(**kwargs) -> Tuple[Graph, URIRef, AttribDict, Graph]:
     for i, (source, inputtype) in enumerate(inputsources):
         print(f"Processing source #{i+1} of {l}",file=sys.stderr)
 
-        oldgraph = copy.deepcopy(g)
+        newgraph = Graph()
+        bind_graph(newgraph)
           
         if inputtype == "null":
             print(f"Starting from scratch, using command line parameters to build",file=sys.stderr)
         elif inputtype == "python":
             print(f"Obtaining python package metadata for: {source}",file=sys.stderr)
             #source is a name of a package or path to a pyproject.toml file
-            codemeta.parsers.python.parse_python(g, res, source, crosswalk, args)
+            codemeta.parsers.python.parse_python(newgraph, res, source, crosswalk, args)
         elif inputtype == "debian":
             print(f"Parsing debian package from {source}",file=sys.stderr)
-            aptlines = getstream(source).read().split("\n")
-            codemeta.parsers.debian.parse_debian(g, res, aptlines, crosswalk, args)
+            with getstream(source) as f:
+                aptlines = f.read().split("\n")
+            codemeta.parsers.debian.parse_debian(newgraph, res, aptlines, crosswalk, args)
         elif inputtype == "nodejs":
             print(f"Parsing npm package.json from {source}",file=sys.stderr)
-            f = getstream(source)
-            codemeta.parsers.nodejs.parse_nodejs(g, res, f, crosswalk, args)
+            with getstream(source) as f:
+                codemeta.parsers.nodejs.parse_nodejs(newgraph, res, f, crosswalk, args)
         elif inputtype == "java":
             print(f"Parsing java/maven pom.xml from {source}",file=sys.stderr)
-            f = getstream(source)
-            codemeta.parsers.java.parse_java(g, res, f, crosswalk, args)
+            with getstream(source) as f:
+                codemeta.parsers.java.parse_java(newgraph, res, f, crosswalk, args)
         elif inputtype == "json":
             print(f"Parsing json-ld file from {source}",file=sys.stderr)
-            founduri = codemeta.parsers.jsonld.parse_jsonld(g, res, getstream(source), args)
+            with getstream(source) as f:
+                founduri = codemeta.parsers.jsonld.parse_jsonld(newgraph, res, f, args)
             if founduri and founduri not in founduris: founduris.append(founduri)
         elif inputtype == "web":
             print(f"Fallback: Obtaining metadata from remote URL {source}",file=sys.stderr)
             found = False
-            for targetres in codemeta.parsers.web.parse_web(g, res, source, args):
+            for targetres in codemeta.parsers.web.parse_web(newgraph, res, source, args):
                 if targetres and args.with_stypes:
                     found = True
                     print(f"Adding service (targetProduct) {source}",file=sys.stderr)
@@ -408,7 +411,7 @@ def build(**kwargs) -> Tuple[Graph, URIRef, AttribDict, Graph]:
                 inputtype = codemeta.parsers.gitapi.get_repo_kind(source)
             if inputtype:
                 print(f"Querying GitAPI parser for {source}",file=sys.stderr)
-                codemeta.parsers.gitapi.parse(g, res, source, inputtype ,args)
+                codemeta.parsers.gitapi.parse(newgraph, res, source, inputtype ,args)
             else:
                 raise ValueError(f"Unable to disambiguate gitapi type")
         elif inputtype in ('authors', 'contributors','maintainers'):
@@ -419,11 +422,12 @@ def build(**kwargs) -> Tuple[Graph, URIRef, AttribDict, Graph]:
                 prop = SDO.contributor
             elif inputtype == 'maintainers':
                 prop = CODEMETA.maintainer
-            codemeta.parsers.authors.parse_authors(g, res, getstream(source), args, property=prop )
+            with getstream(source) as f:
+                codemeta.parsers.authors.parse_authors(newgraph, res, f, args, property=prop )
         elif inputtype is not None:
             raise ValueError(f"Unknown input type: {inputtype}")
 
-        compose_postprocess(g, oldgraph, res)
+        compose(g, newgraph, res, args)
 
     #Process command-line arguments last
     for key in props:

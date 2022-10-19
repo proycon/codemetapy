@@ -2,7 +2,7 @@ import sys
 import json
 from rdflib import Graph, URIRef, BNode, Literal
 from typing import Union, IO, Optional
-from codemeta.common import PREFER_URIREF_PROPERTIES_SIMPLE, AttribDict, REPOSTATUS, license_to_spdx, SDO, SCHEMA_SOURCE, CODEMETA_SOURCE, SCHEMA_LOCAL_SOURCE, SCHEMA_SOURCE, CODEMETA_LOCAL_SOURCE, CODEMETA_SOURCE, STYPE_SOURCE, STYPE_LOCAL_SOURCE, IODATA_SOURCE, IODATA_LOCAL_SOURCE, init_context, SINGULAR_PROPERTIES, merge_graphs, generate_uri, bind_graph, DEVIANT_CONTEXT
+from codemeta.common import PREFER_URIREF_PROPERTIES_SIMPLE, AttribDict, REPOSTATUS, license_to_spdx, SDO, SCHEMA_SOURCE, CODEMETA_SOURCE, SCHEMA_LOCAL_SOURCE, SCHEMA_SOURCE, CODEMETA_LOCAL_SOURCE, CODEMETA_SOURCE, STYPE_SOURCE, STYPE_LOCAL_SOURCE, IODATA_SOURCE, IODATA_LOCAL_SOURCE, init_context, SINGULAR_PROPERTIES, generate_uri, bind_graph, DEVIANT_CONTEXT
 
 
 def rewrite_context(context: Union[list,str], args: AttribDict) -> list:

@@ -76,7 +76,14 @@ The tool also supports adding properties through parameters:
 
 To read an existing codemeta.json and extend it:
 
-`$ codemetapy codemeta.json somepackage > codemeta.json`
+`$ codemetapy -O codemeta.json codemeta.json somepackage`
+
+or even:
+
+`$ codemetapy -O codemeta.json codemeta.json codemeta2.json codemeta3.json`
+
+This makes use of an important characteristic of codemetapy which is *composition*. When you specify multiple input sources, they will be interpreted as referring to the same resource.
+Properties (on `schema:SoftwareSourceCode`) in the later resources will *overwrite* earlier properties. So if `codemeta3.json` specifies authors, all authors that were specified in `codemeta2.json` are lost rather than merged and the end result will have the authors from `codemeta3.json`. However, if `codemeta2.json` has a property that was not in `codemeta3.json`, say `deveopmentStatus`, then that will make it to the end rsult. In other words, the latest source always takes precedence. Any non-overlapping properties will be be merged. This functionality is heavily relied on by the higher-level tool [codemeta-harvester](https://github.com/proycon/codemeta-harvester).
 
 If you want to start from scratch and build using command line parameters, use `/dev/null` as input, and make sure to pass some identifier and code repository:
 
