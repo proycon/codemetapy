@@ -714,20 +714,19 @@ def enrich(g: Graph, res: URIRef, args: AttribDict):
                     print(f"{HEAD} automatically adding runtimePlatform {platform} derived from programmingLanguage {lang}",file=sys.stderr)
                     g.add((res, SDO.runtimePlatform, Literal(platform)))
 
-    if not g.value(res, SDO.contributor):
-        for _,_,o in g.triples((res, SDO.author,None)):
+    if not g.value(res, SDO.contributor) and (res, SDO.author,None) in g:
+        for _,_,o in iter_ordered_list(g, res, SDO.author):
             print(f"{HEAD} adding author {o} as contributor",file=sys.stderr)
-            g.add((res, SDO.contributor, o))
-    elif not g.value(res, SDO.author):
-        for _,_,o in g.triples((res, SDO.contributor,None)):
+            add_to_ordered_list(g, res, SDO.contributor, o)
+    elif not g.value(res, SDO.author) and (res, SDO.contributor,None) in g:
+        for _,_,o in iter_ordered_list(g, res, SDO.author):
             print(f"{HEAD} adding contributor {o} as author",file=sys.stderr)
-            g.add((res, SDO.author, o))
+            add_to_ordered_list(g, res, SDO.author, o)
 
-    authors = len(list(g.triples((res, SDO.author,None))))
-    if not g.value(res, SDO.maintainer) and authors == 1:
+    if not g.value(res, SDO.maintainer) and (res, SDO.author,None) in g:
         print(f"{HEAD} considering sole author as maintainer",file=sys.stderr)
-        author = g.value(res, SDO.author)
-        g.add((res, SDO.maintainer, author))
+        for _,_,o in iter_ordered_list(g, res, SDO.author):
+            g.add((res, SDO.maintainer, o))
 
     maintainers = list(g.triples((res, SDO.maintainer,None)))
     if not g.value(res, SDO.producer) and maintainers:
@@ -741,18 +740,18 @@ def enrich(g: Graph, res: URIRef, args: AttribDict):
                     print(f"{HEAD} maintainer is organization, add as producer",file=sys.stderr)
                     g.add((res, SDO.producer, maintainer))
 
-    if not g.value(res, SDO.producer) and authors == 1:
-        for author in g.triples((res, SDO.author,None)):
+    if not g.value(res, SDO.producer) and (res, SDO.author,None) in g:
+        for _,_,author in iter_ordered_list(g, res, SDO.author):
             if isinstance(author, (URIRef,BNode)):
                 if (author, RDF.type, SDO.Person) in g:
                     for _,_,o in g.triples((author, SDO.affiliation,None)):
-                        print(f"{HEAD} adding affiliation of sole author as producer",file=sys.stderr)
+                        print(f"{HEAD} adding affiliation(s) of first author as producer",file=sys.stderr)
                         g.add((res, SDO.producer, o))
                 elif (author, RDF.type, SDO.Organization) in g:
                     print(f"{HEAD} author is organization, add as producer",file=sys.stderr)
                     g.add((res, SDO.producer, author))
+            break
 
-        
 
 def guess_interfacetype(g: Graph, res: Union[URIRef,BNode], args: AttribDict) -> Union[URIRef,None]:
     IDENTIFIER = g.value(res, SDO.identifier)
