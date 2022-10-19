@@ -667,6 +667,9 @@ def reconcile(g: Graph, res: URIRef, args: AttribDict):
             g.remove((s,p,o))
             g.add((s,CODEMETA.developmentStatus,o))
 
+    if (res, SDO.license, URIRef("http://spdx.org/GPL-3.0-only")) in g and (res, SDO.license, URIRef("http://spdx.org/GPL-2.0-or-later")) in g:
+        g.remove((res, SDO.license, URIRef("http://spdx.org/GPL-2.0-or-later")))
+
     if (res, SDO.targetProduct, None) not in g:
         #we have no target products, that means we have no associated interface types,
         #see if we can extract some clues from the keywords or the description
