@@ -669,6 +669,18 @@ def reconcile(g: Graph, res: URIRef, args: AttribDict):
 
     if (res, SDO.license, URIRef("http://spdx.org/GPL-3.0-only")) in g and (res, SDO.license, URIRef("http://spdx.org/GPL-2.0-or-later")) in g:
         g.remove((res, SDO.license, URIRef("http://spdx.org/GPL-2.0-or-later")))
+    if (res, SDO.license, URIRef("http://spdx.org/GPL-3.0-or-later")) in g and (res, SDO.license, URIRef("http://spdx.org/GPL-2.0-or-later")) in g:
+        g.remove((res, SDO.license, URIRef("http://spdx.org/GPL-2.0-or-later"))) #take the more restrictive option
+
+    gpl = True
+    nongpl = True
+    for license in g.triples((res, SDO.license, None)):
+        if str(license).startswith("http://spdx.org/GPL-") or str(license).startswith("http://spdx.org/AGPL-"):
+            gpl = True
+        else:
+            nongpl = True
+    if gpl and nongpl:
+        print(f"{HEAD} license conflict, you can't use GPL alongside other licenses!",file=sys.stderr)
 
     if (res, SDO.targetProduct, None) not in g:
         #we have no target products, that means we have no associated interface types,
