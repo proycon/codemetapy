@@ -672,8 +672,8 @@ def reconcile(g: Graph, res: URIRef, args: AttribDict):
     if (res, SDO.license, URIRef("http://spdx.org/GPL-3.0-or-later")) in g and (res, SDO.license, URIRef("http://spdx.org/GPL-2.0-or-later")) in g:
         g.remove((res, SDO.license, URIRef("http://spdx.org/GPL-2.0-or-later"))) #take the more restrictive option
 
-    gpl = True
-    nongpl = True
+    gpl = False
+    nongpl = False
     for license in g.triples((res, SDO.license, None)):
         if str(license).startswith("http://spdx.org/GPL-") or str(license).startswith("http://spdx.org/AGPL-"):
             gpl = True
