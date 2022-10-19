@@ -8,7 +8,7 @@ from codemeta.common import init_graph, init_context, CODEMETA, AttribDict,  SDO
 
 from pyshacl import validate as pyshacl_validate
 
-def validate(g: Graph, res: Union[Sequence,URIRef,BNode,None], args: AttribDict, contextgraph: Union[Graph,None] = None) -> Tuple[bool, Graph]:
+def validate(g: Graph, res: Union[URIRef,BNode], args: AttribDict, contextgraph: Union[Graph,None] = None) -> Tuple[bool, Graph]:
     """Validates software metadata using SHACL, generates a validation report and adds it to the SoftwareSourceCode metadata via the schema:review property"""
     shacl_file: str = args.validate
     if shacl_file.endswith("ttl"):

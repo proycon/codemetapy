@@ -140,11 +140,16 @@ def main():
     valid = False
     if args.graph:
         #join multiple inputs into a larger graph
-        g, res, args, contextgraph = read(**args.__dict__)
+        g, res, args, contextgraph = read(**args.__dict__) #may deliver a res when args.select is set
     else:
         #normal behaviour
         g, res, args, contextgraph = build(**args.__dict__)
-    if args.validate: valid, _ = codemeta.validation.validate(g, res, args, contextgraph)
+    if args.validate: 
+        if res:
+            valid, _ = codemeta.validation.validate(g, res, args, contextgraph)
+        else:
+            raise Exception("Validation can only be done on single resources, not when --graph is set and multiple are loaded/aggregated""")
+
     if args.includecontext:
         g += contextgraph
     output = serialize(g, res, args, contextgraph)
