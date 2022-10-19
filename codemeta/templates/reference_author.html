@@ -10,13 +10,13 @@
                                  <span property="schema:givenName">{{ g.value(aures, SDO.givenName) }}</span>
                              {% elif g.value(aures, SDO.name)  %}
                                  <span property="schema:name">{{ g.value(aures, SDO.name) }}</span>
+                             {% else %}
+                                {{ aures }}
                              {% endif %}
                              {% if g.value(aures, SDO.url) and g.value(aures, SDO.email) %}
                                  </a> &lt;<a rel="schema:email" href="mailto:{{ g.value(aures, SDO.email) }}">{{ g.value(aures, SDO.email) }}</a>&gt;
                              {% elif g.value(aures, SDO.url) or g.value(aures, SDO.email) %}
                                  </a>
-                             {% else %}
-                                {{ aures }}
                              {% endif %}
                          </span>
                          {% elif label %}
