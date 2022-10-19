@@ -141,7 +141,7 @@ def parse_python(g: Graph, res: Union[URIRef, BNode], packagename: str, crosswal
                     #(see https://packaging.python.org/en/latest/specifications/core-metadata/#project-url-multiple-use)
                     if "repository" in label or label in ('git','github','code','sourcecode'):
                         add_triple(g, res, "codeRepository", url, args)
-                    elif label in ("bug tracker","issue tracker"):
+                    elif label in ("bug tracker","issue tracker","issues"):
                         add_triple(g, res, "issueTracker", url, args)
                     elif label in ("documentation", "docs","api reference","reference"):
                         add_triple(g, res, "softwareHelp", url, args)
@@ -149,7 +149,7 @@ def parse_python(g: Graph, res: Union[URIRef, BNode], packagename: str, crosswal
                         add_triple(g, res, "readme", url, args)
                     elif label in ("build","build instructions","installation"):
                         add_triple(g, res, "buildInstructions", url, args)
-                    elif label == "release notes":
+                    elif label in ("release notes","releases"):
                         add_triple(g, res, "releaseNotes", url, args)
                     elif label in ("continous integration", "ci","tests"):
                         add_triple(g, res, "contIntegration", url, args)

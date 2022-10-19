@@ -188,8 +188,17 @@
     <div class="links">
         <ul>
         {% for _,_, value in g.triples((res, SDO.url, None)) %}
-        {% if value != g.value(res, SDO.codeRepository) %}
-        <li><i class="fa fa-home"></i>&nbsp;<a rel="schema:url" href="{{ g.value(res, SDO.url) }}" title="This is the project website associated with this software">Website</a></li>
+        {% if str(value).find("/pypi.org") != -1 %} <li><i class="fa fa-box"></i>&nbsp;<a rel="schema:url" href="{{ value }}" title="This is the project's entry in the Python Package Index">Package website (Python Package Index)</a></li>
+        {% elif str(value).find("/crates.io") != -1 %}
+        <li><i class="fa fa-box"></i>&nbsp;<a rel="schema:url" href="{{ value }}" title="This is the project's entry on crates.io">Package website (crates.io)</a></li>
+        {% elif str(value).find("npmjs.com") != -1 %}
+        <li><i class="fa fa-box"></i>&nbsp;<a rel="schema:url" href="{{ value }}" title="This is the project's entry on npmjs.com">Package website (npm)</a></li>
+        {% elif str(value).find("maven.org") != -1 %}
+        <li><i class="fa fa-box"></i>&nbsp;<a rel="schema:url" href="{{ value }}" title="This is the project's entry on Maven Central">Package website (maven)</a></li>
+        {% elif str(value).find("/readthedocs.io") != -1 or str(value).find("/readthedocs.org") != -1%}
+        <li><i class="fa fa-book"></i>&nbsp;<a rel="schema:url" href="{{ value }}" title="This is the project's entry on readthedocs">Documentation website</a></li>
+        {% elif value != g.value(res, SDO.codeRepository) %}
+        <li><i class="fa fa-home"></i>&nbsp;<a rel="schema:url" href="{{ value }}" title="This is the project website associated with this software">Website</a></li>
         {% endif %}
         {% endfor %}
         {% if  (res, SDO.codeRepository, None) in g %}
