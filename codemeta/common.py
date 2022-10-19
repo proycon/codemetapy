@@ -633,7 +633,13 @@ def iter_ordered_list(g: Graph, subject: Union[URIRef, BNode], property: URIRef)
         object =  g.value(collection, RDF.first)
         if object:
             yield subject, property, object
-        collection = g.value(collection, RDF.rest)
+        next_collection = g.value(collection, RDF.rest)
+        if not object and not collection:
+            #this is not an ordered list at all!
+            print(f"WARNING: iter_ordered_list called but no ordered list found! Falling back to unordered iteration...", file=sys.stderr)
+            for _,_,object in g.triples((subject,property,None)):
+                yield subject, property, object
+        collection = next_collection
 
 def parse_human_name(name):
     humanname = HumanName(name.strip())
