@@ -118,6 +118,8 @@ LICENSE_MAP = [ #maps some common licenses to SPDX URIs, mapped with a substring
     ("Mozilla Public License 1.1", "http://spdx.org/licenses/MPL-1.1"),
     ("Mozilla Public License 1", "http://spdx.org/licenses/MPL-1.0"),
     ("Mozilla Public License", "http://spdx.org/licenses/MPL-2.0"),
+    ("https://www.mozilla.org/en-US/MPL/2.0/","http://spdx.org/licenses/MPL-2.0"),
+    ("https://joinup.ec.europa.eu/collection/eupl/eupl-text-eupl-12", "http://spdx.org/licenses/EUPL-1.2"),
     ("European Union Public License 1.1", "http://spdx.org/licenses/EUPL-1.1"),
     ("European Union Public License", "http://spdx.org/licenses/EUPL-1.2"),
     ("Eclipse Public License 1", "http://spdx.org/licenses/EPL-1.0"),
@@ -127,12 +129,21 @@ LICENSE_MAP = [ #maps some common licenses to SPDX URIs, mapped with a substring
     ("Apache License, Version 2.0", "http://spdx.org/licenses/Apache-2.0"),
     ("Apache License", "http://spdx.org/licenses/Apache-1.1"),
     ("https://www.apache.org/licenses/LICENSE-2.0.txt", "http://spdx.org/licenses/Apache-2.0"),
+    ("http://www.apache.org/licenses/LICENSE-2.0.txt", "http://spdx.org/licenses/Apache-2.0"),
+    ("https://www.apache.org/licenses/LICENSE-2.0.html", "http://spdx.org/licenses/Apache-2.0"),
+    ("http://www.apache.org/licenses/LICENSE-2.0.html", "http://spdx.org/licenses/Apache-2.0"),
     ("Apache-2.0", "http://spdx.org/licenses/Apache-2.0"),
     ("Apache-1.1", "http://spdx.org/licenses/Apache-1.1"),
     ("Apache", "http://spdx.org/licenses/Apache-2.0"), #ambiguous, assume apache 2.0
+    ("https://www.gnu.org/licenses/agpl-3.0.html","http://spdx.org/licenses/AGPL-3.0-only"),
+    ("http://www.gnu.org/licenses/agpl-3.0.html","http://spdx.org/licenses/AGPL-3.0-only"),
     ("AGPL-3.0-or-later", "http://spdx.org/licenses/AGPL-3.0-or-later"),
     ("AGPL-3.0-only", "http://spdx.org/licenses/AGPL-3.0-only"),
     ("AGPL-3.0", "http://spdx.org/licenses/AGPL-3.0-only"),
+    ("http://spdx.org/licenses/GPL-3.0", "http://spdx.org/licenses/GPL-3.0-only"),
+    ("https://spdx.org/licenses/GPL-3.0", "http://spdx.org/licenses/GPL-3.0-only"),
+    ("https://www.gnu.org/licenses/gpl-3.0.html","http://spdx.org/licenses/GPL-3.0-only"),
+    ("http://www.gnu.org/licenses/gpl-3.0.html","http://spdx.org/licenses/GPL-3.0-only"),
     ("GPL-3.0-or-later", "http://spdx.org/licenses/GPL-3.0-or-later"),
     ("GPL-3.0-only", "http://spdx.org/licenses/GPL-3.0-only"),
     ("GPL-3.0", "http://spdx.org/licenses/GPL-3.0-only"),
@@ -140,6 +151,8 @@ LICENSE_MAP = [ #maps some common licenses to SPDX URIs, mapped with a substring
     ("GPLv3", "http://spdx.org/licenses/GPL-3.0-only"),
     ("GPL3+", "http://spdx.org/licenses/GPL-3.0-or-later"),
     ("GPL3", "http://spdx.org/licenses/GPL-3.0-only"),
+    ("https://www.gnu.org/licenses/gpl-2.0.html","http://spdx.org/licenses/GPL-2.0-only"),
+    ("http://www.gnu.org/licenses/gpl-2.0.html","http://spdx.org/licenses/GPL-2.0-only"),
     ("GPL-2.0-or-later", "http://spdx.org/licenses/GPL-2.0-or-later"),
     ("GPL-2.0-only", "http://spdx.org/licenses/GPL-2.0-only"),
     ("GPL-2.0", "http://spdx.org/licenses/GPL-2.0-only"),
@@ -159,6 +172,7 @@ LICENSE_MAP = [ #maps some common licenses to SPDX URIs, mapped with a substring
     ("MIT No Attribution", "http://spdx.org/licenses/MIT-0"),
     ("MIT", "http://spdx.org/licenses/MIT"),
     ("Creative Commons Attribution Share Alike 4.0 International", "http://spdx.org/licenses/CC-BY-SA-4.0"), #not designed for software, not OSI-approved
+    ("https://creativecommons.org/licenses/by-sa/4.0","http://spdx.org/licenses/CC-BY-SA-4.0"),
     ("CC-BY-SA-4.0", "http://spdx.org/licenses/CC-BY-SA-4.0"), #not designed for software, not OSI-approved
 ]
 
@@ -330,7 +344,7 @@ def init_graph(args: AttribDict):
     #add license names from our license map (faster/easier than ingesting the json-ld from https://github.com/spdx/license-list-data/)
     for (label, identifier) in LICENSE_MAP:
         license = URIRef(identifier)
-        if (license, SDO.name, None) not in contextgraph:
+        if (license, SDO.name, None) not in contextgraph and not label.startswith("http"):
             contextgraph.add((license, SDO.name, Literal(label)))
 
     #Add labels for software types that are not in the software types extension but in schema.org itself (without needing to parse everythign in schema.org)
@@ -362,6 +376,9 @@ def license_to_spdx(value: Union[str,list,tuple]) -> Union[str,list]:
     if value.startswith("https://spdx.org"):
         #we consistently opt for http:// in this implementation
         return value.replace("https://","http://")
+    if value.startswith("https://opensource.org/licenses/"):
+        #extract license identifier from base (this is usually SPDX and will resolve in the next step)
+        value = value[len("https://opensource.org/licenses/"):]
     for substr, license_uri in LICENSE_MAP:
         if value.find(substr) != -1:
             return license_uri
