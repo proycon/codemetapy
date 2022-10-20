@@ -27,7 +27,7 @@ from rdflib.namespace import RDF, OWL
 from rdflib.plugins.shared.jsonld.context import Context
 import rdflib.plugins.serializers.jsonld
 
-from codemeta.common import init_graph, CODEMETA, AttribDict, getstream, SDO, reconcile, add_triple, generate_uri, remap_uri, query, enrich, compose, bind_graph
+from codemeta.common import init_graph, CODEMETA, AttribDict, getstream, SDO, reconcile, add_triple, generate_uri, remap_uri, query, enrich, compose, correct, bind_graph
 import codemeta.crosswalk
 import codemeta.parsers.python
 import codemeta.parsers.debian
@@ -256,7 +256,11 @@ def read(**kwargs) -> Tuple[Graph, Union[URIRef,None], AttribDict, Graph]:
                 founduris = [str(s)]
             else:
                 founduris = []
+            #ensure the proper URI is set
             s = reidentify(g, s, identifier, founduris, args)
+            #run some automatic corrections on the graph for this resource
+            correct(g, s, args)
+            reconcile(g, s, args)
 
     if args.select:
         res = URIRef(args.select)

@@ -854,39 +854,49 @@ def compose(g: Graph, newgraph: Graph, res: URIRef, args: AttribDict):
                     g.remove((s,p,o_old))
 
     #some correcting operations on the newgraph
-
-    #when developmentStatus is a repostatus id, convert it to the full URI
-    for _,_,status in newgraph.triples((res, CODEMETA.developmentStatus,None)):
-        status = correct_wrong_uri(g, res, CODEMETA.developmentStatus, status, args.baseuri)
-        if str(status).lower() in REPOSTATUS_MAP.values():
-            print(f"{HEAD} automatically converting status {status} to repostatus URI",file=sys.stderr)
-            newgraph.remove((res, CODEMETA.developmentstatus, status))
-            newgraph.set((res, CODEMETA.developmentStatus, URIRef("https://www.repostatus.org/#" + str(status).lower())))
-
-    #attempt to convert licenses to a full spdx.org URI
-    for _,_,o in newgraph.triples((res, SDO.license,None)):
-        license = correct_wrong_uri(g, res, SDO.license, o, args.baseuri)
-        if license and isinstance(license, Literal) and not str(license).startswith("http"):
-            newgraph.remove((res, SDO.license,license))
-            license = license_to_spdx(license)
-            if str(license).startswith("http"):
-                print(f"{HEAD} automatically converting license to spdx URI",file=sys.stderr)
-                newgraph.add((res, SDO.license, URIRef(str(license))))
-            else:
-                newgraph.add((res, SDO.license, Literal(license)))
-        elif isinstance(license, (Literal,URIRef)) and str(license).startswith("https://spdx.org"):
-            #map to HTTP
-            print(f"{HEAD} automatically converting spdx license URI from https:// to http:///",file=sys.stderr)
-            remap_uri(newgraph, license, URIRef(str(license).replace("https://","http://")))
-
-    #Convert Literal to URIRef for certain properties
-    for prop in PREFER_URIREF_PROPERTIES:
-        for _,_,obj in newgraph.triples((res, prop, None)):
-            correct_wrong_uri(newgraph, res, prop, obj, args.baseuri)
+    correct(newgraph, res, args)
 
     #there must be NO blank nodes anymore at this point!!! They might collide
     g += newgraph
     print(f"{HEAD} processed {len(newgraph)} new triples, total is now {len(g)}",file=sys.stderr)
+
+
+def correct(g:Graph, res: URIRef, args: AttribDict):
+    """Runs several automatic correction operations on the graph"""
+
+    IDENTIFIER = g.value(res, SDO.identifier)
+    if not IDENTIFIER: IDENTIFIER = str(res)
+    HEAD = f"[CODEMETA CORRECTION ({IDENTIFIER})]"
+
+    #when developmentStatus is a repostatus id, convert it to the full URI
+    for _,_,status in g.triples((res, CODEMETA.developmentStatus,None)):
+        status = correct_wrong_uri(g, res, CODEMETA.developmentStatus, status, args.baseuri)
+        if str(status).lower() in REPOSTATUS_MAP.values():
+            print(f"{HEAD} automatically converting status {status} to repostatus URI",file=sys.stderr)
+            g.remove((res, CODEMETA.developmentstatus, status))
+            g.set((res, CODEMETA.developmentStatus, URIRef("https://www.repostatus.org/#" + str(status).lower())))
+
+    #attempt to convert licenses to a full spdx.org URI
+    for _,_,o in g.triples((res, SDO.license,None)):
+        license = correct_wrong_uri(g, res, SDO.license, o, args.baseuri)
+        if license and isinstance(license, Literal) and not str(license).startswith("http"):
+            g.remove((res, SDO.license,license))
+            license = license_to_spdx(license)
+            if str(license).startswith("http"):
+                print(f"{HEAD} automatically converting license to spdx URI",file=sys.stderr)
+                g.add((res, SDO.license, URIRef(str(license))))
+            else:
+                g.add((res, SDO.license, Literal(license)))
+        elif isinstance(license, (Literal,URIRef)) and str(license).startswith("https://spdx.org"):
+            #map to HTTP
+            print(f"{HEAD} automatically converting spdx license URI from https:// to http:///",file=sys.stderr)
+            remap_uri(g, license, URIRef(str(license).replace("https://","http://")))
+
+    #Convert Literal to URIRef for certain properties
+    for prop in PREFER_URIREF_PROPERTIES:
+        for _,_,obj in g.triples((res, prop, None)):
+            correct_wrong_uri(g, res, prop, obj, args.baseuri)
+
 
 def correct_wrong_uri(g:Graph, res: URIRef, prop: URIRef, obj: Union[URIRef,Literal], baseuri: Union[str,None]) -> Union[URIRef,Literal]:
     """Certain Literals should be URIRefs when possible, and some URIRefs are misinterpreted by rdflib and should be Literals"""
