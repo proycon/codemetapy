@@ -751,9 +751,10 @@ def enrich(g: Graph, res: URIRef, args: AttribDict):
             add_to_ordered_list(g, res, SDO.author, o)
 
     if not g.value(res, SDO.maintainer) and (res, SDO.author,None) in g:
-        print(f"{HEAD} considering sole author as maintainer",file=sys.stderr)
+        print(f"{HEAD} considering first author as maintainer",file=sys.stderr)
         for _,_,o in iter_ordered_list(g, res, SDO.author):
             g.add((res, SDO.maintainer, o))
+            break
 
     maintainers = list(g.triples((res, SDO.maintainer,None)))
     if not g.value(res, SDO.producer) and maintainers:
