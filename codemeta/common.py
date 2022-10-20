@@ -690,15 +690,17 @@ def reconcile(g: Graph, res: URIRef, args: AttribDict):
             g.remove((s,p,o))
             g.add((s,CODEMETA.developmentStatus,o))
 
-    if (res, SDO.license, URIRef("http://spdx.org/GPL-3.0-only")) in g and (res, SDO.license, URIRef("http://spdx.org/GPL-2.0-or-later")) in g:
+    if (res, SDO.license, URIRef("http://spdx.org/licenses/GPL-3.0-only")) in g and (res, SDO.license, URIRef("http://spdx.org/licenses/GPL-2.0-or-later")) in g:
+        print(f"{HEAD} license conflict: found GPL-3.0-only and GPL-2.0-or-later, removing the latter",file=sys.stderr)
         g.remove((res, SDO.license, URIRef("http://spdx.org/GPL-2.0-or-later")))
-    if (res, SDO.license, URIRef("http://spdx.org/GPL-3.0-or-later")) in g and (res, SDO.license, URIRef("http://spdx.org/GPL-2.0-or-later")) in g:
-        g.remove((res, SDO.license, URIRef("http://spdx.org/GPL-2.0-or-later"))) #take the more restrictive option
+    if (res, SDO.license, URIRef("http://spdx.org/licenses/GPL-3.0-or-later")) in g and (res, SDO.license, URIRef("http://spdx.org/licenses/GPL-2.0-or-later")) in g:
+        print(f"{HEAD} license conflict: found GPL-3.0-or-later and GPL-2.0-or-later, removing the latter",file=sys.stderr)
+        g.remove((res, SDO.license, URIRef("http://spdx.org/licenses/GPL-2.0-or-later"))) #take the more restrictive option
 
     gpl = False
     nongpl = False
     for license in g.triples((res, SDO.license, None)):
-        if str(license).startswith("http://spdx.org/GPL-") or str(license).startswith("http://spdx.org/AGPL-"):
+        if str(license).startswith("http://spdx.org/licenses/GPL-") or str(license).startswith("http://spdx.org/licenses/AGPL-"):
             gpl = True
         else:
             nongpl = True
