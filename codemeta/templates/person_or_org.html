@@ -29,7 +29,7 @@
                                  <span property="schema:affiliation" class="affiliation">
                                      {% if res3 and g.value(res3, SDO.url) %}
                                      (<a href="{{ g.value(res3, SDO.url) }}">{{ affiliation_label }}</a>)
-                                     {% else %}
+                                     {% elif affiliation_label %}
                                      <em>({{ affiliation_label }})</em>
                                      {% endif %}
                                  </span>
