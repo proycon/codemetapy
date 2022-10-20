@@ -447,7 +447,7 @@ def add_triple(g: Graph, res: Union[URIRef, BNode],key, value, args: AttribDict,
         f_add = g.add
     if key == "developmentStatus":
         f_add = g.add
-        value = value_or_uri(value, args.baseuri)
+        #value = value_or_uri(value, args.baseuri)
         if value.strip().lower() in REPOSTATUS_MAP.values():
             delete_repostatus(g, res)
             f_add((res, CODEMETA.developmentStatus, getattr(REPOSTATUS, value.strip().lower()) ))
@@ -466,10 +466,11 @@ def add_triple(g: Graph, res: Union[URIRef, BNode],key, value, args: AttribDict,
             if value.strip().lower() in TRL_MAP:
                 f_add((res, CODEMETA.developmentStatus, TRL_MAP[value.strip().lower()] ))
     elif key == "license": 
-        if value == "UNKNOWN":
+        if value in ( "UNKNOWN","NOASSERTION"):
             #python distutils has a tendency to assign 'UNKNOWN', we don't use this value
+            #npm uses NOASSERTION?
             return True
-        value = value_or_uri(value, args.baseuri)
+        #value = value_or_uri(value, args.baseuri)
         value = license_to_spdx(value)
         if isinstance(value, str):
             listify = lambda x: [x]
