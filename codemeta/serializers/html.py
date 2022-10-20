@@ -146,6 +146,19 @@ def get_badge(g: Graph, res: Union[URIRef,None], key):
                         yield f"{image_url}", f"{name}", f"{name}"  
      
 
+def has_actionable_targetproducts(g: Graph, res: Union[URIRef,BNode]) -> bool:
+    for _,_,targetres in g.triples((res, SDO.targetProduct,None)):
+        if (targetres, SDO.url,None) in g:
+            return True
+    return False
+
+def has_displayable_targetproducts(g: Graph, res: Union[URIRef,BNode]) -> bool:
+    for _,_,targetres in g.triples((res, SDO.targetProduct,None)):
+        if (targetres, SDO.url,None) in g or (targetres, SDO.name,None) in g or (targetres, SOFTWARETYPES.executableName,None)  in g:
+            return True
+    return False
+        
+
 
 def type_label(g: Graph, res: Union[URIRef,None]):
     label = g.value(res, RDF.type)
@@ -219,7 +232,7 @@ def serialize_to_html( g: Graph, res: Union[Sequence,URIRef,None], args: AttribD
         else:
             index = get_index(g)
     template = env.get_template(template)
-    return template.render(g=g,res=res, SDO=SDO,CODEMETA=CODEMETA, CODEMETAPY=CODEMETAPY, RDF=RDF,RDFS=RDFS,STYPE=SOFTWARETYPES, SOFTWAREIODATA=SOFTWAREIODATA, REPOSTATUS=REPOSTATUS, SKOS=SKOS, TRL=TRL, get_triples=get_triples, get_target_platforms=get_target_platforms, type_label=type_label, css=args.css, contextgraph=contextgraph, URIRef=URIRef, get_badge=get_badge, now=datetime.now().strftime("%Y-%m-%d %H:%M:%S"), index=index, get_interface_types=get_interface_types,baseuri=args.baseuri,baseurl=args.baseurl, toolstore=args.toolstore, intro=args.intro, get_last_component=get_last_component, is_resource=is_resource, int=int, range=range, str=str, Literal=Literal, get_version=get_version, chain=chain,get_doi=get_doi, **kwargs)
+    return template.render(g=g,res=res, SDO=SDO,CODEMETA=CODEMETA, CODEMETAPY=CODEMETAPY, RDF=RDF,RDFS=RDFS,STYPE=SOFTWARETYPES, SOFTWAREIODATA=SOFTWAREIODATA, REPOSTATUS=REPOSTATUS, SKOS=SKOS, TRL=TRL, get_triples=get_triples, get_target_platforms=get_target_platforms, type_label=type_label, css=args.css, contextgraph=contextgraph, URIRef=URIRef, get_badge=get_badge, now=datetime.now().strftime("%Y-%m-%d %H:%M:%S"), index=index, get_interface_types=get_interface_types,baseuri=args.baseuri,baseurl=args.baseurl, toolstore=args.toolstore, intro=args.intro, get_last_component=get_last_component, is_resource=is_resource, int=int, range=range, str=str, Literal=Literal, get_version=get_version, chain=chain,get_doi=get_doi, has_actionable_targetproducts=has_actionable_targetproducts, has_displayable_targetproducts=has_displayable_targetproducts, **kwargs)
 
 
 

@@ -14,29 +14,33 @@
     <div property="schema:description">{{ g.value(sscres, SDO.description) }}</div>
     {% endif %}
 
-    {% if g.value(sscres, SDO.targetProduct) %}
+    {% if not has_actionable_targetproducts(g,res) %}
+        {% if g.value(sscres, SDO.url) %}
+        <div class="go">
+            <i class="fa fa-home"></i>
+            <a rel="schema:url" href="{{ g.value(sscres, SDO.url) }}">
+                <strong>Go to the software website</strong>
+                <tt>{{ g.value(sscres, SDO.url) }}</tt>
+            </a>
+        </div>
+        {% elif g.value(sscres, SDO.codeRepository) %}
+        <div class="go">
+            <i class="fa fa-code-branch"></i>
+            <a rel="schema:url" href="{{ g.value(sscres, SDO.codeRepository) }}">
+                <strong>Go to the source repository</strong>
+                <tt>{{ g.value(sscres, SDO.codeRepository) }}</tt>
+            </a>
+        </div>
+        {% endif %}
+    {% endif %}
+
+    {% if has_displayable_targetproducts(g, res) %}
     <h3>Provided tools &amp; services</h3>
 
     <div class="targetindex">
         {% for _, targetres in get_triples(g, sscres, SDO.targetProduct, abcsort=True) %}
         {% include 'targetproduct.html' %}
         {% endfor %}
-    </div>
-    {% elif g.value(sscres, SDO.url) %}
-    <div class="go">
-        <i class="fa fa-home"></i>
-        <a rel="schema:url" href="{{ g.value(sscres, SDO.url) }}">
-            <strong>Go to the software website</strong>
-            <tt>{{ g.value(sscres, SDO.url) }}</tt>
-        </a>
-    </div>
-    {% elif g.value(sscres, SDO.codeRepository) %}
-    <div class="go">
-        <i class="fa fa-code-branch"></i>
-        <a rel="schema:url" href="{{ g.value(sscres, SDO.codeRepository) }}">
-            <strong>Go to the source repository</strong>
-            <tt>{{ g.value(sscres, SDO.codeRepository) }}</tt>
-        </a>
     </div>
     {% endif %}
 
