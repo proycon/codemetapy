@@ -31,7 +31,7 @@ TRL = Namespace("https://w3id.org/research-technology-readiness-levels#")
 
 REPOSTATUS = Namespace("https://www.repostatus.org/#")
 
-SPDX = Namespace("http://spdx.org/licences/")
+SPDX = Namespace("http://spdx.org/licenses/")
 
 ORCID = Namespace("http://orcid.org/")
 
