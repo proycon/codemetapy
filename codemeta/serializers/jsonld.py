@@ -268,15 +268,16 @@ def serialize_to_jsonld(g: Graph, res: Union[Sequence,URIRef,None], args: Attrib
         data = sort_by_position(data)
     else:
         #we have a graph of multiple resources, structure is mostly stand-off: we do object framing on each SoftwareSourceCode instance (this does lead to some redundancy)
-        new_graph = []
         if args.includecontext:
             data = expand_implicit_id_nodes(data, PREFER_URIREF_PROPERTIES_SIMPLE)
-        for item in data['@graph']:
-            if isinstance(item, dict) and item.get('@type', item.get('type',None)) == 'SoftwareSourceCode':
-                item_id = item.get('@id', item.get('id', None))
-                if item_id:
-                    new_graph.append(do_object_framing(data, item_id, preserve_context=False))
-        data['@graph'] = new_graph
+        if '@graph' in data:
+            new_graph = []
+            for item in data['@graph']:
+                if isinstance(item, dict) and item.get('@type', item.get('type',None)) == 'SoftwareSourceCode':
+                    item_id = item.get('@id', item.get('id', None))
+                    if item_id:
+                        new_graph.append(do_object_framing(data, item_id, preserve_context=False))
+            data['@graph'] = new_graph
         data = hide_ordered_lists(data)
         data = sort_by_position(data)
 
