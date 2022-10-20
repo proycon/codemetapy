@@ -4,7 +4,7 @@ import os.path
 from typing import Union, IO, Sequence, Optional
 from rdflib import Graph, URIRef, BNode, Literal
 from copy import copy
-from codemeta.common import AttribDict, license_to_spdx, SDO, CODEMETA_SOURCE, CODEMETA_LOCAL_SOURCE, SCHEMA_SOURCE, SCHEMA_LOCAL_SOURCE, STYPE_SOURCE, STYPE_LOCAL_SOURCE, IODATA_SOURCE, IODATA_LOCAL_SOURCE, init_context, REPOSTATUS_LOCAL_SOURCE, REPOSTATUS_SOURCE, get_subgraph, PREFER_URIREF_PROPERTIES_SIMPLE, TMPDIR, DEVIANT_CONTEXT, ORDEREDLIST_PROPERTIES
+from codemeta.common import AttribDict, license_to_spdx, SDO, CODEMETA_SOURCE, CODEMETA_LOCAL_SOURCE, SCHEMA_SOURCE, SCHEMA_LOCAL_SOURCE, STYPE_SOURCE, STYPE_LOCAL_SOURCE, IODATA_SOURCE, IODATA_LOCAL_SOURCE, init_context, REPOSTATUS_LOCAL_SOURCE, REPOSTATUS_SOURCE, get_subgraph, PREFER_URIREF_PROPERTIES, TMPDIR, DEVIANT_CONTEXT, ORDEREDLIST_PROPERTIES
 
 ORDEREDLIST_PROPERTIES_NAMES = list(os.path.basename(x) for x in ORDEREDLIST_PROPERTIES)
 
@@ -252,7 +252,7 @@ def serialize_to_jsonld(g: Graph, res: Union[Sequence,URIRef,None], args: Attrib
     if res and (not isinstance(res, (list,tuple)) or len(res) == 1):
         assert isinstance(res, URIRef)
         if args.includecontext:
-            data = expand_implicit_id_nodes(data, PREFER_URIREF_PROPERTIES_SIMPLE)
+            data = expand_implicit_id_nodes(data, [ str(x).split("/")[-1] for x in PREFER_URIREF_PROPERTIES] )
         data = do_object_framing(data, str(res))
         # Hide explicit @list nodes, on read-in they will be assumed agained via the (manipulated) context
         data = hide_ordered_lists(data)
@@ -269,7 +269,7 @@ def serialize_to_jsonld(g: Graph, res: Union[Sequence,URIRef,None], args: Attrib
     else:
         #we have a graph of multiple resources, structure is mostly stand-off: we do object framing on each SoftwareSourceCode instance (this does lead to some redundancy)
         if args.includecontext:
-            data = expand_implicit_id_nodes(data, PREFER_URIREF_PROPERTIES_SIMPLE)
+            data = expand_implicit_id_nodes(data, [ str(x).split("/")[-1] for x in PREFER_URIREF_PROPERTIES])
         if '@graph' in data:
             new_graph = []
             for item in data['@graph']:

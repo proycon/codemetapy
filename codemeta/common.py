@@ -269,9 +269,10 @@ SINGULAR_PROPERTIES = ( SDO.name, SDO.version, SDO.description, SDO.dateCreated,
 #these will be treated as ordered lists
 ORDEREDLIST_PROPERTIES = ( SDO.author, SDO.contributor )
 
-#properties that should prefer URIRef rather than Literal **if and only if** the value is a URI
-PREFER_URIREF_PROPERTIES = (SDO.url, SDO.license, SDO.codeRepository, CODEMETA.developmentStatus, CODEMETA.issueTracker, CODEMETA.contIntegration, CODEMETA.readme, CODEMETA.releaseNotes, SDO.softwareHelp)
-PREFER_URIREF_PROPERTIES_SIMPLE = ('url','license', 'issueTracker', 'contIntegration', 'readme', 'releaseNotes', 'softwareHelp', 'developmentStatus', 'applicationCategory')
+#properties that should prefer URIRef rather than Literal **if and only if** the value is a URI, even though the @context might not make this explicit (e.g. interpret as if @type=@id)
+PREFER_URIREF_PROPERTIES = (SDO.license,  CODEMETA.developmentStatus )
+
+
 
 class AttribDict(dict):
     """Simple dictionary that is addressable via attributes"""
@@ -420,18 +421,6 @@ def getregistry(identifier, registry):
     raise KeyError(identifier)
 
 
-def value_or_uri(value: str, baseuri: Optional[str]) -> str:
-    #some values formally take a URI but may also be given a literal string,
-    #if we interpreted the URI locally then this is an indication we
-    #want a literatal string instead. Allows for values like developmentStatus: "active"
-    if baseuri and value.startswith(baseuri):
-        #misinterpreted as a local URI
-        return value.split("/")[-1]
-    elif value.startswith("/"):
-        #misinterpreted as a relative URI
-        return value.split("/")[-1]
-    return value
-
 def delete_repostatus(g: Graph, res: Union[URIRef, BNode]):
     """Delete any existing developmentStatus repostatus triples before adding a new one (there may be only one)"""
     for _,_,o in g.triples((res, CODEMETA.developmentStatus, None)):
@@ -447,7 +436,6 @@ def add_triple(g: Graph, res: Union[URIRef, BNode],key, value, args: AttribDict,
         f_add = g.add
     if key == "developmentStatus":
         f_add = g.add
-        #value = value_or_uri(value, args.baseuri)
         if value.strip().lower() in REPOSTATUS_MAP.values():
             delete_repostatus(g, res)
             f_add((res, CODEMETA.developmentStatus, getattr(REPOSTATUS, value.strip().lower()) ))
@@ -470,7 +458,6 @@ def add_triple(g: Graph, res: Union[URIRef, BNode],key, value, args: AttribDict,
             #python distutils has a tendency to assign 'UNKNOWN', we don't use this value
             #npm uses NOASSERTION?
             return True
-        #value = value_or_uri(value, args.baseuri)
         value = license_to_spdx(value)
         if isinstance(value, str):
             listify = lambda x: [x]
@@ -892,15 +879,13 @@ def correct(g:Graph, res: URIRef, args: AttribDict):
 
     #when developmentStatus is a repostatus id, convert it to the full URI
     for _,_,status in g.triples((res, CODEMETA.developmentStatus,None)):
-        status = correct_wrong_uri(g, res, CODEMETA.developmentStatus, status, args.baseuri)
         if str(status).lower() in REPOSTATUS_MAP.values():
             print(f"{HEAD} automatically converting status {status} to repostatus URI",file=sys.stderr)
             g.remove((res, CODEMETA.developmentstatus, status))
             g.set((res, CODEMETA.developmentStatus, URIRef("https://www.repostatus.org/#" + str(status).lower())))
 
     #attempt to convert licenses to a full spdx.org URI
-    for _,_,o in g.triples((res, SDO.license,None)):
-        license = correct_wrong_uri(g, res, SDO.license, o, args.baseuri)
+    for _,_,license in g.triples((res, SDO.license,None)):
         if license and isinstance(license, Literal) and not str(license).startswith("http"):
             g.remove((res, SDO.license,license))
             license = license_to_spdx(license)
@@ -913,30 +898,6 @@ def correct(g:Graph, res: URIRef, args: AttribDict):
             #map to HTTP
             print(f"{HEAD} automatically converting spdx license URI from https:// to http:///",file=sys.stderr)
             remap_uri(g, license, URIRef(str(license).replace("https://","http://")))
-
-    #Convert Literal to URIRef for certain properties
-    for prop in PREFER_URIREF_PROPERTIES:
-        for _,_,obj in g.triples((res, prop, None)):
-            correct_wrong_uri(g, res, prop, obj, args.baseuri)
-
-
-def correct_wrong_uri(g:Graph, res: URIRef, prop: URIRef, obj: Union[URIRef,Literal], baseuri: Union[str,None]) -> Union[URIRef,Literal]:
-    """Certain Literals should be URIRefs when possible, and some URIRefs are misinterpreted by rdflib and should be Literals"""
-    new_obj = obj
-    if isinstance(obj, URIRef) and prop in (SDO.license, CODEMETA.developmentStatus):
-        if baseuri and str(obj).startswith(baseuri): #got misassigned to baseuri (rdflib might do this if it expects a @type=@id)
-            new_obj =  Literal(str(obj)[len(baseuri):])
-        if str(obj).startswith("file://"): #got misassigned to file:// (rdflib might do this if it expects a @type=@id)
-            new_obj =  Literal(str(obj)[len("file://"):])
-    if prop in PREFER_URIREF_PROPERTIES:
-        if isinstance(obj, Literal) and str(obj).startswith("http"):
-            new_obj =  URIRef(str(obj))
-        elif isinstance(obj, Literal) and str(obj).startswith("//"): #if absolute url is missing a schema, assume HTTPS
-            new_obj =  URIRef("https:" + str(obj))
-    if new_obj != obj:
-        g.remove((res,prop,obj))
-        g.add((res,prop,new_obj))
-    return new_obj
 
 def get_doi(g: Graph, res: Union[URIRef,BNode]) -> Optional[str]:
     """Get the DOI for a resource, looks in various places"""

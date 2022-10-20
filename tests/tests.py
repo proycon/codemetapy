@@ -36,9 +36,9 @@ class BuildTest_Json(unittest.TestCase):
 
     def test003_urlref(self):
         """Testing some common URL References"""
-        self.assertIn( (self.res, SDO.codeRepository, URIRef("https://github.com/LanguageMachines/frog")), self.g)
+        self.assertEqual( str(self.g.value(self.res, SDO.codeRepository)),"https://github.com/LanguageMachines/frog")
         self.assertIn( (self.res, SDO.license, URIRef("http://spdx.org/licenses/GPL-3.0-only")), self.g)
-        self.assertIn( (self.res, SDO.url, URIRef("https://languagemachines.github.io/frog")), self.g)
+        self.assertEqual( str(self.g.value(self.res, SDO.url)), "https://languagemachines.github.io/frog")
 
     def test004_codemeta_urlref(self):
         """Testing some codemeta URL References"""
@@ -194,9 +194,9 @@ class BuildTest_SetupPy(unittest.TestCase):
 
     def test003_urlref(self):
         """Testing some common URL References"""
-        self.assertIn( (self.res, SDO.codeRepository, URIRef("https://github.com/among/fusus")), self.g)
+        self.assertEqual( str(self.g.value(self.res, SDO.codeRepository)), "https://github.com/among/fusus")
         self.assertIn( (self.res, SDO.license, URIRef("http://spdx.org/licenses/MIT")), self.g)
-        self.assertIn( (self.res, SDO.url, URIRef("https://github.com/among/fusus")), self.g)
+        self.assertEqual( str(self.g.value(self.res, SDO.url)), "https://github.com/among/fusus")
 
     def test004_codemeta_urlref(self):
         """Testing some codemeta URL References"""
@@ -244,8 +244,8 @@ class BuildTest_GithubAPI(unittest.TestCase):
         self.assertIsInstance( self.res, URIRef)
         self.assertIn( (self.res, RDF.type, SDO.SoftwareSourceCode), self.g)
         self.assertIn( (self.res, SDO.name, Literal("labirinto")), self.g)
-        self.assertIn( (self.res, SDO.codeRepository, URIRef("https://github.com/proycon/labirinto")), self.g)
-        self.assertIn( (self.res, CODEMETA.issueTracker, URIRef("https://github.com/proycon/labirinto/issues")), self.g)
+        self.assertIn( str(self.g.value(self.res, SDO.codeRepository)), "https://github.com/proycon/labirinto")
+        self.assertIn( str(self.g.value(self.res, CODEMETA.issueTracker)), "https://github.com/proycon/labirinto/issues")
         self.assertIn( (self.res, SDO.description, None), self.g) #doesn't test actual value
         self.assertIn( (self.res, SDO.keywords, Literal("codemeta")), self.g)
 
@@ -302,10 +302,10 @@ class BuildTest_NpmPackageJSON(unittest.TestCase):
 
     def test003_urlref(self):
         """Testing some common URL References"""
-        self.assertIn( (self.res, SDO.codeRepository, URIRef("https://github.com/proycon/labirinto")), self.g)
+        self.assertEqual( str(self.g.value(self.res, SDO.codeRepository)) , "https://github.com/proycon/labirinto")
         self.assertIn( (self.res, SDO.license, URIRef("http://spdx.org/licenses/AGPL-3.0-or-later")), self.g)
-        self.assertIn( (self.res, SDO.url, URIRef("https://github.com/proycon/labirinto")), self.g)
-        self.assertIn( (self.res, CODEMETA.issueTracker, URIRef("https://github.com/proycon/labirinto/issues")), self.g)
+        self.assertEqual( str(self.g.value(self.res, SDO.url)),  "https://github.com/proycon/labirinto")
+        self.assertEqual( str(self.g.value(self.res, CODEMETA.issueTracker)),  "https://github.com/proycon/labirinto/issues")
 
     def test100_serialisation_json(self):
         """Test json serialisation"""
@@ -381,10 +381,10 @@ class BuildTest_Compose(unittest.TestCase):
 
     def test003_urlref(self):
         """Testing some common URL References"""
-        self.assertIn( (self.res, SDO.codeRepository, URIRef("https://github.com/proycon/labirinto")), self.g)
+        self.assertEqual( str(self.g.value(self.res, SDO.codeRepository)) , "https://github.com/proycon/labirinto")
         self.assertIn( (self.res, SDO.license, URIRef("http://spdx.org/licenses/AGPL-3.0-or-later")), self.g)
-        self.assertIn( (self.res, SDO.url, URIRef("https://github.com/proycon/labirinto")), self.g)
-        self.assertIn( (self.res, CODEMETA.issueTracker, URIRef("https://github.com/proycon/labirinto/issues")), self.g)
+        self.assertEqual( str(self.g.value(self.res, SDO.url)),  "https://github.com/proycon/labirinto")
+        self.assertEqual( str(self.g.value(self.res, CODEMETA.issueTracker)),  "https://github.com/proycon/labirinto/issues")
 
     def test004_combined(self):
         """Testing properties that come from the second resource"""

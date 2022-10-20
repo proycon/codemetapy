@@ -1,8 +1,9 @@
 import sys
 import json
+import os
 from rdflib import Graph, URIRef, BNode, Literal
 from typing import Union, IO, Optional
-from codemeta.common import PREFER_URIREF_PROPERTIES_SIMPLE, AttribDict, REPOSTATUS, license_to_spdx, SDO, SCHEMA_SOURCE, CODEMETA_SOURCE, SCHEMA_LOCAL_SOURCE, SCHEMA_SOURCE, CODEMETA_LOCAL_SOURCE, CODEMETA_SOURCE, STYPE_SOURCE, STYPE_LOCAL_SOURCE, IODATA_SOURCE, IODATA_LOCAL_SOURCE, init_context, SINGULAR_PROPERTIES, generate_uri, bind_graph, DEVIANT_CONTEXT
+from codemeta.common import  PREFER_URIREF_PROPERTIES, AttribDict, REPOSTATUS, license_to_spdx, SDO, CODEMETA, SCHEMA_SOURCE, CODEMETA_SOURCE, SCHEMA_LOCAL_SOURCE, SCHEMA_SOURCE, CODEMETA_LOCAL_SOURCE, CODEMETA_SOURCE, STYPE_SOURCE, STYPE_LOCAL_SOURCE, IODATA_SOURCE, IODATA_LOCAL_SOURCE, init_context, SINGULAR_PROPERTIES, generate_uri, bind_graph, DEVIANT_CONTEXT
 
 
 def rewrite_context(context: Union[list,str], args: AttribDict) -> list:
@@ -41,18 +42,6 @@ def rewrite_context(context: Union[list,str], args: AttribDict) -> list:
         if {key:value} not in context:
             context.append({key:value})
     return context
-
-def rewrite_schemeless_uri(data: dict) -> dict:
-    for key, value in data.items():
-        if key in PREFER_URIREF_PROPERTIES_SIMPLE:
-            if isinstance(value, dict):
-                data[key] = rewrite_schemeless_uri(value)
-            elif isinstance(value, list):
-                data[key] = [ "https:" + x if isinstance(x,str) and x.startswith("//") else x for x in value ]
-            elif isinstance(value, str) and value.startswith("//"):
-                data[key] = "https:" + data[key]
-    return data
-
 
 def parse_jsonld(g: Graph, res: Union[BNode, URIRef,None], file_descriptor: IO, args: AttribDict) -> Union[str,None]:
     data = json.load(file_descriptor)
@@ -108,6 +97,33 @@ def skolemize(g: Graph, baseuri: Optional[str] = None):
             o = o.skolemize(authority=authority, basepath=basepath)
             g.add((s,p,o))
 
+def correct_wrong_uris(g:Graph, baseuri: Optional[str]):
+    """Certain Literals should be URIRefs when possible, and some URIRefs are misinterpreted by rdflib and should be Literals."""
+    for s,p,o in g:
+        new_obj = o
+        if str(o).startswith("//"):
+            #we interpret this as a schemeless URL and will blatantly assume HTTPS (which is the most common source when fetching info, but this may be wrong)
+            if isinstance(o, Literal):
+                new_obj = Literal("https:" + o)
+            elif isinstance(o, URIRef):
+                new_obj = URIRef("https:" + o)
+        if p in PREFER_URIREF_PROPERTIES:
+            #turn Literals into URIRef for properties that prefer a URIRef
+            if isinstance(o, Literal) and str(o).startswith("http"):
+                new_obj =  URIRef(str(o))
+
+            #these often get misinterpreted if they're not URIs, because rdflib prepends its baseuri
+            cwd = os.getcwd()
+            prefixes = [baseuri, cwd + "/", "file://" +cwd + "/", cwd, "file://" +cwd, "file://"]
+            for prefix in prefixes:
+                if prefix and str(o).startswith(prefix):
+                    new_obj =  Literal(str(o)[len(prefix):])
+                    break
+        #commit the change
+        if new_obj != o:
+            g.remove((s,p,o))
+            g.add((s,p,new_obj))
+
 
 def parse_jsonld_data(g: Graph, res: Union[BNode, URIRef,None], data: dict, args: AttribDict, baseuri: Optional[str] = None) -> Union[str,None]:
     #preprocess json
@@ -130,5 +146,6 @@ def parse_jsonld_data(g: Graph, res: Union[BNode, URIRef,None], data: dict, args
 
     #parse as RDF, add to main graph, and skolemize (turn blank nodes into URIs)
     skolemize(g.parse(data=reserialised_data, format="json-ld", publicID=baseuri if baseuri else args.baseuri), args.baseuri)
+    correct_wrong_uris(g, args.baseuri)
 
     return founduri #return found uri (if any)
