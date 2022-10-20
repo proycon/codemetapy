@@ -918,7 +918,7 @@ def correct(g:Graph, res: URIRef, args: AttribDict):
 def correct_wrong_uri(g:Graph, res: URIRef, prop: URIRef, obj: Union[URIRef,Literal], baseuri: Union[str,None]) -> Union[URIRef,Literal]:
     """Certain Literals should be URIRefs when possible, and some URIRefs are misinterpreted by rdflib and should be Literals"""
     new_obj = obj
-    if isinstance(obj, URIRef) and prop in (SDO.license, SDO.developmentStatus):
+    if isinstance(obj, URIRef) and prop in (SDO.license, CODEMETA.developmentStatus):
         if baseuri and str(obj).startswith(baseuri): #got misassigned to baseuri (rdflib might do this if it expects a @type=@id)
             new_obj =  Literal(str(obj)[len(baseuri):])
         if str(obj).startswith("file://"): #got misassigned to file:// (rdflib might do this if it expects a @type=@id)
