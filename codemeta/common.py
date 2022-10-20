@@ -728,8 +728,9 @@ def enrich(g: Graph, res: URIRef, args: AttribDict):
                     g.add((res, SDO.programmingLanguage, Literal(lang)))
     elif not g.value(res, SDO.runtimePlatform):
         for _,_,o in g.triples((res, SDO.programmingLanguage,None)):
-            for lang in ("Python","Perl","Ruby","Julia","PHP","Java","Kotlin","Groovy","Erlang","Elixir"):
-                if str(o).lower().startswith(lang.lower()):
+            #                                                      v--- space is needed to prevent mismatches with Javascript
+            for lang in ("Python","Perl","Ruby","Julia","PHP","Java ","Kotlin","Groovy","Erlang","Elixir"):
+                if str(o).lower() == lang.lower().strip() or str(o).lower().startswith(lang.lower()):
                     if lang in ("Kotlin","Groovy"):
                         platform = "Java"
                     elif lang in "Elixir":
