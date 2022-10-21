@@ -153,27 +153,31 @@ def embed_items(data, itemmap: dict, history: set):
     """Replace all references with items, auxiliary function for object framing. The history prevents circular references."""
     if isinstance(data, list): 
         for i, item in enumerate(data):
-            data[i], new_history = embed_items(item, itemmap, copy(history)) #recursion step
-            history |= new_history
+            #print(f"DEBUG processing list, #history: {len(history)}", file=sys.stderr)
+            data[i] = embed_items(item, itemmap, copy(history)) #recursion step
     elif isinstance(data, dict): 
         for idkey in ('@id', 'id'):
             if idkey in data and data[idkey] in itemmap and data[idkey] not in history:
                 #print(f"DEBUG embedded {data[idkey]} (explicit)", file=sys.stderr)
                 history.add(data[idkey])
+                #print(f"DEBUG (recursing over embedded content)", file=sys.stderr)
                 return embed_items(itemmap[data[idkey]], itemmap, copy(history))
-            elif idkey in data and data[idkey] not in itemmap:
-                #print(f"DEBUG could not embed {data[idkey]}, not in graph", file=sys.stderr)
-                pass
+            #elif idkey in data and data[idkey] not in itemmap:
+            #    print(f"DEBUG could not embed {data[idkey]}, not in graph", file=sys.stderr)
+            #    pass
+            #elif idkey in data and data[idkey] and data[idkey] in history:
+            #    print(f"DEBUG could not embed {data[idkey]}, already in history", file=sys.stderr)
+            #    pass
         for k, v in data.items():
-            data[k], new_history = embed_items(v, itemmap, copy(history)) #recursion step
-            history |= new_history
+            if k not in ('@id','id'):
+                print(f"DEBUG processing key {k}, #history: {len(history)}", file=sys.stderr)
+                data[k] = embed_items(v, itemmap, copy(history)) #recursion step
     elif isinstance(data, str) and data.startswith(("http","file://","/","_")) and data in itemmap and data not in history: #this is probably a reference even though it's not explicit
         #data is an URI reference we can resolve
         history.add(data)
-        #print(f"DEBUG embedded {data} (implicit)", file=sys.stderr)
-        data, new_history = embed_items(itemmap[data], itemmap, copy(history))
-        history |= new_history
-    return data, history
+        #print(f"DEBUG embedded {data} (implicit), recursing over embedded content", file=sys.stderr)
+        data = embed_items(itemmap[data], itemmap, copy(history))
+    return data
 
 
 def hide_ordered_lists(data: Union[dict,list,tuple,str], key: Optional[str] = None) -> Union[dict,list,str]:
