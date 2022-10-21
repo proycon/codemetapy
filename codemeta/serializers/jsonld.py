@@ -8,25 +8,6 @@ from codemeta.common import AttribDict, license_to_spdx, SDO, CODEMETA_SOURCE, C
 
 ORDEREDLIST_PROPERTIES_NAMES = list(os.path.basename(x) for x in ORDEREDLIST_PROPERTIES)
 
-def flatten_singletons(data): #TODO: no longer used, remove
-    """Recursively flattens singleton ``key: { "@id": uri }`` instances to ``key: uri``"""
-    if isinstance(data, dict):
-        for key, value in data.items():
-            if isinstance(value, dict):
-                if '@id' in value and len(value) == 1:
-                    data[key] = value['@id']
-                elif 'id' in value and len(value) == 1:
-                    data[key] = value['id']
-                else:
-                    data[key] = flatten_singletons(data[key])
-            else:
-                data[key] = flatten_singletons(data[key])
-        return data
-    elif isinstance(data, (list,tuple)):
-        return [ x['@id'] if isinstance(x, dict) and '@id' in x and len(x) == 1 else flatten_singletons(x) for x in data ]
-    else:
-        return data
-
 def remove_blank_ids(data):
     """Recursively remove all blank node IDs"""
     if isinstance(data, dict):
