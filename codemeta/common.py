@@ -695,17 +695,18 @@ def reconcile(g: Graph, res: URIRef, args: AttribDict):
     if gpl and nongpl:
         print(f"{HEAD} license conflict, you can't use GPL alongside other licenses!",file=sys.stderr)
 
-    if (res, SDO.targetProduct, None) not in g:
-        #we have no target products, that means we have no associated interface types,
-        #see if we can extract some clues from the keywords or the description
-        #and add a targetproduct (with only a type)
-        guess_interfacetype(g,res, args)
 
 def enrich(g: Graph, res: URIRef, args: AttribDict):
     """Do some automatic inference and enrichment of the graph"""
     IDENTIFIER = g.value(res, SDO.identifier)
     if not IDENTIFIER: IDENTIFIER = str(res)
     HEAD = f"[CODEMETA ENRICHMENT ({IDENTIFIER})]"
+
+    if (res, SDO.targetProduct, None) not in g:
+        #we have no target products, that means we have no associated interface types,
+        #see if we can extract some clues from the keywords or the description
+        #and add a targetproduct (with only a type)
+        guess_interfacetype(g,res, args)
 
     if not g.value(res, SDO.programmingLanguage):
         for _,_,o in g.triples((res, SDO.runtimePlatform,None)):
@@ -771,7 +772,7 @@ def enrich(g: Graph, res: URIRef, args: AttribDict):
 def guess_interfacetype(g: Graph, res: Union[URIRef,BNode], args: AttribDict) -> Union[URIRef,None]:
     IDENTIFIER = g.value(res, SDO.identifier)
     if not IDENTIFIER: IDENTIFIER = str(res)
-    HEAD = f"[CODEMETA VALIDATION ({IDENTIFIER})]"
+    HEAD = f"[CODEMETA ENRICHMENT ({IDENTIFIER})]"
 
     counter = Counter() #we count clues for all kinds of types we can find and pick the highest one
     keywords = [ o.lower() for _,_,o in g.triples((res, SDO.keywords, None)) ]
