@@ -886,7 +886,9 @@ def correct(g:Graph, res: URIRef, args: AttribDict):
 
     #attempt to convert licenses to a full spdx.org URI
     for _,_,license in g.triples((res, SDO.license,None)):
-        if license and isinstance(license, Literal) and not str(license).startswith("http"):
+        if str(license).upper() in ("UNKNOWN", "NOASSERTION","NONE"):
+            g.remove((res, SDO.license, Literal(license)))
+        elif license and isinstance(license, Literal) and not str(license).startswith("http"):
             g.remove((res, SDO.license,license))
             license = license_to_spdx(license)
             if str(license).startswith("http"):
