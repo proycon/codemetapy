@@ -170,7 +170,7 @@ def embed_items(data, itemmap: dict, history: set):
             #    pass
         for k, v in data.items():
             if k not in ('@id','id'):
-                print(f"DEBUG processing key {k}, #history: {len(history)}", file=sys.stderr)
+                #print(f"DEBUG processing key {k}, #history: {len(history)}", file=sys.stderr)
                 data[k] = embed_items(v, itemmap, copy(history)) #recursion step
     elif isinstance(data, str) and data.startswith(("http","file://","/","_")) and data in itemmap and data not in history: #this is probably a reference even though it's not explicit
         #data is an URI reference we can resolve
