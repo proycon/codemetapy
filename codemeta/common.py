@@ -140,8 +140,6 @@ LICENSE_MAP = [ #maps some common licenses to SPDX URIs, mapped with a substring
     ("AGPL-3.0-or-later", "http://spdx.org/licenses/AGPL-3.0-or-later"),
     ("AGPL-3.0-only", "http://spdx.org/licenses/AGPL-3.0-only"),
     ("AGPL-3.0", "http://spdx.org/licenses/AGPL-3.0-only"),
-    ("http://spdx.org/licenses/GPL-3.0", "http://spdx.org/licenses/GPL-3.0-only"),
-    ("https://spdx.org/licenses/GPL-3.0", "http://spdx.org/licenses/GPL-3.0-only"),
     ("https://www.gnu.org/licenses/gpl-3.0.html","http://spdx.org/licenses/GPL-3.0-only"),
     ("http://www.gnu.org/licenses/gpl-3.0.html","http://spdx.org/licenses/GPL-3.0-only"),
     ("GPL-3.0-or-later", "http://spdx.org/licenses/GPL-3.0-or-later"),
@@ -371,15 +369,24 @@ def license_to_spdx(value: Union[str,list,tuple]) -> Union[str,list]:
     """Attempts to converts a license name or acronym to a full SPDX URI (https://spdx.org/licenses/)"""
     if isinstance(value, (list,tuple)):
         return [ license_to_spdx(x) for x in value ]
+    if value in ("http://spdx.org/licenses/GPL-3.0", "https://spdx.org/licenses/GPL-3.0"):
+        #short form is too inprecise and deprecated, resolve to most restrictive form:
+        return "http://spdx.org/licenses/GPL-3.0-only"
+    if value in ("http://spdx.org/licenses/GPL-2.0"):
+        #short form is too inprecise and deprecated, resolve to most restrictive form:
+        return "http://spdx.org/licenses/GPL-2.0-only"
     if value.startswith("http://spdx.org"):
         #we're already good, nothing to do
         return value
     if value.startswith("https://spdx.org"):
         #we consistently opt for http:// in this implementation
         return value.replace("https://","http://")
-    if value.startswith("https://opensource.org/licenses/"):
+    if value.startswith("https://opensource.org/licenses/"): #OSI
         #extract license identifier from base (this is usually SPDX and will resolve in the next step)
         value = value[len("https://opensource.org/licenses/"):]
+        if value in ("GPL-3.0","GPL-2.0","AGPL-3.0","LGPL-2.1"):
+            #short form is too inprecise and deprecated, resolve to most restrictive form:
+            value += "-only"
     for substr, license_uri in LICENSE_MAP:
         if value.find(substr) != -1:
             return license_uri
