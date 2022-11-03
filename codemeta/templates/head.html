@@ -6,6 +6,8 @@
             {{ g.value(res, SKOS.prefLabel) }}
         {% elif res and (res, RDFS.label, None) in g %}
             {{ g.value(res, RDFS.label) }}
+        {% elif title %}
+            {{ title }}
         {% elif toolstore %}
             Tool Index
         {% endif %}
@@ -15,7 +17,33 @@
         <link href="{{ css_url }}" rel="stylesheet" />
         {% endfor %}
         {% endif %}
+        {% if res %}
         {% if baseuri and toolstore %}
         <link rel="alternate" type="application/json+ld" href="{{ res }}.json" />
         <link rel="alternate" type="text/turtle" href="{{ res }}.ttl" />
         {% endif %}
+        <meta property="og:type" content="website" />
+        {% if (res, SDO.name, None) in g %}
+        <meta property="og:title" content="{{ g.value(res, SDO.name) }}" />
+        <meta property="schema:name" content="{{ g.value(res, SDO.name) }}" />
+        {% elif (res, SKOS.prefLabel, None) in g %}
+        <meta property="og:title" content="{{ g.value(res, SKOS.prefLabel) }}" />
+        {% elif (res, RDFS.label, None) in g %}
+        <meta property="og:title" content="{{ g.value(res,RDFS.label) }}" />
+        {% endif %}
+        {% if (res, SDO.description, None) in g %}
+        <meta name="description" content="{{ g.value(res, SDO.description) }}" />
+        <meta property="og:description" content="{{ g.value(res, SDO.description) }}" />
+        <meta property="schema:description" content="{{ g.value(res, SDO.description) }}" />
+        {% endif %}
+        {% if (res, SDO.author, None) in g %}
+        <meta name="author" content="{% for label, pores in get_triples(g, res, SDO.author, max=1) %}{{ label }}{% endfor %}" />
+        {% endif %}
+        {% if g.value(res, SDO.thumbnailUrl) %}
+        <meta property="og:image" content="{{ g.value(res, SDO.thumbnailUrl) }}"  />
+        {% endif %}
+        {% if (res, SDO.keywords, None) in g %}
+        <meta name="keywords" content="{% for label, _ in get_triples(g, res, SDO.keywords, abcsort=True) %}{{label}},{% endfor %}" />
+        {% endif %}
+        {% endif %}
+        <meta name="generator" content="codemetapy {{ get_version("codemetapy") }}" />

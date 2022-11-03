@@ -15,7 +15,7 @@ from codemeta import __path__ as rootpath
 import codemeta.parsers.gitapi
 from jinja2 import Environment, FileSystemLoader
 
-def get_triples(g: Graph, res: Union[URIRef,BNode,None], prop, labelprop=(SDO.name,SDO.legalName, RDFS.label, SKOS.prefLabel), abcsort=False, contextgraph: Optional[Graph] = None):
+def get_triples(g: Graph, res: Union[URIRef,BNode,None], prop, labelprop=(SDO.name,SDO.legalName, RDFS.label, SKOS.prefLabel), abcsort=False, contextgraph: Optional[Graph] = None, max=0):
     """Get all triples for a particular resource and properties, also returns labels which are looked for in the contextgraph when needed, and handles sorting"""
     results = []
     havepos = False
@@ -57,6 +57,8 @@ def get_triples(g: Graph, res: Union[URIRef,BNode,None], prop, labelprop=(SDO.na
                 results.append((label, res2, pos, _get_sortkey2(g,res2)))
             else:
                 results.append((str(res2), res2, pos, _get_sortkey2(g,res2)))
+        if max and len(results) >= max:
+            break
     if havepos:
         try:
             results.sort(key=lambda x: x[2])
