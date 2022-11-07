@@ -485,3 +485,24 @@ div.card div.topbar div.warning {
 div.card div.topbar ul {
     list-style: none;
 }
+div.group>h2 {
+    display: block;
+    min-width: 320px;
+    max-width: 640px;
+    text-align: left;
+    color: #000c48;
+    margin-left: auto;
+    margin-right: auto;
+}
+div.group {
+    border-top: 1px #000c48 solid;
+    border-bottom: 1px #000c48 solid;
+    border-left: 10px #000c48 solid;
+}
+table td.group {
+    text-align: left;
+    margin-left: 20px;
+    font-weight: bold;
+    background: #000c48;
+    color: white;
+}

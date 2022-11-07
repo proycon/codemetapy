@@ -6,8 +6,17 @@
     <body class="cards">
         {% include "header.html" %}
         {% include "intro.html" %}
-        {% for res, label in index %}
+        {% for group, explicit, resources in index %}
+        {% if explicit %}
+        <div class="group">
+            <h2>{{ group }}</h2>
+        {% endif %}
+        {% for res, label in resources %}
         {% include 'card_softwaresourcecode.html' %}
+        {% endfor %}
+        {% if explicit %}
+        </div>
+        {% endif %}
         {% endfor %}
         {% include 'indexfooter.html' %}
     </body>

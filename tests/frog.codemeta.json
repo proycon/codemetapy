@@ -189,6 +189,7 @@
 	],
     "dateCreated": "2011-03-31T12:35:01Z+0000",
     "dateModified": "2022-07-21T13:17:06Z+0200",
+    "applicationSuite": "Frog",
     "targetProduct": [
         {
             "@type": "SoftwareLibrary",

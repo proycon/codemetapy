@@ -1,6 +1,7 @@
 import sys
 import os.path
 from datetime import datetime
+from collections import OrderedDict
 import codemeta.parsers.gitapi
 from rdflib import Graph, URIRef, BNode, Literal
 from rdflib.namespace import RDF, SKOS, RDFS
@@ -90,22 +91,30 @@ def _get_sortkey2(g: Graph, res: Union[URIRef,BNode,None]):
 
 
 def get_index(g: Graph, restype=SDO.SoftwareSourceCode):
-    results = []
+    groups = OrderedDict()
     for res,_,_ in g.triples((None, RDF.type, restype)):
+        found = False
         label = g.value(res, SDO.name)
-        if label:
-            results.append((res, label))
-        else:
-            identifier = g.value(res, SDO.identifier)
-            if identifier: 
-                label = identifier.strip("/ \n").capitalize()
-                results.append((res, label))
+        if not label:
+            label = g.value(res, SDO.identifier)
+            if label: 
+                label = label.strip("/ \n").capitalize()
             else:
-                results.append((res, "(untitled"))
-    results.sort(key=lambda x: x[1].lower())
-    return results
+                label = "~untitled"
 
+        for _,_, group in g.triples((res, SDO.applicationSuite,None)):
+            groups.setdefault((str(group),True),[]).append((res,str(label))) #explicit group
+            found = True
+        
+        if not found:
+            #ad-hoc group (singleton)
+            group = str(label)
+            groups.setdefault((group,False),[]).append((res,str(label))) #ad-hoc group
 
+    for key in groups:
+        groups[key].sort(key=lambda x: x[1].lower())
+
+    return sorted((k[0],k[1],v) for k,v in groups.items())
 
 def is_resource(res) -> bool:
     return isinstance(res, (URIRef,BNode))
@@ -227,10 +236,11 @@ def serialize_to_html( g: Graph, res: Union[Sequence,URIRef,None], args: AttribD
     else:
         template = kwargs.get("indextemplate","index.html")
         if isinstance(res, (list,tuple)):
-            index = [ (x, g.value(x, SDO.name)) for x in res ]
+            index = [("Selected resource(s)", True, [ (x, g.value(x, SDO.name)) for x in res ])]
             res = None
         elif sparql_query:
             index = query(g, sparql_query)
+            index = [("Search results",True,index)]
         else:
             index = get_index(g)
     template = env.get_template(template)

@@ -6,7 +6,8 @@
     <body class="cards">
         {% include "header.html" %}
         {% include "intro.html" %}
-        {% for res, label in index %}
+        {% for group, explicit, resources in index %}
+        {% for res, label in resources %}
          {% for _, targetres in get_triples(g, res, SDO.targetProduct, abcsort=True) %}
            {% if ((targetres, RDF.type, SDO.WebApplication) in g or
              (targetres, RDF.type, SDO.WebSite) in g or
@@ -15,6 +16,7 @@
              {% include 'card_service.html' %}
            {% endif %}
          {% endfor %}
+        {% endfor %}
         {% endfor %}
         {% include 'indexfooter.html' %}
     </body>

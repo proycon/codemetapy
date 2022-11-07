@@ -19,8 +19,15 @@
                 <th class="producer" title="The institute or person who produces the software; or for services the institute or person who provides the service">Producer/Provider</th>
             </thead>
             <tbody>
-        {% for res, label in index %}
+        {% for group, explicit, resources in index %}
+        {% if explicit and resources %}
+        <tr>
+            <td class="group" colspan="9">{{ group }}</td>
+        </tr>
+        {% endif %}
+        {% for res, label in resources %}
         {% include 'item_softwaresourcecode.html' %}
+        {% endfor %}
         {% endfor %}
             </tbody>
         </table>
