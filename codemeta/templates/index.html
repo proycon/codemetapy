@@ -28,6 +28,11 @@
         {% for res, label in resources %}
         {% include 'item_softwaresourcecode.html' %}
         {% endfor %}
+        {% if explicit and resources %}
+        <tr>
+            <td class="group" colspan="9"></td>
+        </tr>
+        {% endif %}
         {% endfor %}
             </tbody>
         </table>
