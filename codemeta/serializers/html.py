@@ -114,7 +114,7 @@ def get_index(g: Graph, restype=SDO.SoftwareSourceCode):
     for key in groups:
         groups[key].sort(key=lambda x: x[1].lower())
 
-    return sorted((k[0],k[1],v) for k,v in groups.items())
+    return sorted(( (k[0],k[1],v) for k,v in groups.items()) , key=lambda x: (x[0].lower(), x[2].lower()) )
 
 def is_resource(res) -> bool:
     return isinstance(res, (URIRef,BNode))
