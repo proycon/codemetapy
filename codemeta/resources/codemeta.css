@@ -498,6 +498,7 @@ div.group {
     border-top: 1px #000c48 solid;
     border-bottom: 1px #000c48 solid;
     border-left: 10px #000c48 solid;
+    background: #00000020;
 }
 table td.group {
     text-align: left;
