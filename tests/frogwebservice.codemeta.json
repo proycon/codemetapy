@@ -1,0 +1,297 @@
+{
+    "@context": [
+        "https://doi.org/10.5063/schema/codemeta-2.0",
+        "https://w3id.org/software-iodata",
+        "https://w3id.org/nwo-research-fields",
+        "https://raw.githubusercontent.com/jantman/repostatus.org/master/badges/latest/ontology.jsonld",
+        "https://w3id.org/research-technology-readiness-levels",
+        "https://schema.org",
+        "https://w3id.org/software-types"
+    ],
+    "@id": "https://tools.dev.clariah.nl/frog-service/2.3",
+    "@type": "SoftwareSourceCode",
+    "applicationCategory": [
+        "Internet > WWW/HTTP > WSGI > Application",
+        "Text Processing > Linguistic"
+    ],
+    "audience": [
+        {
+            "@id": "https://tools.dev.clariah.nl/audience/developers",
+            "@type": "Audience",
+            "audienceType": "Developers"
+        },
+        {
+            "@id": "https://tools.dev.clariah.nl/audience/science-research",
+            "@type": "Audience",
+            "audienceType": "Science/Research"
+        }
+    ],
+    "author": [
+        {
+            "@id": "https://tools.dev.clariah.nl/person/maarten-van-gompel",
+            "@type": "Person",
+            "affiliation": [
+                {
+                    "@id": "https://tools.dev.clariah.nl/org/(knaw-humanities-cluster)",
+                    "@type": "Organization",
+                    "name": "(KNAW Humanities Cluster)"
+                },
+                {
+                    "@id": "https://tools.dev.clariah.nl/org/knaw-humanities-cluster-clst-radboud-university",
+                    "@type": "Organization",
+                    "name": "KNAW Humanities Cluster & CLST, Radboud University"
+                },
+                {
+                    "@id": "https://tools.dev.clariah.nl/org/knaw-humanities-cluster-clst,-radboud-university",
+                    "@type": "Organization",
+                    "name": "KNAW Humanities Cluster & CLST, Radboud University"
+                }
+            ],
+            "email": "proycon@anaproy.nl",
+            "familyName": "van Gompel",
+            "givenName": "Maarten",
+            "position": 1,
+            "url": "https://proycon.anaproy.nl"
+        }
+    ],
+    "codeRepository": "https://github.com/proycon/frog_webservice",
+    "contributor": [
+        {
+            "@id": "https://tools.dev.clariah.nl/person/maarten-van-gompel",
+            "@type": "Person",
+            "affiliation": [
+                {
+                    "@id": "https://tools.dev.clariah.nl/org/knaw-humanities-cluster-clst,-radboud-university",
+                    "@type": "Organization",
+                    "name": "KNAW Humanities Cluster & CLST, Radboud University"
+                }
+            ],
+            "email": "proycon@anaproy.nl",
+            "familyName": "van Gompel",
+            "givenName": "Maarten",
+            "position": 1,
+            "url": "https://proycon.anaproy.nl"
+        }
+    ],
+    "dateCreated": "2022-02-17T20:41:15Z+0100",
+    "dateModified": "2022-04-08T20:00:09Z+0200",
+    "description": "Frog is a suite containing a tokeniser, Part-of-Speech tagger, lemmatiser, morphological analyser, shallow parser, and dependency parser for Dutch. This is the webservice for it, for both humans and machines.",
+    "developmentStatus": {
+        "@id": "https://www.repostatus.org/#active",
+        "@type": "skos:Concept",
+        "og:image": "https://www.repostatus.org/badges/latest/active.svg",
+        "skos:definition": "The project has reached a stable, usable state and is being actively developed.",
+        "skos:inScheme": [
+            {
+                "@id": "https://www.repostatus.org",
+                "@type": "skos:ConceptScheme",
+                "dct:creator": "Jason Antman",
+                "dct:description": "A standard to easily communicate to humans and machines the development/support and usability status of software repositories/projects.",
+                "dct:title": "repostatus.org"
+            },
+            {
+                "@id": "https://www.repostatus.org",
+                "@type": "skos:ConceptScheme",
+                "dct:creator": "Jason Antman",
+                "dct:description": "A standard to easily communicate to humans and machines the development/support and usability status of software repositories/projects.",
+                "dct:title": "repostatus.org"
+            }
+        ],
+        "skos:prefLabel": "Active"
+    },
+    "downloadUrl": "https://github.com/proycon/frog_webservice/archive/refs/tags/v2.3.zip",
+    "https://github.com/proycon/codemetapy/errors": 0,
+    "https://github.com/proycon/codemetapy/log": "(log file starts at Wed Nov  9 03:07:21 UTC 2022)\n\n[harvester info] --> Processing frog-service (https://github.com/proycon/frog_webservice) [Wed Nov  9 03:07:21 UTC 2022]\n\n[harvester info] Git updating cached clone of https://github.com/proycon/frog_webservice...\n\n[harvester info] Found release v2.3\n\n[harvester info] Using v2.3\n\n[harvester info] Git reference: v2.3\n\n[harvester info] Scanning directory /tmp/codemeta-harvester.cache/frog-service for harvestable resources...\n\n[harvester info] found codemeta-harvest.json for frog-service (md5sum 16cf3d64614b00d284526103914cc8fa); values in here take precendence over (override) those in later detection stages\n\n[harvester info] found python setup for frog-service, converting to codemeta\n\n[harvester info] Looking for license....\n\n[harvester info] Found license GPL-3.0-only\n\n[harvester info] Getting contributors from git...\n\n[harvester info] Extracting last and first commit date from git log....\n\n[harvester info] Date created: 2022-02-17T20:41:15Z+0100, date modified: 2022-04-08T20:00:09Z+0200\n\n[harvester info] Querying Github/GitLab API (https://github.com/proycon/frog_webservice)\n\n[harvester info] Found README.md\n\n[harvester info] Found releaseNotes\n\n[harvester info] Querying Zenodo API for DOI (access token provided)...\n\n[harvester info] Looking for TRL information in README.md...\n\n[harvester info] Looking for repostatus information in README.md...\n\n[harvester info] Found repostatus https://www.repostatus.org/#active\n\n[harvester info] Looking for continuous integration information in README.md...\n\n[harvester info] Looking for documentation links in README.md...\n\n[harvester info] Falling back to git tag (v2.3) if no version number is specified...\n\n[harvester info] Inferring repostatus information from git activity (used only as a fallback if not explicitly provided)...\n\n[harvester info] Inferred repostatus https://www.repostatus.org/#active\n\n[harvester info] Looking for repostatus information in README.md in master branch...\n\n[harvester info] Found repostatus (master branch) https://www.repostatus.org/#active\n\n[harvester info] Setting group Frog\n\n[harvester info] Reconciliating: codemetapy  --baseuri https://tools.dev.clariah.nl --baseuri https://tools.dev.clariah.nl --toolstore --css https://tools.dev.clariah.nl/resources/codemeta.css,https://tools.dev.clariah.nl/resources/fontawesome.css --includecontext --addcontext https://w3id.org/nwo-research-fields --addcontext https://w3id.org/research-technology-readiness-levels --trl --identifier \"frog-service\" --codeRepository \"https://github.com/proycon/frog_webservice\" --validate /etc/software.ttl --released --enrich --textv \"Please consult the CLARIAH Software Metadata Requirements at https://github.com/CLARIAH/clariah-plus/blob/main/requirements/software-metadata-requirements.md for an in-depth explanation of any found problems\" -O /tmp/out/frog-service.codemeta.json /tmp/codemeta-harvester.cache//tmp/99-version.frog-service.codemeta.json /tmp/codemeta-harvester.cache//tmp/99-repostatus.frog-service.codemeta.json /tmp/codemeta-harvester.cache//tmp/43-releasenotes.frog-service.codemeta.json /tmp/codemeta-harvester.cache//tmp/41-readme.frog-service.codemeta.json /tmp/codemeta-harvester.cache//tmp/40-gitapi.frog-service.codemeta.json /tmp/codemeta-harvester.cache//tmp/39-gitdate.frog-service.codemeta.json /tmp/codemeta-harvester.cache//tmp/32-contributors.frog-service.codemeta.json /tmp/codemeta-harvester.cache//tmp/29-license.frog-service.codemeta.json /tmp/codemeta-harvester.cache//tmp/20-python.frog-service.codemeta.json /tmp/codemeta-harvester.cache//tmp/11-repostatus.frog-service.codemeta.json /tmp/codemeta-harvester.cache//tmp/10-harvest.frog-service.codemeta.json /tmp/codemeta-harvester.cache//tmp/05-repostatus.frog-service.codemeta.json /tmp/codemeta-harvester.cache//tmp/04-applicationSuite.frog-service.codemeta.json \n\n-- begin log --\n\nPassed 13 files/sources but specified 0 input types! Automatically guessing types...\n\nDetected input types: [('/tmp/codemeta-harvester.cache//tmp/99-version.frog-service.codemeta.json', 'json'), ('/tmp/codemeta-harvester.cache//tmp/99-repostatus.frog-service.codemeta.json', 'json'), ('/tmp/codemeta-harvester.cache//tmp/43-releasenotes.frog-service.codemeta.json', 'json'), ('/tmp/codemeta-harvester.cache//tmp/41-readme.frog-service.codemeta.json', 'json'), ('/tmp/codemeta-harvester.cache//tmp/40-gitapi.frog-service.codemeta.json', 'json'), ('/tmp/codemeta-harvester.cache//tmp/39-gitdate.frog-service.codemeta.json', 'json'), ('/tmp/codemeta-harvester.cache//tmp/32-contributors.frog-service.codemeta.json', 'json'), ('/tmp/codemeta-harvester.cache//tmp/29-license.frog-service.codemeta.json', 'json'), ('/tmp/codemeta-harvester.cache//tmp/20-python.frog-service.codemeta.json', 'json'), ('/tmp/codemeta-harvester.cache//tmp/11-repostatus.frog-service.codemeta.json', 'json'), ('/tmp/codemeta-harvester.cache//tmp/10-harvest.frog-service.codemeta.json', 'json'), ('/tmp/codemeta-harvester.cache//tmp/05-repostatus.frog-service.codemeta.json', 'json'), ('/tmp/codemeta-harvester.cache//tmp/04-applicationSuite.frog-service.codemeta.json', 'json')]\n\nInitial URI automatically generated, may be overriden later: https://tools.dev.clariah.nl/frog-service\n\nProcessing source #1 of 13\n\nParsing json-ld file from /tmp/codemeta-harvester.cache//tmp/99-version.frog-service.codemeta.json\n\n    NOTE: Not a valid JSON-LD document, @context missing! Attempting to inject automatically...\n\n    Injected (possibly temporary) URI https://tools.dev.clariah.nl/frog-service\n\n[CODEMETA COMPOSITION (https://tools.dev.clariah.nl/frog-service)] processed 1 new triples, total is now 2\n\nProcessing source #2 of 13\n\nParsing json-ld file from /tmp/codemeta-harvester.cache//tmp/99-repostatus.frog-service.codemeta.json\n\n    NOTE: Not a valid JSON-LD document, @context missing! Attempting to inject automatically...\n\n    Injected (possibly temporary) URI https://tools.dev.clariah.nl/frog-service\n\n[CODEMETA COMPOSITION (https://tools.dev.clariah.nl/frog-service)] processed 1 new triples, total is now 3\n\nProcessing source #3 of 13\n\nParsing json-ld file from /tmp/codemeta-harvester.cache//tmp/43-releasenotes.frog-service.codemeta.json\n\n    NOTE: Not a valid JSON-LD document, @context missing! Attempting to inject automatically...\n\n    Injected (possibly temporary) URI https://tools.dev.clariah.nl/frog-service\n\n[CODEMETA COMPOSITION (https://tools.dev.clariah.nl/frog-service)] processed 2 new triples, total is now 5\n\nProcessing source #4 of 13\n\nParsing json-ld file from /tmp/codemeta-harvester.cache//tmp/41-readme.frog-service.codemeta.json\n\n    NOTE: Not a valid JSON-LD document, @context missing! Attempting to inject automatically...\n\n    Injected (possibly temporary) URI https://tools.dev.clariah.nl/frog-service\n\n[CODEMETA COMPOSITION (https://tools.dev.clariah.nl/frog-service)] processed 1 new triples, total is now 6\n\nProcessing source #5 of 13\n\nParsing json-ld file from /tmp/codemeta-harvester.cache//tmp/40-gitapi.frog-service.codemeta.json\n\n    Found main resource with URI https://tools.dev.clariah.nl/frog_webservice/snapshot\n\n    Injected (possibly temporary) URI https://tools.dev.clariah.nl/frog-service\n\n[CODEMETA COMPOSITION (https://tools.dev.clariah.nl/frog-service)] processed 29 new triples, total is now 34\n\nProcessing source #6 of 13\n\nParsing json-ld file from /tmp/codemeta-harvester.cache//tmp/39-gitdate.frog-service.codemeta.json\n\n    NOTE: Not a valid JSON-LD document, @context missing! Attempting to inject automatically...\n\n    Injected (possibly temporary) URI https://tools.dev.clariah.nl/frog-service\n\n[CODEMETA COMPOSITION (https://tools.dev.clariah.nl/frog-service)] overriding old http://schema.org/dateCreated (2022-02-17T21:15:33Z -> 2022-02-17T20:41:15Z+0100)\n\n[CODEMETA COMPOSITION (https://tools.dev.clariah.nl/frog-service)] overriding old http://schema.org/dateModified (2022-11-01T10:08:34Z -> 2022-04-08T20:00:09Z+0200)\n\n[CODEMETA COMPOSITION (https://tools.dev.clariah.nl/frog-service)] processed 2 new triples, total is now 34\n\nProcessing source #7 of 13\n\nParsing json-ld file from /tmp/codemeta-harvester.cache//tmp/32-contributors.frog-service.codemeta.json\n\n    Found main resource with URI https://tools.dev.clariah.nl/frog-service.contributors/snapshot\n\n    Injected (possibly temporary) URI https://tools.dev.clariah.nl/frog-service\n\n[CODEMETA COMPOSITION (https://tools.dev.clariah.nl/frog-service)] processed 8 new triples, total is now 37\n\nProcessing source #8 of 13\n\nParsing json-ld file from /tmp/codemeta-harvester.cache//tmp/29-license.frog-service.codemeta.json\n\n    NOTE: Not a valid JSON-LD document, @context missing! Attempting to inject automatically...\n\n    Injected (possibly temporary) URI https://tools.dev.clariah.nl/frog-service\n\n[CODEMETA COMPOSITION (https://tools.dev.clariah.nl/frog-service)] overriding old http://schema.org/license (http://spdx.org/licenses/GPL-3.0-only -> GPL-3.0-only)\n\n[CODEMETA CORRECTION (https://tools.dev.clariah.nl/frog-service)] automatically converting license to spdx URI\n\n[CODEMETA COMPOSITION (https://tools.dev.clariah.nl/frog-service)] processed 1 new triples, total is now 37\n\nProcessing source #9 of 13\n\nParsing json-ld file from /tmp/codemeta-harvester.cache//tmp/20-python.frog-service.codemeta.json\n\n    Found main resource with URI https://tools.dev.clariah.nl/frog-webservice/2.3\n\n    Injected (possibly temporary) URI https://tools.dev.clariah.nl/frog-service\n\n[CODEMETA COMPOSITION (frog-webservice)] overriding old http://schema.org/author (https://tools.dev.clariah.nl/stub/N7af5540ee11b4f87813066261cf9bc8e -> https://tools.dev.clariah.nl/stub/N9a622dd046454f23883b47cd6bfa27a9)\n\n[CODEMETA COMPOSITION (frog-webservice)] overriding old http://schema.org/description (Webservice and web interface for Frog, a dutch NLP suite -> Frog is a suite containing a tokeniser, Part-of-Speech tagger, lemmatiser, morphological analyser, shallow parser, and dependency parser for Dutch. This is the webservice for it, for both humans and machines.)\n\n[CODEMETA COMPOSITION (frog-webservice)] overriding old http://schema.org/keywords (frog -> clam webservice rest nlp computational_linguistics rest)\n\n[CODEMETA COMPOSITION (frog-webservice)] overriding old http://schema.org/keywords (nlp -> clam webservice rest nlp computational_linguistics rest)\n\n[CODEMETA COMPOSITION (frog-webservice)] overriding old http://schema.org/keywords (folia -> clam webservice rest nlp computational_linguistics rest)\n\n[CODEMETA COMPOSITION (frog-webservice)] overriding old http://schema.org/keywords (named-entity-recognition -> clam webservice rest nlp computational_linguistics rest)\n\n[CODEMETA COMPOSITION (frog-webservice)] overriding old http://schema.org/keywords (part-of-speech-tagger -> clam webservice rest nlp computational_linguistics rest)\n\n[CODEMETA COMPOSITION (frog-webservice)] overriding old http://schema.org/keywords (webservice -> clam webservice rest nlp computational_linguistics rest)\n\n[CODEMETA COMPOSITION (frog-webservice)] overriding old http://schema.org/keywords (dutch -> clam webservice rest nlp computational_linguistics rest)\n\n[CODEMETA COMPOSITION (frog-webservice)] overriding old http://schema.org/name (frog_webservice -> Frog-Webservice)\n\n[CODEMETA COMPOSITION (frog-webservice)] overriding old http://schema.org/version (v2.3 -> 2.3)\n\n[CODEMETA COMPOSITION (frog-webservice)] processed 54 new triples, total is now 72\n\nProcessing source #10 of 13\n\nParsing json-ld file from /tmp/codemeta-harvester.cache//tmp/11-repostatus.frog-service.codemeta.json\n\n    NOTE: Not a valid JSON-LD document, @context missing! Attempting to inject automatically...\n\n    Injected (possibly temporary) URI https://tools.dev.clariah.nl/frog-service\n\n[CODEMETA COMPOSITION (frog-webservice)] overriding old https://codemeta.github.io/terms/developmentStatus (https://w3id.org/research-technology-readiness-levels#Level8Complete -> https://www.repostatus.org/#active)\n\n[CODEMETA COMPOSITION (frog-webservice)] processed 1 new triples, total is now 71\n\nProcessing source #11 of 13\n\nParsing json-ld file from /tmp/codemeta-harvester.cache//tmp/10-harvest.frog-service.codemeta.json\n\n    Injected (possibly temporary) URI https://tools.dev.clariah.nl/frog-service\n\n[CODEMETA COMPOSITION (frog-webservice)] overriding old http://schema.org/softwareRequirements (https://tools.dev.clariah.nl/dependency/folia-tools -> https://tools.dev.clariah.nl/stub/N9db0e09b4aef4bd39edd54095ee6962b)\n\n[CODEMETA COMPOSITION (frog-webservice)] overriding old http://schema.org/softwareRequirements (https://tools.dev.clariah.nl/dependency/clam-ge-3.1.4 -> https://tools.dev.clariah.nl/stub/N9db0e09b4aef4bd39edd54095ee6962b)\n\n[CODEMETA COMPOSITION (frog-webservice)] processed 5 new triples, total is now 74\n\nProcessing source #12 of 13\n\nParsing json-ld file from /tmp/codemeta-harvester.cache//tmp/05-repostatus.frog-service.codemeta.json\n\n    NOTE: Not a valid JSON-LD document, @context missing! Attempting to inject automatically...\n\n    Injected (possibly temporary) URI https://tools.dev.clariah.nl/frog-service\n\n[CODEMETA COMPOSITION (frog-webservice)] processed 1 new triples, total is now 74\n\nProcessing source #13 of 13\n\nParsing json-ld file from /tmp/codemeta-harvester.cache//tmp/04-applicationSuite.frog-service.codemeta.json\n\n    NOTE: Not a valid JSON-LD document, @context missing! Attempting to inject automatically...\n\n    Injected (possibly temporary) URI https://tools.dev.clariah.nl/frog-service\n\n[CODEMETA COMPOSITION (frog-webservice)] processed 1 new triples, total is now 75\n\nRemapping URI to (possibly) new identifier and version component: https://tools.dev.clariah.nl/frog-service -> https://tools.dev.clariah.nl/frog-service/2.3\n\n[CODEMETA ENRICHMENT (frog-service)] Guessing interface type https://w3id.org/software-types#SoftwareLibrary based on clues\n\n[CODEMETA ENRICHMENT (frog-service)] automatically adding programmingLanguage Python derived from runtimePlatform Python\n\n[CODEMETA ENRICHMENT (frog-service)] automatically adding programmingLanguage Python derived from runtimePlatform Python\n\n[CODEMETA ENRICHMENT (frog-service)] automatically adding programmingLanguage Python derived from runtimePlatform Python\n\n[CODEMETA ENRICHMENT (frog-service)] automatically adding programmingLanguage Python derived from runtimePlatform Python\n\n[CODEMETA ENRICHMENT (frog-service)] automatically adding programmingLanguage Python derived from runtimePlatform Python\n\n[CODEMETA ENRICHMENT (frog-service)] automatically adding programmingLanguage Python derived from runtimePlatform Python\n\n[CODEMETA ENRICHMENT (frog-service)] adding affiliation(s) of first author as producer\n\nVALIDATION https://tools.dev.clariah.nl/frog-service/2.3 #1: Warning: Software source code *SHOULD* link to a continuous integration service that builds the software and runs the software's tests (This is missing in the metadata)\n\nVALIDATION https://tools.dev.clariah.nl/frog-service/2.3 #2: Warning: Documentation *SHOULD* be expressed (This is missing in the metadata)\n\nVALIDATION https://tools.dev.clariah.nl/frog-service/2.3 #3: Info: Reference publications *SHOULD* be expressed (This is missing in the metadata)\n\nVALIDATION https://tools.dev.clariah.nl/frog-service/2.3 #4: Info: The funder *SHOULD* be acknowledged (This is missing in the metadata)\n\nVALIDATION https://tools.dev.clariah.nl/frog-service/2.3 #5: Info: The technology readiness level *SHOULD* be expressed (This is missing in the metadata)\n\nVALIDATION https://tools.dev.clariah.nl/frog-service/2.3 #6: Info: A research domain *SHOULD* be expressed as a category using the NWO Research Fields vocabulary (This is missing in the metadata)\n\nVALIDATION https://tools.dev.clariah.nl/frog-service/2.3 #7: Info: A research activity *SHOULD* be expressed as a category using the TaDiRaH vocabulary (This is missing in the metadata)\n\n-- end log --\n\n[harvester info] Output written to /tmp/out/frog-service.codemeta.json\n\n[harvester info] Harvesting remote service URL https://webservices.cls.ru.nl/frog/ for frog-service: codemetapy  --baseuri https://tools.dev.clariah.nl --baseuri https://tools.dev.clariah.nl --toolstore --css https://tools.dev.clariah.nl/resources/codemeta.css,https://tools.dev.clariah.nl/resources/fontawesome.css --includecontext --addcontext https://w3id.org/nwo-research-fields --addcontext https://w3id.org/research-technology-readiness-levels --trl -O \"/tmp/codemeta-harvester.cache//tmp/frog-service.codemeta.json\" \"/tmp/out/frog-service.codemeta.json\" \"https://webservices.cls.ru.nl/frog/\"\n\n[harvester info] <-- Finished processing frog-service (https://github.com/proycon/frog_webservice) [Wed Nov  9 03:07:39 UTC 2022]\n",
+    "identifier": "frog-service",
+    "issueTracker": "https://github.com/proycon/frog_webservice/issues",
+    "keywords": "clam webservice rest nlp computational_linguistics rest",
+    "license": {
+        "@id": "http://spdx.org/licenses/GPL-3.0-only",
+        "name": "GNU General Public License v3"
+    },
+    "maintainer": {
+        "@id": "https://tools.dev.clariah.nl/person/maarten-van-gompel",
+        "@type": "Person",
+        "affiliation": [
+            {
+                "@id": "https://tools.dev.clariah.nl/org/(knaw-humanities-cluster)",
+                "@type": "Organization",
+                "name": "(KNAW Humanities Cluster)"
+            },
+            {
+                "@id": "https://tools.dev.clariah.nl/org/knaw-humanities-cluster-clst-radboud-university",
+                "@type": "Organization",
+                "name": "KNAW Humanities Cluster & CLST, Radboud University"
+            },
+            {
+                "@id": "https://tools.dev.clariah.nl/org/knaw-humanities-cluster-clst,-radboud-university",
+                "@type": "Organization",
+                "name": "KNAW Humanities Cluster & CLST, Radboud University"
+            }
+        ],
+        "email": "proycon@anaproy.nl",
+        "familyName": "van Gompel",
+        "givenName": "Maarten",
+        "position": 1,
+        "url": "https://proycon.anaproy.nl"
+    },
+    "name": "Frog-Webservice",
+    "operatingSystem": [
+        "BSD",
+        "Linux",
+        "macOS"
+    ],
+    "owl:sameAs": [
+        {
+            "@id": "https://tools.dev.clariah.nl/frog-webservice/2.3"
+        },
+        {
+            "@id": "https://tools.dev.clariah.nl/frog-service.contributors/snapshot"
+        },
+        {
+            "@id": "https://tools.dev.clariah.nl/frog_webservice/snapshot"
+        },
+        {
+            "@id": "https://tools.dev.clariah.nl/frog-service/2.3"
+        }
+    ],
+    "producer": {
+        "@id": "https://tools.dev.clariah.nl/org/knaw-humanities-cluster-clst-radboud-university",
+        "@type": "Organization",
+        "name": "KNAW Humanities Cluster & CLST, Radboud University"
+    },
+    "programmingLanguage": "Python",
+    "readme": "https://github.com/proycon/frog_webservice/blob/v2.3/README.md",
+    "releaseNotes": "https://github.com/proycon/frog_webservice/releases/tag/v2.3",
+    "review": {
+        "@id": "https://tools.dev.clariah.nl/validation/Nec3f1ea3f9865ae9593be126b81d7724",
+        "@type": "Review",
+        "author": [
+            "codemetapy validator using software.ttl"
+        ],
+        "datePublished": "2022-11-09 03:07:35",
+        "name": "Automatic software metadata validation report for Frog-Webservice 2.3",
+        "reviewBody": "Please consult the CLARIAH Software Metadata Requirements at https://github.com/CLARIAH/clariah-plus/blob/main/requirements/software-metadata-requirements.md for an in-depth explanation of any found problems\n\nValidation of Frog-Webservice 2.3 was successful (score=3/5), but there are some warnings which should be addressed:\n\n1. Warning: Software source code *SHOULD* link to a continuous integration service that builds the software and runs the software's tests (This is missing in the metadata)\n2. Warning: Documentation *SHOULD* be expressed (This is missing in the metadata)\n3. Info: Reference publications *SHOULD* be expressed (This is missing in the metadata)\n4. Info: The funder *SHOULD* be acknowledged (This is missing in the metadata)\n5. Info: The technology readiness level *SHOULD* be expressed (This is missing in the metadata)\n6. Info: A research domain *SHOULD* be expressed as a category using the NWO Research Fields vocabulary (This is missing in the metadata)\n7. Info: A research activity *SHOULD* be expressed as a category using the TaDiRaH vocabulary (This is missing in the metadata)",
+        "reviewRating": 3
+    },
+    "runtimePlatform": [
+        "Python 3",
+        "Python 3.10",
+        "Python 3.6",
+        "Python 3.7",
+        "Python 3.8",
+        "Python 3.9"
+    ],
+    "softwareRequirements": {
+        "@type": "SoftwareApplication",
+        "identifier": "frog",
+        "name": "frog",
+        "version": ">= 0.24"
+    },
+    "targetProduct": [
+        {
+            "@id": "https://tools.dev.clariah.nl/webapplication/frog",
+            "@type": "WebApplication",
+            "author": [
+                {
+                    "@id": "https://tools.dev.clariah.nl/person/ko-van-der-sloot",
+                    "@type": "Person",
+                    "email": [
+                        "K.vanderSloot@let.ru.nl",
+                    ],
+                    "familyName": "van der Sloot",
+                    "givenName": "Ko"
+                },
+                {
+                    "@id": "https://tools.dev.clariah.nl/person/antal-van-den-bosch",
+                    "@type": "Person",
+                    "email": "a.vandenbosch@let.ru.nl",
+                    "familyName": "van den Bosch",
+                    "givenName": "Antal"
+                },
+                {
+                    "@id": "https://tools.dev.clariah.nl/person/maarten-van-gompel",
+                    "@type": "Person",
+                    "affiliation": [
+                        {
+                            "@id": "https://tools.dev.clariah.nl/org/knaw-humanities-cluster-clst,-radboud-university",
+                            "@type": "Organization",
+                            "name": "KNAW Humanities Cluster & CLST, Radboud University"
+                        }
+                    ],
+                    "email": "proycon@anaproy.nl",
+                    "familyName": "van Gompel",
+                    "givenName": "Maarten",
+                    "position": 1,
+                    "url": "https://proycon.anaproy.nl"
+                },
+                {
+                    "@id": "https://tools.dev.clariah.nl/person/bertjan-busser",
+                    "@type": "Person",
+                    "familyName": "Busser",
+                    "givenName": "Bertjan"
+                }
+            ],
+            "description": "Frog is a suite containing a tokeniser, Part-of-Speech tagger, lemmatiser, morphological analyser, shallow parser, and dependency parser for Dutch.",
+            "email": "lamasoftware@science.ru.nl",
+            "name": "Frog",
+            "provider": "Centre for Language and Speech Technology, Radboud University",
+            "url": "https://webservices.cls.ru.nl/frog"
+        },
+        {
+            "@id": "https://tools.dev.clariah.nl/webapi/frog",
+            "@type": "WebAPI",
+            "author": [
+                {
+                    "@id": "https://tools.dev.clariah.nl/person/ko-van-der-sloot",
+                    "@type": "Person",
+                    "email": [
+                        "K.vanderSloot@let.ru.nl",
+                    ],
+                    "familyName": "van der Sloot",
+                    "givenName": "Ko"
+                },
+                {
+                    "@id": "https://tools.dev.clariah.nl/person/antal-van-den-bosch",
+                    "@type": "Person",
+                    "email": "a.vandenbosch@let.ru.nl",
+                    "familyName": "van den Bosch",
+                    "givenName": "Antal"
+                },
+                {
+                    "@id": "https://tools.dev.clariah.nl/person/maarten-van-gompel",
+                    "@type": "Person",
+                    "affiliation": [
+                        {
+                            "@id": "https://tools.dev.clariah.nl/org/knaw-humanities-cluster-clst,-radboud-university",
+                            "@type": "Organization",
+                            "name": "KNAW Humanities Cluster & CLST, Radboud University"
+                        }
+                    ],
+                    "email": "proycon@anaproy.nl",
+                    "familyName": "van Gompel",
+                    "givenName": "Maarten",
+                    "position": 1,
+                    "url": "https://proycon.anaproy.nl"
+                },
+                {
+                    "@id": "https://tools.dev.clariah.nl/person/bertjan-busser",
+                    "@type": "Person",
+                    "familyName": "Busser",
+                    "givenName": "Bertjan"
+                }
+            ],
+            "description": "Frog is a suite containing a tokeniser, Part-of-Speech tagger, lemmatiser, morphological analyser, shallow parser, and dependency parser for Dutch.",
+            "documentation": "https://webservices.cls.ru.nl/frog/info",
+            "email": "lamasoftware@science.ru.nl",
+            "name": "Frog",
+            "provider": "Centre for Language and Speech Technology, Radboud University",
+            "url": "https://webservices.cls.ru.nl/frog"
+        },
+        {
+            "@type": "WebAPI"
+        }
+    ],
+    "url": "https://languagemachines.github.io/frog",
+    "version": "2.3"
+}
