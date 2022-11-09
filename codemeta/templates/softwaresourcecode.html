@@ -44,9 +44,8 @@
     </div>
     {% endif %}
 
-    {% set suite = g.value(sscres, SDO.applicationSuite) %}
-    {% if suite %}
-    <h3>Tool suite</h3>
+    {% for _,_,suite in g.triples((sscres, SDO.applicationSuite,None)) %}
+    <h3>Tool suite: {{ suite }}</h3>
 
     <p>The following closely related tools are in a tool suite together with {{ g.value(sscres, SDO.name) }}:</p>
 
@@ -58,7 +57,7 @@
     {% endfor %}
     </div>
 
-    {% endif %}
+    {% endfor %}
 
     {% if g.value(sscres, SDO.screenshot)  %}
     <h3>Screenshots</h3>
