@@ -510,5 +510,5 @@ table td.group {
 }
 body.page div.cards div.card {
     display: block;
-    border: 3px solid;
+    border: 1px solid black;
 }
