@@ -508,3 +508,7 @@ table td.group {
     background: #000c48;
     color: white;
 }
+body.page div.cards div.card {
+    display: block;
+    border: 3px solid;
+}

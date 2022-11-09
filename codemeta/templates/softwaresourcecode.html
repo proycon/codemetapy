@@ -44,6 +44,21 @@
     </div>
     {% endif %}
 
+    {% set suite = g.value(sscres, SDO.applicationSuite) %}
+    {% if suite %}
+    <h3>Tool suite</h3>
+
+    <p>The following closely related tools are in a tool suite together with {{ g.value(sscres, SDO.name) }}:</p>
+
+    <div class="cards">
+    {% for res,_,_ in g.triples((None, SDO.applicationSuite, suite)) %}
+    {% if res != sscres %}
+    {% include 'card_softwaresourcecode.html' %}
+    {% endif %}
+    {% endfor %}
+    </div>
+
+    {% endif %}
 
     {% if g.value(sscres, SDO.screenshot)  %}
     <h3>Screenshots</h3>
