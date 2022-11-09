@@ -507,6 +507,7 @@ table td.group {
     font-weight: bold;
     background: #000c48;
     color: white;
+    height: 5px;
 }
 body.page div.cards div.card {
     display: block;
