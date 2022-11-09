@@ -196,9 +196,7 @@
                 {
                     "@id": "https://tools.dev.clariah.nl/person/ko-van-der-sloot",
                     "@type": "Person",
-                    "email": [
-                        "K.vanderSloot@let.ru.nl",
-                    ],
+                    "email": "K.vanderSloot@let.ru.nl",
                     "familyName": "van der Sloot",
                     "givenName": "Ko"
                 },
@@ -245,9 +243,7 @@
                 {
                     "@id": "https://tools.dev.clariah.nl/person/ko-van-der-sloot",
                     "@type": "Person",
-                    "email": [
-                        "K.vanderSloot@let.ru.nl",
-                    ],
+                    "email": "K.vanderSloot@let.ru.nl",
                     "familyName": "van der Sloot",
                     "givenName": "Ko"
                 },
