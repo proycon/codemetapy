@@ -43,7 +43,7 @@
         "url": "https://proycon.anaproy.nl"
     },
     "dateCreated": "2018-04-16T10:54:22Z+0200",
-    "dateModified": "2022-10-19T14:26:47Z+0200",
+    "dateModified": "2022-11-09T13:10:47Z+0100",
     "description": "Generate and manage CodeMeta software metadata",
     "developmentStatus": "https://www.repostatus.org/#active",
     "identifier": "codemetapy",
@@ -163,5 +163,5 @@
         "runtimePlatform": "Python 3"
     }],
     "url": "https://github.com/proycon/codemetapy.git",
-    "version": "2.3.1"
+    "version": "2.3.2"
 }
