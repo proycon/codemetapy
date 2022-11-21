@@ -77,9 +77,29 @@ def inject_uri(data: dict, res: URIRef):
         raise Exception("JSON-LD file does not describe a single resource (did you mean to use --graph instead?)")
 
 
+def compute_hash(g: Graph, s: Union[URIRef,BNode], history: Optional[set] = None) -> int:
+    """Computes a content hash for all contents in a resource"""
+    values = []
+    if not history: 
+        history = set(s)
+    else:
+        history.add(s)
+    if isinstance(s, URIRef):
+        values.append(s)
+    for s,p,o in g.triples((s,None,None)):
+        values += [p,o]
+        if isinstance(o, (URIRef,BNode)) and o not in history and (o,None,None) in g:
+            #recursion step
+            values.append( compute_hash(g, o, history) )
+    return hash(tuple(values))
+        
+
+
 def skolemize(g: Graph, baseuri: Optional[str] = None):
     """In-place skolemization, turns blank nodes into uris"""
     #unlike Graph.skolemize, this one is in-place and edits the same graph rather than returning a copy
+    #also, if blank nodes have identical content, they receive the same stub ID based on a hash of the content
+
     if baseuri:
         authority = baseuri
         if authority[-1] != "/": authority += "/"
@@ -87,14 +107,25 @@ def skolemize(g: Graph, baseuri: Optional[str] = None):
     else:
         authority = "file://" #for compatibility with rdflib
         basepath = "/stub/"
+
+    hashes = {}
+    for s,p,o in g.triples((None,None,None)):
+        if isinstance(s, BNode) and s not in hashes:
+            hashes[s] = compute_hash(g,s)
+
     for s,p,o in g.triples((None,None,None)):
         if isinstance(s, BNode):
             g.remove((s,p,o))
-            s = s.skolemize(authority=authority, basepath=basepath)
+            #skolemize using hashes
+            s = URIRef(authority + basepath + "H" + "%016x" % hashes[s])
             g.add((s,p,o))
         if isinstance(o, BNode):
             g.remove((s,p,o))
-            o = o.skolemize(authority=authority, basepath=basepath)
+            if o in hashes:
+                #skolemize using hashes
+                o = URIRef(authority + basepath + "H" + "%016x" % hashes[o])
+            else:
+                o = o.skolemize(authority=authority, basepath=basepath)
             g.add((s,p,o))
 
 def correct_wrong_uris(g:Graph, baseuri: Optional[str]):
