@@ -806,6 +806,9 @@ def guess_interfacetype(g: Graph, res: Union[URIRef,BNode], args: AttribDict) ->
         interfacetype = max(counter)
         targetres = URIRef(generate_uri(baseuri=args.baseuri, prefix="stub"))
         g.set((targetres, RDF.type, interfacetype))
+        name = g.value(res,SDO.name)
+        if name:
+            g.set((targetres, SDO.name, name))
         g.set((res, SDO.targetProduct, targetres))
         return targetres
 
