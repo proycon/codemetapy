@@ -51,9 +51,12 @@ def parse_rust(g: Graph, res: Union[URIRef, BNode], file: IO ,  args: AttribDict
 #pylint: disable=W0621
 def add_dependency(g: Graph, res: Union[URIRef, BNode], name: str, version: str, args: AttribDict):
     if version and version[0].isalnum():
-        version = "-" + version
-    depres = URIRef(generate_uri(name+version.replace(' ',''),args.baseuri,"dependency")) #version number is deliberately in ID here!
+        version_id = "-" + version
+    else:
+        version_id = version
+    depres = URIRef(generate_uri(name+version_id.replace(' ',''),args.baseuri,"dependency")) #version number is deliberately in ID here!
     g.add((depres, RDF.type, SDO.SoftwareApplication))
     g.add((depres, SDO.identifier, Literal(name)))
     g.add((depres, SDO.name, Literal(name)))
+    g.add((depres, SDO.version, Literal(version)))
     g.add((res, CODEMETA.softwareRequirements, depres))
