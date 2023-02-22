@@ -295,6 +295,8 @@ def build(**kwargs) -> Tuple[Graph, URIRef, AttribDict, Graph]:
                     inputtypes.append("python")
                 elif inputsource.endswith("pom.xml"):
                     inputtypes.append("java")
+                elif inputsource.endswith("Cargo.toml"):
+                    inputtypes.append("rust")
                 elif inputsource.lower().endswith(".json") or inputsource.lower().endswith(".jsonld"):
                     inputtypes.append("json")
                 elif inputsource.upper().endswith("CONTRIBUTORS"):
@@ -393,6 +395,10 @@ def build(**kwargs) -> Tuple[Graph, URIRef, AttribDict, Graph]:
             print(f"Parsing npm package.json from {source}",file=sys.stderr)
             with getstream(source) as f:
                 codemeta.parsers.nodejs.parse_nodejs(newgraph, res, f, crosswalk, args)
+        elif inputtype == "rust":
+            print(f"Parsing rust Cargo.toml from {source}",file=sys.stderr)
+            with getstream(source) as f:
+                codemeta.parsers.rust.parse_rust(newgraph, res, f, args)
         elif inputtype == "java":
             print(f"Parsing java/maven pom.xml from {source}",file=sys.stderr)
             with getstream(source) as f:
