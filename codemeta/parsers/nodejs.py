@@ -49,6 +49,8 @@ def parse_nodejs(g: Graph, res: Union[URIRef, BNode], file: IO , crosswalk, args
                         add_triple(g, res, "keywords", keyword, args)
                 else:
                     print("WARNING: keywords in package.json should be a list",file=sys.stderr)
+            elif key == 'private' and value:
+                    print("WARNING: private=true was set on package.json! This package is marked not to be published!",file=sys.stderr)
             elif key == 'repository':
                 if isinstance(value, str):
                     value = parse_sourcerepo(value)
@@ -75,6 +77,14 @@ def parse_nodejs(g: Graph, res: Union[URIRef, BNode], file: IO , crosswalk, args
                     #npm allows strings like "Barney Rubble <b@rubble.com> (http://barnyrubble.tumblr.com/)"
                     #our add_authors function can handle that directly
                     add_authors(g, res, value, single_author=True, baseuri=args.baseuri)
+            elif key == 'contributor':
+                if isinstance(value, dict) and 'name' in value:
+                    authors = add_authors(g, res, value['name'], property=SDO.contributor, single_author=True, mail=value.get("email"), baseuri=args.baseuri)
+                elif isinstance(value, str):
+                    add_authors(g, res, value, property=SDO.contributor, baseuri=args.baseuri)
+                elif isinstance(value, (list,tuple)):
+                    for value in value:
+                        authors = add_authors(g, res, value['name'], property=SDO.contributor, single_author=True, mail=value.get("email"), baseuri=args.baseuri)
             elif key in ('dependencies','devDependencies'):
                 if isinstance(value, dict):
                     for key, versioninfo in value.items():
