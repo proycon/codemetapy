@@ -14,7 +14,6 @@
         "audienceType": "Developers"
     },
     "author": {
-        "@id": "/person/maarten-van-gompel",
         "@type": "Person",
         "affiliation": {
             "@id": "/org/knaw-humanities-cluster-clst,-radboud-university",
@@ -24,12 +23,10 @@
         "email": "proycon@anaproy.nl",
         "familyName": "van Gompel",
         "givenName": "Maarten",
-        "position": 1,
         "url": "https://proycon.anaproy.nl"
     },
     "codeRepository": "https://github.com/proycon/codemetapy.git",
     "contributor": {
-        "@id": "/person/maarten-van-gompel",
         "@type": "Person",
         "affiliation": {
             "@id": "/org/knaw-humanities-cluster-clst,-radboud-university",
@@ -39,13 +36,23 @@
         "email": "proycon@anaproy.nl",
         "familyName": "van Gompel",
         "givenName": "Maarten",
-        "position": 1,
         "url": "https://proycon.anaproy.nl"
     },
     "dateCreated": "2018-04-16T10:54:22Z+0200",
     "dateModified": "2023-02-22T15:30:47Z+0100",
     "description": "Codemetapy is a command-line tool and python library to work with the codemeta software metadata standard. Codemeta builds upon schema.org and defines a vocabulary for describing software source code. It maps various existing metadata standards to a unified vocabulary. Codemetapy allows you to generate codemeta from various sources.",
     "developmentStatus": [ "https://www.repostatus.org/#active", "https://w3id.org/research-technology-readiness-level#Level7ReleaseCandidate" ],
+	"funding": [
+        {
+            "@type": "Grant",
+            "name": "CLARIAH-PLUS (NWO grant 184.034.023)",
+            "funder": {
+                "@type": "Organization",
+                "name": "NWO", 
+                "url": "https://www.nwo.nl"
+            }
+        }
+	],
     "identifier": "codemetapy",
     "issueTracker": "https://github.com/proycon/codemetapy/issues",
     "keywords": [
@@ -58,19 +65,16 @@
         "schema.org",
         "linked data"
     ],
-    "license": "http://spdx.org/licenses/GPL-3.0-only",
+    "license": "https://spdx.org/licenses/GPL-3.0-only",
     "maintainer": {
-        "@id": "/person/maarten-van-gompel",
         "@type": "Person",
         "affiliation": {
-            "@id": "/org/knaw-humanities-cluster-clst,-radboud-university",
             "@type": "Organization",
             "name": "KNAW Humanities Cluster & CLST, Radboud University"
         },
         "email": "proycon@anaproy.nl",
         "familyName": "van Gompel",
         "givenName": "Maarten",
-        "position": 1,
         "url": "https://proycon.anaproy.nl"
     },
     "name": "CodeMetaPy",
