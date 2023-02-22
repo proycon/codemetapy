@@ -34,6 +34,7 @@ import codemeta.parsers.debian
 import codemeta.parsers.jsonld
 import codemeta.parsers.nodejs
 import codemeta.parsers.java
+import codemeta.parsers.rust
 import codemeta.parsers.web
 import codemeta.parsers.gitapi
 import codemeta.parsers.authors

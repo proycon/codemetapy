@@ -1,11 +1,9 @@
 import sys
 import tomlkit
-import os
 from rdflib import Graph, URIRef, BNode, Literal
 from rdflib.namespace import RDF
 from typing import Union, IO
 from codemeta.common import AttribDict, add_triple, CODEMETA, SOFTWARETYPES, add_authors, SDO, COMMON_SOURCEREPOS, SOFTWARETYPES, generate_uri
-
 
 
 def parse_rust(g: Graph, res: Union[URIRef, BNode], file: IO ,  args: AttribDict):

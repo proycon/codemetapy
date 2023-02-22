@@ -481,6 +481,45 @@ class BuildTest_NewId2(unittest.TestCase):
         self.assertIn( (URIRef("https://tools.clariah.nl/withid/0.1"), None,None), self.g)
         self.assertIn( (self.res,OWL.sameAs,URIRef("http://example.org/test")), self.g, "Test if old URI is referenced via owl:sameAs")
 
+class BuildTest_RustCargoToml(unittest.TestCase):
+    """Build codemeta.json from npm package json"""
+
+    def setUp(self):
+        #relies on automatically guessing the type
+        self.g, self.res, self.args, self.contextgraph = build(inputsources=["analiticcl.Cargo.toml"])
+
+    def test001_sanity(self):
+        """Testing whether a package.json was read accurately, tests some basic properties"""
+        self.assertIsInstance( self.g, Graph )
+        self.assertIsInstance( self.res, URIRef)
+        self.assertIn( (self.res, RDF.type, SDO.SoftwareSourceCode), self.g)
+
+    def test002_basics(self):
+        """Testing some basic identifying properties"""
+        self.assertIn( (self.res, SDO.name, Literal("analiticcl")), self.g)
+        self.assertIn( (self.res, SDO.version, Literal("0.4.5")), self.g)
+        self.assertIn( (self.res, SDO.description, None), self.g) #doesn't test actual value
+
+    def test003_urlref(self):
+        """Testing some common URL References"""
+        self.assertEqual( str(self.g.value(self.res, SDO.codeRepository)) , "https://github.com/proycon/analiticcl")
+        self.assertIn( (self.res, SDO.license, URIRef("http://spdx.org/licenses/GPL-3.0-or-later")), self.g)
+        self.assertEqual( str(self.g.value(self.res, SDO.url)),  "https://github.com/proycon/analiticcl")
+        self.assertEqual( str(self.g.value(self.res, SDO.softwareHelp)),  "https://docs.rs/analiticcl")
+
+    def test100_serialisation_json(self):
+        """Test json serialisation"""
+        serialize(self.g, self.res, AttribDict({ "output": "json" }), self.contextgraph)
+
+    def test100_serialisation_turtle(self):
+        """Test json serialisation"""
+        serialize(self.g, self.res, AttribDict({ "output": "ttl" }), self.contextgraph)
+
+    def test100_serialisation_html(self):
+        """Test html serialisation"""
+        serialize(self.g, self.res, AttribDict({ "output": "html" }), self.contextgraph)
+
+
 if __name__ == '__main__':
     unittest.main()
 

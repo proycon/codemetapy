@@ -144,6 +144,7 @@ LICENSE_MAP = [ #maps some common licenses to SPDX URIs, mapped with a substring
     ("http://www.gnu.org/licenses/gpl-3.0.html","http://spdx.org/licenses/GPL-3.0-only"),
     ("GPL-3.0-or-later", "http://spdx.org/licenses/GPL-3.0-or-later"),
     ("GPL-3.0-only", "http://spdx.org/licenses/GPL-3.0-only"),
+    ("GPL-3.0+", "http://spdx.org/licenses/GPL-3.0-or-later"),
     ("GPL-3.0", "http://spdx.org/licenses/GPL-3.0-only"),
     ("GPLv3+", "http://spdx.org/licenses/GPL-3.0-or-later"),
     ("GPLv3", "http://spdx.org/licenses/GPL-3.0-only"),
