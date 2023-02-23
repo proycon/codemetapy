@@ -28,7 +28,7 @@ def parse_nodejs(g: Graph, res: Union[URIRef, BNode], file: IO , crosswalk, args
             if key == 'name' and value:
                 #remove the 'scope' from the name
                 if value[0] == '@' and value.find('/') != -1:
-                    value = value.strip('/')[1]
+                    value = value.split('/')[1]
                 add_triple(g, res, key, value, args)
             elif key == 'bugs':
                 if isinstance(value,dict) and 'url' in value:
