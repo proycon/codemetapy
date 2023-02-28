@@ -100,18 +100,18 @@ def find_main(data, res: Union[URIRef,None]):
     else:
         return data, None
 
-def expand_implicit_id_nodes(data, idref_properties):
+def expand_implicit_id_nodes(data, idref_properties, nsprefixes = ('schema:','codemeta:','rdf:','rdfs:','skos:','trl:','dct:','dc:','dc11:','xsd:','stype:','softwaretypes:','iodata:','softwareiodata:','owl:','og:','sh:','nwo:','repostatus:','clariah:')):
     """Turn nodes like `key: uri` into `key: { "@id": uri }`"""
     if isinstance(data, dict):
         for k, v in data.items():
-            if k in idref_properties and isinstance(v, str) and v.startswith(("http","_","/")):
+            if k in idref_properties and isinstance(v, str) and (v.startswith(("http","_","/")) or v.startswith(nsprefixes)):
                 data[k] = {"@id": v }
             elif k in idref_properties and isinstance(v, list):
-                data[k] = [ {"@id": e } if isinstance(e, str) and e.startswith(("http","_","/")) else expand_implicit_id_nodes(e, idref_properties) if isinstance(e, dict) else e for e in v ]
+                data[k] = [ {"@id": e } if isinstance(e, str) and (e.startswith(("http","_","/")) or e.startswith(nsprefixes)) else expand_implicit_id_nodes(e, idref_properties, nsprefixes) if isinstance(e, dict) else e for e in v ]
             elif isinstance(v, dict):
-                data[k] = expand_implicit_id_nodes(data[k], idref_properties)
+                data[k] = expand_implicit_id_nodes(data[k], idref_properties, nsprefixes)
             elif isinstance(v, list):
-                data[k] = [ expand_implicit_id_nodes(e, idref_properties) if isinstance(e,dict) else e for e in v ]
+                data[k] = [ expand_implicit_id_nodes(e, idref_properties, nsprefixes) if isinstance(e,dict) else e for e in v ]
     return data
 
 def do_object_framing(data: dict, res_id: str, history: set = set(), preserve_context: bool = True):
@@ -232,12 +232,13 @@ def serialize_to_jsonld(g: Graph, res: Union[Sequence,URIRef,None], args: Attrib
     context =[ x[0] for x in init_context(args)] + [DEVIANT_CONTEXT] 
     data = json.loads(g.serialize(format='json-ld', auto_compact=True, context=context))
 
+    nsprefixes = tuple([ x[0] + ":" for x in g.namespaces() ])
     #rdflib doesn't do 'object framing' so we have to do it in this post-processing step
     #if we have a single resource, it'll be the focus object the whole frame will be built around
     if res and (not isinstance(res, (list,tuple)) or len(res) == 1):
         assert isinstance(res, URIRef)
         if args.includecontext:
-            data = expand_implicit_id_nodes(data, [ str(x).split("/")[-1] for x in PREFER_URIREF_PROPERTIES] )
+            data = expand_implicit_id_nodes(data, [ str(x).split("/")[-1] for x in PREFER_URIREF_PROPERTIES])
         data = do_object_framing(data, str(res))
         # Hide explicit @list nodes, on read-in they will be assumed agained via the (manipulated) context
         data = hide_ordered_lists(data)
