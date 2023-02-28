@@ -3,10 +3,14 @@ import json
 import os.path
 from typing import Union, IO, Sequence, Optional
 from rdflib import Graph, URIRef, BNode, Literal
+from rdflib.namespace import SKOS
 from copy import copy
 from codemeta.common import AttribDict, license_to_spdx, SDO, CODEMETA_SOURCE, CODEMETA_LOCAL_SOURCE, SCHEMA_SOURCE, SCHEMA_LOCAL_SOURCE, STYPE_SOURCE, STYPE_LOCAL_SOURCE, IODATA_SOURCE, IODATA_LOCAL_SOURCE, init_context, REPOSTATUS_LOCAL_SOURCE, REPOSTATUS_SOURCE, get_subgraph, PREFER_URIREF_PROPERTIES, TMPDIR, DEVIANT_CONTEXT, ORDEREDLIST_PROPERTIES
 
 ORDEREDLIST_PROPERTIES_NAMES = list(os.path.basename(x) for x in ORDEREDLIST_PROPERTIES)
+NSPREFIXES = ('schema:','codemeta:','rdf:','rdfs:','skos:','trl:','dct:','dc:','dc11:','xsd:','stype:','softwaretypes:','iodata:','softwareiodata:','owl:','og:','sh:','nwo:','repostatus:','clariah:')
+#do not embed items under theme properties
+NOEMBED = ("skos:broader","skos:narrower","skos:hasTopConcept","skos:inScheme", SKOS.broader, SKOS.narrower, SKOS.hasTopConcept, SKOS.inScheme)
 
 def remove_blank_ids(data):
     """Recursively remove all blank node IDs"""
@@ -71,6 +75,7 @@ def cleanup(data: Union[dict,list,tuple,str], baseuri: Optional[str] = None) -> 
        * It removes the IDs of all former blank nodes (stubs) (making them blank again)
        * It enforces @id and @type rather than the id/type aliases
        * It removes file:// prefixes from URIs
+       * It removes the _embedding_done helper
     """
     if isinstance(data, dict):
         if 'id' in data:
@@ -79,6 +84,8 @@ def cleanup(data: Union[dict,list,tuple,str], baseuri: Optional[str] = None) -> 
         if 'type' in data:
             data['@type'] = data['type']
             del data['type']
+        if '_embedding_done' in data:
+            del data['_embedding_done']
         if '@id' in data:
             if (data['@id'].startswith('_') or data['@id'].startswith("file://") or (baseuri and data['@id'].startswith(baseuri + "stub/"))) and len(data) > 1:
                 del data['@id']
@@ -100,18 +107,18 @@ def find_main(data, res: Union[URIRef,None]):
     else:
         return data, None
 
-def expand_implicit_id_nodes(data, idref_properties, nsprefixes = ('schema:','codemeta:','rdf:','rdfs:','skos:','trl:','dct:','dc:','dc11:','xsd:','stype:','softwaretypes:','iodata:','softwareiodata:','owl:','og:','sh:','nwo:','repostatus:','clariah:')):
+def expand_implicit_id_nodes(data, idref_properties):
     """Turn nodes like `key: uri` into `key: { "@id": uri }`"""
     if isinstance(data, dict):
         for k, v in data.items():
-            if k in idref_properties and isinstance(v, str) and (v.startswith(("http","_","/")) or v.startswith(nsprefixes)):
+            if k in idref_properties and isinstance(v, str) and (v.startswith(("http","_","/")) or v.startswith(NSPREFIXES)):
                 data[k] = {"@id": v }
             elif k in idref_properties and isinstance(v, list):
-                data[k] = [ {"@id": e } if isinstance(e, str) and (e.startswith(("http","_","/")) or e.startswith(nsprefixes)) else expand_implicit_id_nodes(e, idref_properties, nsprefixes) if isinstance(e, dict) else e for e in v ]
+                data[k] = [ {"@id": e } if isinstance(e, str) and (e.startswith(("http","_","/")) or e.startswith(NSPREFIXES)) else expand_implicit_id_nodes(e, idref_properties) if isinstance(e, dict) else e for e in v ]
             elif isinstance(v, dict):
-                data[k] = expand_implicit_id_nodes(data[k], idref_properties, nsprefixes)
+                data[k] = expand_implicit_id_nodes(data[k], idref_properties)
             elif isinstance(v, list):
-                data[k] = [ expand_implicit_id_nodes(e, idref_properties, nsprefixes) if isinstance(e,dict) else e for e in v ]
+                data[k] = [ expand_implicit_id_nodes(e, idref_properties) if isinstance(e,dict) else e for e in v ]
     return data
 
 def do_object_framing(data: dict, res_id: str, history: set = set(), preserve_context: bool = True):
@@ -124,7 +131,6 @@ def do_object_framing(data: dict, res_id: str, history: set = set(), preserve_co
     #print("DEBUG itemmap", repr(itemmap))
     if res_id not in itemmap:
         raise Exception(f"Resource {res_id} not found in tree, framing not possible")
-    history.add(res_id)
     embed_items(itemmap[res_id], itemmap, history)
     if '@context' in data and preserve_context:
         #preserve context
@@ -161,22 +167,30 @@ def embed_items(data, itemmap: dict, history: set):
                 #print(f"DEBUG embedded {data[idkey]} (explicit)", file=sys.stderr)
                 history.add(data[idkey])
                 #print(f"DEBUG (recursing over embedded content)", file=sys.stderr)
-                return embed_items(itemmap[data[idkey]], itemmap, copy(history))
+                if '_embedding_done' in itemmap[data[idkey]]:
+                    data = itemmap[data[idkey]]
+                else:
+                    data = embed_items(itemmap[data[idkey]], itemmap, copy(history))
+                    data['_embedding_done'] = True
+                return data
             #elif idkey in data and data[idkey] not in itemmap:
             #    print(f"DEBUG could not embed {data[idkey]}, not in graph", file=sys.stderr)
-            #    pass
             #elif idkey in data and data[idkey] and data[idkey] in history:
-            #    print(f"DEBUG could not embed {data[idkey]}, already in history", file=sys.stderr)
-            #    pass
+            #    print(f"DEBUG could not embed {data[idkey]}, already in history, returning a reference", file=sys.stderr)
+            #    return { idkey: data[idkey] }
         for k, v in data.items():
-            if k not in ('@id','id'):
+            if k not in ('@id','id') and k not in NOEMBED:
                 #print(f"DEBUG processing key {k}, #history: {len(history)}", file=sys.stderr)
                 data[k] = embed_items(v, itemmap, copy(history)) #recursion step
-    elif isinstance(data, str) and data.startswith(("http","file://","/","_")) and data in itemmap and data not in history: #this is probably a reference even though it's not explicit
+    elif isinstance(data, str) and (data.startswith(("http","file://","/","_")) or data.startswith(NSPREFIXES)) and data in itemmap and data not in history: #this is probably a reference even though it's not explicit
         #data is an URI reference we can resolve
         history.add(data)
         #print(f"DEBUG embedded {data} (implicit), recursing over embedded content", file=sys.stderr)
-        data = embed_items(itemmap[data], itemmap, copy(history))
+        if '_embedding_done' in itemmap[data]:
+            data = itemmap[data]
+        else:
+            data = embed_items(itemmap[data], itemmap, copy(history))
+            data['_embedding_done'] = True
     return data
 
 
