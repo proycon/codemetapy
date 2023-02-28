@@ -327,6 +327,7 @@ def init_graph(args: AttribDict):
 
     g = Graph()
 
+
     #The context graph loads some additional linked data we may need for interpretation (it is not related to @context!),
     #This data is not propagated to the output graph (g) unless --includecontext is set
 
@@ -362,6 +363,24 @@ def init_graph(args: AttribDict):
     for local, _ in context_sources:
         with open(local.replace("file://",""),'rb') as f:
             contextgraph.parse(data=json.load(f), format="json-ld")
+
+    if args.addcontextgraph:
+        #these are only added to the context graph, but NOT the json-ld context, here you can also add turtle files
+        for url in args.addcontextgraph:
+            if url.startswith("http"):
+                localfile = os.path.join(TMPDIR, os.path.basename(url))
+            else:
+                localfile = url 
+            if not os.path.exists(localfile) and url.startswith("http"):
+                print(f"Downloading data for contextgraph from {url}", file=sys.stderr)
+                accept = "application/ld+json;q=1.0;application/json;q=0.9;text/turtle;q=0.8,text/plain;q=0.5"
+                r = requests.get(url, headers={ "Accept": accept})
+                r.raise_for_status()
+                with open(localfile, 'wb') as f:
+                    f.write(r.content)
+            print(f"Adding to contextgraph: {localfile}", file=sys.stderr)
+            with open(localfile, 'r') as f:
+                contextgraph.parse(f)
 
     return g, contextgraph
 

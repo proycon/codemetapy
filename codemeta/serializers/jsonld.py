@@ -232,7 +232,6 @@ def serialize_to_jsonld(g: Graph, res: Union[Sequence,URIRef,None], args: Attrib
     context =[ x[0] for x in init_context(args)] + [DEVIANT_CONTEXT] 
     data = json.loads(g.serialize(format='json-ld', auto_compact=True, context=context))
 
-    nsprefixes = tuple([ x[0] + ":" for x in g.namespaces() ])
     #rdflib doesn't do 'object framing' so we have to do it in this post-processing step
     #if we have a single resource, it'll be the focus object the whole frame will be built around
     if res and (not isinstance(res, (list,tuple)) or len(res) == 1):

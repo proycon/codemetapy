@@ -104,6 +104,7 @@ def main():
     parser.add_argument('-V','--validate', type=str, help="Validate against the provided SHACL file. Adds a review property with the condensed validation results.", action='store',required=False)
     parser.add_argument('--enrich', help="Enable automatic inference and enrichment of the metadata where possible", action='store_true',required=False)
     parser.add_argument('--addcontext', help="Add the specified jsonld (must be a URL) to the context (and to the context graph). May be specified multiple times.", action='append',required=False)
+    parser.add_argument('--addcontextgraph', help="Add the specified jsonld or turtle (must be a URL) to the context graph, but NOT to the main json-ld context. May be specified multiple times.", action='append',required=False)
     parser.add_argument('--includecontext', help="Include all context vocabularies in the main graph and express it verbosely in serialisations. This makes the resoluting codemeta.json richer without the need to query certain external vocabularies, at the cost of added redundancy.", action='store_true',required=False)
     parser.add_argument('--interpreter', help="Start interactive python interpreter after loading the graph", action='store_true',required=False)
     parser.add_argument('--exitv', help="Set exit status according to validation result. Use with --validate", action='store_true',required=False)
