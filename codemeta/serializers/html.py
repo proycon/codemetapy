@@ -47,11 +47,17 @@ def get_triples(g: Graph, res: Union[URIRef,BNode,None], prop, labelprop=(SDO.na
                     pos = int(pos) if pos.isnumeric() else 9999
             label = None
             for p in labelprop:
-                label = g.value(res2, p)
+                for _,_,candidate in g.triples((res2,p,None)):
+                    if isinstance(candidate, Literal) and candidate.language in (None,'en'): #hard-coded english for now
+                        label = candidate
+                        break
                 if label: 
                     break
                 elif contextgraph:
-                    label = contextgraph.value(res2, p)
+                    for _,_,candidate in contextgraph.triples((res2,p,None)):
+                        if isinstance(candidate, Literal) and candidate.language in (None,'en'): #hard-coded english for now
+                            label = candidate
+                            break
                     if label: 
                         break
             if label:
