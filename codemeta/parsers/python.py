@@ -12,7 +12,9 @@ from rdflib import Graph, URIRef, BNode, Literal
 from rdflib.namespace import RDF
 from codemeta.common import AttribDict, add_triple, CODEMETA, SOFTWARETYPES, add_authors, SDO, COMMON_SOURCEREPOS, generate_uri, get_last_component
 from codemeta.crosswalk import readcrosswalk, CWKey
+import pyproject_parser
 import pep517.meta
+
 
 
 def splitdependencies(s: str):
@@ -39,7 +41,8 @@ def parsedependency(s: str):
         s.find(">") if s.find(">") != -1 else 999999,
         s.find("!") if s.find("!") != -1 else 999999,
         s.find("~") if s.find("~") != -1 else 999999,
-        s.find("=") if s.find("=") != -1 else 999999
+        s.find("=") if s.find("=") != -1 else 999999,
+        s.find("^") if s.find("^") != -1 else 999999
     )
     if end != 999999:
         identifier = s[:end]
@@ -64,6 +67,54 @@ def parsedependency(s: str):
         version = version.split(";")[0]
     return identifier, version.strip("[]() -.,:")
 
+
+def parse_classifier(value: str, g: Graph, res: Union[URIRef, BNode], crosswalk, args: AttribDict):
+    fields = [ x.strip() for x in value.strip().split('::') ]
+    classifier = fields[0]
+    pipkey = f"classifiers['{classifier}']".lower()
+    if pipkey in crosswalk[CWKey.PYPI]:
+        key = crosswalk[CWKey.PYPI][pipkey]
+        det = " > " if key != "programmingLanguage" else " "
+        value = det.join(fields[1:])
+        add_triple(g, res, "runtimePlatform" if key == "programmingLanguage" else key, value, args)
+    elif classifier.lower() in crosswalk[CWKey.PYPI]:
+        key = crosswalk[CWKey.PYPI][classifier.lower()]
+        det = " > " if key != "programmingLanguage" else " "
+        value = det.join(fields[1:])
+        add_triple(g, res, "runtimePlatform" if key == "programmingLanguage" else key, value, args)
+    elif classifier == "Intended Audience":
+        add_triple(g, res, "audience", " > ".join(fields[1:]), args)
+    else:
+        print("NOTICE: Classifier "  + fields[0] + " has no translation",file=sys.stderr)
+
+def parse_url(label: str, url: str, g: Graph, res: Union[URIRef, BNode], crosswalk, args: AttribDict):
+    #label is free so we do some educated guessed
+    #(see https://packaging.python.org/en/latest/specifications/core-metadata/#project-url-multiple-use)
+    label = label.lower()
+    if "repository" in label or label in ('git','github','code','sourcecode',"source"):
+        add_triple(g, res, "codeRepository", url, args)
+    elif label in ("bug tracker","issue tracker","tracker", "issues"):
+        add_triple(g, res, "issueTracker", url, args)
+    elif label in ("documentation", "docs","api reference","reference"):
+        add_triple(g, res, "softwareHelp", url, args)
+    elif label == "readme":
+        add_triple(g, res, "readme", url, args)
+    elif label in ("build","build instructions","installation"):
+        add_triple(g, res, "buildInstructions", url, args)
+    elif label in ("release notes","releases"):
+        add_triple(g, res, "releaseNotes", url, args)
+    elif label in ("continous integration", "ci","tests"):
+        add_triple(g, res, "contIntegration", url, args)
+    else:
+        add_triple(g, res, "url", url, args)
+
+def metadata_from_pyproject(pyproject: pyproject_parser.PyProject):
+    if pyproject.project and 'name' in pyproject.project:
+        return pyproject.project
+    if pyproject.tool and 'name' in list(pyproject.tool.values())[0]:
+        return list(pyproject.tool.values())[0]
+    return None
+
 #pylint: disable=W0621
 def parse_python(g: Graph, res: Union[URIRef, BNode], packagename: str, crosswalk, args: AttribDict):
     """Parses python package metadata and converts it to codemeta
@@ -79,15 +130,31 @@ def parse_python(g: Graph, res: Union[URIRef, BNode], packagename: str, crosswal
         g.add((res, SDO.runtimePlatform, Literal("Python 3")))
 
     prevdir = None
+    pkg = None
     if os.path.basename(packagename) == "pyproject.toml":
-        print(f"Loading metadata from {packagename} via PEP517",file=sys.stderr) #pylint: disable=W0212
+        print(f"Loading metadata from {packagename} via pyproject-parser",file=sys.stderr) #pylint: disable=W0212
+        metadata = None
         try:
-            pkg = pep517.meta.load(os.path.dirname(packagename))
+            pyproject = pyproject_parser.PyProject.load(packagename)
+            metadata = metadata_from_pyproject(pyproject)
+            if not metadata:
+                print(f"Failed to find complete enough metadata in pyproject.toml",file=sys.stderr)
         except Exception as e:
-            print(f"Failed to process {packagename} via PEP517: {str(e)}",file=sys.stderr)
-            sys.exit(4)
-        packagename = pkg.name
+            print(f"Failed to process {packagename} via pyproject-parser: {str(e)}",file=sys.stderr)
+       
+        if not metadata:
+            print(f"Fallback: Loading metadata from {packagename} via PEP517",file=sys.stderr) #pylint: disable=W0212
+            try:
+                pkg = pep517.meta.load(os.path.dirname(packagename))
+            except Exception as e:
+                print(f"Failed to process {packagename} via PEP517: {str(e)}",file=sys.stderr)
+                sys.exit(4)
+            packagename = pkg.name
+            metadata = pkg.metadata.items()
+        else:
+            metadata = metadata.items()
     else:
+        print(f"Loading metadata from {packagename} via importlib.metadata",file=sys.stderr) #pylint: disable=W0212
         try:
             pkg = importlib_metadata.distribution(packagename)
         except importlib_metadata.PackageNotFoundError:
@@ -104,59 +171,53 @@ def parse_python(g: Graph, res: Union[URIRef, BNode], packagename: str, crosswal
                 print(f"No such python package: {packagename}",file=sys.stderr)
                 if prevdir: os.chdir(prevdir)
                 sys.exit(4)
+        if isinstance(pkg._path, str):
+            print(f"Found metadata in {pkg._path}",file=sys.stderr) #pylint: disable=W0212
+        metadata = pkg.metadata.items()
             #if prevdir: os.chdir(prevdir)
 
-    if isinstance(pkg._path, str):
-        print(f"Found metadata in {pkg._path}",file=sys.stderr) #pylint: disable=W0212
-    for key, value in pkg.metadata.items():
-        if key == "Classifier":
-            fields = [ x.strip() for x in value.strip().split('::') ]
-            classifier = fields[0]
-            pipkey = f"classifiers['{classifier}']".lower()
-            if pipkey in crosswalk[CWKey.PYPI]:
-                key = crosswalk[CWKey.PYPI][pipkey]
-                det = " > " if key != "programmingLanguage" else " "
-                value = det.join(fields[1:])
-                add_triple(g, res, "runtimePlatform" if key == "programmingLanguage" else key, value, args)
-            elif classifier.lower() in crosswalk[CWKey.PYPI]:
-                key = crosswalk[CWKey.PYPI][classifier.lower()]
-                det = " > " if key != "programmingLanguage" else " "
-                value = det.join(fields[1:])
-                add_triple(g, res, "runtimePlatform" if key == "programmingLanguage" else key, value, args)
-            elif classifier == "Intended Audience":
-                add_triple(g, res, "audience", " > ".join(fields[1:]), args)
-            else:
-                print("NOTICE: Classifier "  + fields[0] + " has no translation",file=sys.stderr)
+    for key, value in metadata:
+        if key == "Classifier": #importlib.metadata
+            parse_classifier(value, g, res, crosswalk, args)
+        elif key == "classifiers" and isinstance(value, (list,tuple)): #pyproject
+            for e in value:
+                parse_classifier(e, g, res, crosswalk, args)
         else:
-            if key == "Author":
+            if key == "authors" and isinstance(value, (list,tuple)): #pyproject
+                for e in value:
+                    if isinstance(e, str):
+                        add_authors(g, res, e, single_author=True, baseuri=args.baseuri)
+                    elif isinstance(e, dict) and 'name' in e:
+                        add_authors(g, res, e['name'], single_author=True, mail=e.get('mail',""), baseuri=args.baseuri)
+            elif key == "Author" and pkg: #distutils
                 add_authors(g, res, value, single_author=args.single_author, mail=pkg.metadata.get("Author-email",""), baseuri=args.baseuri)
             elif key == "Author-email":
                 continue #already handled by the above
             elif key == "Project-URL":
                 if ',' in value:
                     label, url = value.split(",",1) #according to spec
-                    label = label.strip().lower()
+                    label = label.strip()
                     url = url.strip()
-                    #label is free so we do some educated guessed
-                    #(see https://packaging.python.org/en/latest/specifications/core-metadata/#project-url-multiple-use)
-                    if "repository" in label or label in ('git','github','code','sourcecode'):
-                        add_triple(g, res, "codeRepository", url, args)
-                    elif label in ("bug tracker","issue tracker","issues"):
-                        add_triple(g, res, "issueTracker", url, args)
-                    elif label in ("documentation", "docs","api reference","reference"):
-                        add_triple(g, res, "softwareHelp", url, args)
-                    elif label == "readme":
-                        add_triple(g, res, "readme", url, args)
-                    elif label in ("build","build instructions","installation"):
-                        add_triple(g, res, "buildInstructions", url, args)
-                    elif label in ("release notes","releases"):
-                        add_triple(g, res, "releaseNotes", url, args)
-                    elif label in ("continous integration", "ci","tests"):
-                        add_triple(g, res, "contIntegration", url, args)
-                    else:
-                        add_triple(g, res, "url", url, args)
+                    parse_url(label, url, g, res, crosswalk, args)
                 else:
-                    add_triple(g, res, "url", value, args) #input probably not according to spec
+                    #input probably not according to spec
+                    add_triple(g, res, "url", value, args) 
+            elif key == "urls" and isinstance(value,dict): #pyproject.toml
+                for label, url in value.items():
+                    parse_url(label, url, g, res, crosswalk, args)
+            elif key == 'repository':
+                add_triple(g, res, "codeRepository", value, args)
+            elif key == 'dependencies':
+                if isinstance(value, dict):
+                    for k,v in value.items():
+                        add_dependency(g, res, f"{k} {v}", args)
+                elif isinstance(value, list):
+                    for e in value:
+                        #                      v-- we may get a pyproject_parser.Requirement() instance here, so convert to str()
+                        add_dependency(g, res, str(e), args)
+            elif key == 'description' and not pkg: #pyproject.toml
+                #note: in distutils this is called 'summary' and we don't want the Description field there because it contains the whole README 
+                add_triple(g, res, 'description', value, args)
             elif key.lower() in crosswalk[CWKey.PYPI]:
                 add_triple(g, res, crosswalk[CWKey.PYPI][key.lower()], value, args)
                 if crosswalk[CWKey.PYPI][key.lower()] == "url":
@@ -167,15 +228,15 @@ def parse_python(g: Graph, res: Union[URIRef, BNode], packagename: str, crosswal
                                 prefuri = value
                             break
             else:
-                print("WARNING: No translation for distutils key " + key,file=sys.stderr)
+                print("WARNING: No translation for distutils or pyproject.toml key " + key,file=sys.stderr)
 
-    if pkg.requires:
+    if pkg and pkg.requires:
         for value in pkg.requires:
             add_dependency(g, res, value, args)
 
     test_and_set_identifier(g, res, args)
 
-    if args.with_stypes:
+    if args.with_stypes and pkg:
         found = False
         for rawentrypoint in pkg.entry_points:
             if rawentrypoint.group == "console_scripts":
@@ -201,7 +262,7 @@ def add_dependency(g: Graph, res: Union[URIRef, BNode], value: str, args: Attrib
         if 'extra ==' in dependency and args.no_extras:
             continue
         dependency, depversion = parsedependency(dependency.strip())
-        if dependency:
+        if dependency and not dependency.startswith(('<','>','=','^')):
             print(f"Found dependency {dependency} {depversion}",file=sys.stderr)
             depres = URIRef(generate_uri(dependency+depversion.replace(' ',''),args.baseuri,"dependency")) #version number is deliberately in ID here!
             g.add((depres, RDF.type, SDO.SoftwareApplication))
