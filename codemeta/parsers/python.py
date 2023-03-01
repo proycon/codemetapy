@@ -218,6 +218,17 @@ def parse_python(g: Graph, res: Union[URIRef, BNode], packagename: str, crosswal
             elif key == 'description' and not pkg: #pyproject.toml
                 #note: in distutils this is called 'summary' and we don't want the Description field there because it contains the whole README 
                 add_triple(g, res, 'description', value, args)
+            elif key in ('gui_scripts','gui-scripts') and isinstance(value, dict): #pyproject.toml, flit, poetry?
+                for script_name, rawentrypoint in value.items():
+                    module_name = rawentrypoint.strip().split(':')[0]
+                    interfacetype = SOFTWARETYPES.DesktopApplication
+                    add_entrypoint(g, res, script_name, module_name, interfacetype, args)
+            elif key == 'scripts' and isinstance(value, dict): #pyproject.toml, poetry
+                for script_name, rawentrypoint in value.items():
+                    module_name = rawentrypoint.strip().split(':')[0]
+                    #we don't really know for sure if it's a CLI or GUI application, assume CLI
+                    interfacetype = SOFTWARETYPES.CommandLineApplication
+                    add_entrypoint(g, res, script_name, module_name, interfacetype, args)
             elif key.lower() in crosswalk[CWKey.PYPI]:
                 add_triple(g, res, crosswalk[CWKey.PYPI][key.lower()], value, args)
                 if crosswalk[CWKey.PYPI][key.lower()] == "url":
