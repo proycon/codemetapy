@@ -8,11 +8,9 @@ from codemeta.common import AttribDict, add_triple, CODEMETA, SOFTWARETYPES, add
 
 def parse_rust(g: Graph, res: Union[URIRef, BNode], file: IO ,  args: AttribDict):
     data = tomlkit.parse(file.read())
-    foundrepo = False
     if 'package' in data:
         for key, value in data['package'].items():
             if key == 'repository':
-                foundrepo = True
                 add_triple(g, res, 'codeRepository', value, args)
             elif key == 'authors':
                 if isinstance(value, str):
@@ -28,7 +26,7 @@ def parse_rust(g: Graph, res: Union[URIRef, BNode], file: IO ,  args: AttribDict
                     print("WARNING: keywords in Cargo.toml should be a list",file=sys.stderr)
             elif key == 'homepage':
                 for sourcerepo in COMMON_SOURCEREPOS:
-                    if value.startswith(sourcerepo) and not foundrepo:
+                    if value.startswith(sourcerepo) and 'repository' not in data['package']:
                         #catch if we're describing the source code repo instead
                         add_triple(g, res, "codeRepository", value, args)
                         break
