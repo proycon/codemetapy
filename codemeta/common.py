@@ -890,6 +890,11 @@ def compose(g: Graph, newgraph: Graph, res: URIRef, args: AttribDict):
         if (s,p,None) in g:
             for s,p,o_old in g.triples((res,p,None)):
                 if (s,p,o_old) not in newgraph:
+                    if p in (CODEMETA.developmentStatus, SDO.applicationCategory):
+                        #this is a bit simplistic for now...
+                        if different_domain(o,o_old):
+                            #old one an new ones are URIs and have different domain, we want to keep both, do NOT override
+                            continue
                     print(f"{HEAD} overriding old {p} ({o_old} -> {o})",file=sys.stderr)
                     g.remove((s,p,o_old))
 
@@ -899,6 +904,12 @@ def compose(g: Graph, newgraph: Graph, res: URIRef, args: AttribDict):
     #there must be NO blank nodes anymore at this point!!! They might collide
     g += newgraph
     print(f"{HEAD} processed {len(newgraph)} new triples, total is now {len(g)}",file=sys.stderr)
+
+def different_domain(res: URIRef, res2: URIRef) -> bool:
+    if res.startswith("http") and res2.startswith("http"):
+        return res.split('/')[2] != res2.split('/')[2]
+    else:
+        return False
 
 
 def correct(g:Graph, res: URIRef, args: AttribDict):
@@ -912,7 +923,7 @@ def correct(g:Graph, res: URIRef, args: AttribDict):
     for _,_,status in g.triples((res, CODEMETA.developmentStatus,None)):
         if str(status).lower() in REPOSTATUS_MAP.values():
             print(f"{HEAD} automatically converting status {status} to repostatus URI",file=sys.stderr)
-            g.remove((res, CODEMETA.developmentstatus, status))
+            g.remove((res, CODEMETA.developmentStatus, status))
             g.set((res, CODEMETA.developmentStatus, URIRef("https://www.repostatus.org/#" + str(status).lower())))
 
     #attempt to convert licenses to a full spdx.org URI
