@@ -45,8 +45,8 @@
         {% if (res, SDO.applicationCategory, None) in g %}
         <div class="keywords">
         <strong>Category:</strong> <ul>
-             {% for label, _ in get_triples(g, res, SDO.applicationCategory, abcsort=True, contextgraph=contextgraph) %}
-                <li property="schema:">{{ label }}</li>
+             {% for label, catres in get_triples(g, res, SDO.applicationCategory, abcsort=True, contextgraph=contextgraph) %}
+                <li property="schema:" title="{{ get_description(contextgraph, catres) }}">{{ label }}</li>
              {% endfor %}
         </ul>
         </div>

@@ -78,6 +78,13 @@ def get_triples(g: Graph, res: Union[URIRef,BNode,None], prop, labelprop=(SDO.na
             pass
     return [ tuple(x[:2]) for x in results ]
 
+def get_description(contextgraph: Graph, res: Union[URIRef,BNode,None]):
+    """Gets the skos:note for a specific resource"""
+    for _,_,candidate in contextgraph.triples((res,SKOS.note,None)):
+        if isinstance(candidate, Literal) and candidate.language in (None,'en'): #hard-coded english for now
+            return candidate
+    return ""
+
 
 def _get_sortkey2(g: Graph, res: Union[URIRef,BNode,None]):
     #set a secondary sort-key for items with the very same name
@@ -250,7 +257,7 @@ def serialize_to_html( g: Graph, res: Union[Sequence,URIRef,None], args: AttribD
         else:
             index = get_index(g)
     template = env.get_template(template)
-    return template.render(g=g,res=res, SDO=SDO,CODEMETA=CODEMETA, CODEMETAPY=CODEMETAPY, RDF=RDF,RDFS=RDFS,STYPE=SOFTWARETYPES, SOFTWAREIODATA=SOFTWAREIODATA, REPOSTATUS=REPOSTATUS, SKOS=SKOS, TRL=TRL, get_triples=get_triples, get_target_platforms=get_target_platforms, type_label=type_label, css=args.css, contextgraph=contextgraph, URIRef=URIRef, get_badge=get_badge, now=datetime.now().strftime("%Y-%m-%d %H:%M:%S"), index=index, get_interface_types=get_interface_types,baseuri=args.baseuri,baseurl=args.baseurl, toolstore=args.toolstore, intro=args.intro, get_last_component=get_last_component, is_resource=is_resource, int=int, range=range, str=str, Literal=Literal, get_version=get_version, chain=chain,get_doi=get_doi, has_actionable_targetproducts=has_actionable_targetproducts, has_displayable_targetproducts=has_displayable_targetproducts, **kwargs)
+    return template.render(g=g,res=res, SDO=SDO,CODEMETA=CODEMETA, CODEMETAPY=CODEMETAPY, RDF=RDF,RDFS=RDFS,STYPE=SOFTWARETYPES, SOFTWAREIODATA=SOFTWAREIODATA, REPOSTATUS=REPOSTATUS, SKOS=SKOS, TRL=TRL, get_triples=get_triples, get_description=get_description, get_target_platforms=get_target_platforms, type_label=type_label, css=args.css, contextgraph=contextgraph, URIRef=URIRef, get_badge=get_badge, now=datetime.now().strftime("%Y-%m-%d %H:%M:%S"), index=index, get_interface_types=get_interface_types,baseuri=args.baseuri,baseurl=args.baseurl, toolstore=args.toolstore, intro=args.intro, get_last_component=get_last_component, is_resource=is_resource, int=int, range=range, str=str, Literal=Literal, get_version=get_version, chain=chain,get_doi=get_doi, has_actionable_targetproducts=has_actionable_targetproducts, has_displayable_targetproducts=has_displayable_targetproducts, **kwargs)
 
 
 

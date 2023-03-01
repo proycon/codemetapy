@@ -101,16 +101,16 @@
     {% if (targetres, SDO.applicationCategory, None) in g %}
     <div class="category">
         <i class="fa fa-sitemap" title="Category"></i> <ul>
-         {% for label, _ in get_triples(g, targetres, SDO.applicationCategory, abcsort=True) %}
-            <li property="schema:applicationCategory">{{ label }}</li>
+         {% for label, catres in get_triples(g, targetres, SDO.applicationCategory, abcsort=True) %}
+             <li property="schema:applicationCategory" title="{{ get_description(contextgraph, catres) }}">{{ label }}</li>
          {% endfor %}
         </ul>
     </div>
     {% elif (res, SDO.applicationCategory, None) in g %}
     <div class="category">
         <i class="fa fa-sitemap" title="Category"></i> <ul>
-         {% for label, _ in get_triples(g, res, SDO.applicationCategory, abcsort=True) %}
-            <li property="schema:applicationCategory">{{ label }}</li>
+         {% for label, catres in get_triples(g, res, SDO.applicationCategory, abcsort=True) %}
+            <li property="schema:applicationCategory" title="{{ get_description(contextgraph, catres) }}">{{ label }}</li>
          {% endfor %}
         </ul>
     </div>

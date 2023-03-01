@@ -166,8 +166,8 @@
         <dt class="category">Category</dt>
         <dd class="category">
             <ul>
-                 {% for label, _ in get_triples(g, sscres, SDO.applicationCategory, abcsort=True, contextgraph=contextgraph) %}
-                    <li property="schema:applicationCategory">{{ label }}</li>
+                 {% for label, catres in get_triples(g, sscres, SDO.applicationCategory, abcsort=True, contextgraph=contextgraph) %}
+                    <li property="schema:applicationCategory" title="{{ get_description(contextgraph, catres) }}">{{ label }}</li>
                  {% endfor %}
             </ul>
         </dd>
@@ -177,7 +177,7 @@
         <dt class="keywords">Keywords <i class="fa fa-tags"></i></dt>
         <dd class="keywords">
         <ul>
-             {% for label, _ in get_triples(g, sscres, SDO.keywords, abcsort=True, contextgraph=contextgraph) %}
+             {% for label, catres in get_triples(g, sscres, SDO.keywords, abcsort=True, contextgraph=contextgraph) %}
                 <li property="schema:keywords">{{ label }}</li>
              {% endfor %}
         </ul>
