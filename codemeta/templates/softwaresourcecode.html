@@ -63,7 +63,7 @@
     <h3>Screenshots</h3>
 
     <div class="screenshots">
-        {% for url, res2 in get_triples(g, sscres, SDO.author, SDO.url) %}
+        {% for url, res2 in get_triples(g, sscres, SDO.screenshot, SDO.url) %}
             <img src="{{ url }}" title="{{ g.value(res2, SDO.caption) }}" />
         {% endfor %}
     </div>
