@@ -133,9 +133,14 @@ def parse_java(g: Graph, res: Union[URIRef, BNode], file: IO , crosswalk, args: 
                     g.add((orgres, SDO.url, Literal(org_url)))
                 g.add((res, SDO.producer, orgres))
         elif key.lower() in crosswalk[CWKey.MAVEN]:
+            value = node.text
+            if group_id and value.find("${project.groupId}") != -1:
+                value = value.replace("${project.groupId}", group_id)
+            if artifact_id and value.find("${project.artifactId}") != -1:
+                value = value.replace("${project.artifactId}", artifact_id)
             key = crosswalk[CWKey.MAVEN][key.lower()]
             if key != 'identifier':
-                add_triple(g, res, key, node.text, args)
+                add_triple(g, res, key, value, args)
 
     if group_id and artifact_id:
         add_triple(g, res, "identifier", group_id + "." + artifact_id, args)
