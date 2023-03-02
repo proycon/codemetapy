@@ -14,11 +14,10 @@
         "audienceType": "Developers"
     },
     "author": {
+        "@id": "https://orcid.org/0000-0002-1046-0006",
         "@type": "Person",
         "affiliation": {
-            "@id": "/org/knaw-humanities-cluster-clst,-radboud-university",
-            "@type": "Organization",
-            "name": "KNAW Humanities Cluster & CLST, Radboud University"
+            "@id": "https://huc.knaw.nl"
         },
         "email": "proycon@anaproy.nl",
         "familyName": "van Gompel",
@@ -27,11 +26,10 @@
     },
     "codeRepository": "https://github.com/proycon/codemetapy.git",
     "contributor": {
+        "@id": "https://orcid.org/0000-0002-1046-0006",
         "@type": "Person",
         "affiliation": {
-            "@id": "/org/knaw-humanities-cluster-clst,-radboud-university",
-            "@type": "Organization",
-            "name": "KNAW Humanities Cluster & CLST, Radboud University"
+            "@id": "https://huc.knaw.nl"
         },
         "email": "proycon@anaproy.nl",
         "familyName": "van Gompel",
@@ -67,10 +65,10 @@
     ],
     "license": "https://spdx.org/licenses/GPL-3.0-only",
     "maintainer": {
+        "@id": "https://orcid.org/0000-0002-1046-0006",
         "@type": "Person",
         "affiliation": {
-            "@type": "Organization",
-            "name": "KNAW Humanities Cluster & CLST, Radboud University"
+            "@id": "https://huc.knaw.nl"
         },
         "email": "proycon@anaproy.nl",
         "familyName": "van Gompel",
@@ -83,6 +81,22 @@
         "BSD",
         "macOS"
     ],
+    "producer": {
+        "@id": "https://huc.knaw.nl",
+        "@type": "Organization",
+        "name": "KNAW Humanities Cluster",
+        "url": "https://huc.knaw.nl",
+        "parentOrganization": {
+            "@id": "https://knaw.nl",
+            "@type": "Organization",
+            "name": "KNAW",
+            "url": "https://knaw.nl",
+            "location": {
+                "@type": "Place",
+                "name": "Amsterdam"
+            }
+        }
+    },
     "readme": "https://github.com/proycon/codemetapy/blob/README.rst",
     "runtimePlatform": [
         "Python 3.6",
