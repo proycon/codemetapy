@@ -719,14 +719,14 @@ def reconcile(g: Graph, res: URIRef, args: AttribDict):
     name = g.value(res,SDO.name)
     if name:
         targetproducts = set()
-        for s,p,targetproduct in g.triples((res, SDO.targetProduct, None)):
+        for _,_,targetproduct in g.triples((res, SDO.targetProduct, None)):
             if isinstance(targetproduct, (URIRef, BNode)):
-                for t in g.triples((targetproduct,RDF.type,None)):
+                for _,_,t in g.triples((targetproduct,RDF.type,None)):
                     if t in (SDO.WebApplication, SDO.WebAPI):
                         targetproducts.add(targetproduct)
         if len(targetproducts) > 1:
-            no_stubs = set(targetproduct for targetproduct in targetproducts if g.value(targetproduct, SDO.url) is not None and g.value((targetproduct, SDO.name, name)) == name)
-            stubs = set(targetproduct for targetproduct in targetproducts if g.value(targetproduct, SDO.url) is None)
+            no_stubs = set(targetproduct for targetproduct in targetproducts if (targetproduct, SDO.url, None) in g and (targetproduct, SDO.name, name) in g)
+            stubs = set(targetproduct for targetproduct in targetproducts if (targetproduct, SDO.url,None) not in g)
             if stubs and no_stubs:
                 for stub in stubs:
                     print(f"{HEAD} removing stub targetProduct (WebApplication or WebAPI) without a URL, as we already have one (or more) with URL",file=sys.stderr)
