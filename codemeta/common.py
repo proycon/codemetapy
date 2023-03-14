@@ -725,8 +725,8 @@ def reconcile(g: Graph, res: URIRef, args: AttribDict):
                     if t in (SDO.WebApplication, SDO.WebAPI):
                         targetproducts.add(targetproduct)
         if len(targetproducts) > 1:
-            no_stubs = set(targetproduct for targetproduct in targetproducts if (targetproduct, SDO.url, None) in g and (targetproduct, SDO.name, name) in g)
-            stubs = set(targetproduct for targetproduct in targetproducts if (targetproduct, SDO.url,None) not in g)
+            no_stubs = set(targetproduct for targetproduct in targetproducts if g.value(targetproduct, SDO.url) != None)
+            stubs = set(targetproduct for targetproduct in targetproducts if not g.value(targetproduct, SDO.url) and (targetproduct, SDO.name, name) in g)
             if stubs and no_stubs:
                 for stub in stubs:
                     print(f"{HEAD} removing stub targetProduct (WebApplication or WebAPI) without a URL, as we already have one (or more) with URL",file=sys.stderr)
@@ -741,6 +741,7 @@ def reconcile(g: Graph, res: URIRef, args: AttribDict):
             nongpl = True
     if gpl and nongpl:
         print(f"{HEAD} license conflict, you can't use GPL alongside other licenses!",file=sys.stderr)
+    print(f"{HEAD} done",file=sys.stderr)
 
 
 def enrich(g: Graph, res: URIRef, args: AttribDict):
