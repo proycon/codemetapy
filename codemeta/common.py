@@ -719,18 +719,18 @@ def reconcile(g: Graph, res: URIRef, args: AttribDict):
     name = g.value(res,SDO.name)
     if name:
         targetproducts = set()
-        for s,p,targetproduct in g.triples((res, TRL.targetProduct, None)):
+        for s,p,targetproduct in g.triples((res, SDO.targetProduct, None)):
             if isinstance(targetproduct, (URIRef, BNode)):
                 for t in g.triples((targetproduct,RDF.type,None)):
                     if t in (SDO.WebApplication, SDO.WebAPI):
                         targetproducts.add(targetproduct)
         if len(targetproducts) > 1:
-            no_stubs = set(targetproduct for targetproduct in targetproducts if g.value((targetproduct, SDO.url,None)) is not None and g.value((targetproduct, SDO.name, name)) == name)
-            stubs = set(targetproduct for targetproduct in targetproducts if g.value((targetproduct, SDO.url,None)) is None)
+            no_stubs = set(targetproduct for targetproduct in targetproducts if g.value(targetproduct, SDO.url) is not None and g.value((targetproduct, SDO.name, name)) == name)
+            stubs = set(targetproduct for targetproduct in targetproducts if g.value(targetproduct, SDO.url) is None)
             if stubs and no_stubs:
                 for stub in stubs:
                     print(f"{HEAD} removing stub targetProduct (WebApplication or WebAPI) without a URL, as we already have one (or more) with URL",file=sys.stderr)
-                    g.remove((res, TRL.targetProduct, stub))
+                    g.remove((res, SDO.targetProduct, stub))
 
     gpl = False
     nongpl = False
