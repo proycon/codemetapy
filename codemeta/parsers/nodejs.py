@@ -82,7 +82,7 @@ def parse_nodejs(g: Graph, res: Union[URIRef, BNode], file: IO , crosswalk, args
                     #npm allows strings like "Barney Rubble <b@rubble.com> (http://barnyrubble.tumblr.com/)"
                     #our add_authors function can handle that directly
                     add_authors(g, res, value, single_author=True, baseuri=args.baseuri)
-            elif key == 'contributor':
+            elif key == 'contributors':
                 if isinstance(value, dict) and 'name' in value:
                     authors = add_authors(g, res, value['name'], property=SDO.contributor, single_author=True, mail=value.get("email"), baseuri=args.baseuri)
                 elif isinstance(value, str):
