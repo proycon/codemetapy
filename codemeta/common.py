@@ -842,8 +842,8 @@ def guess_interfacetype(g: Graph, res: Union[URIRef,BNode], args: AttribDict) ->
                 counter.update({INTERFACE_CLUES_DEPS[depname]:1})
 
     if counter:
-        print(f"{HEAD} Guessing interface type {interfacetype} based on clues",file=sys.stderr)
         interfacetype = max(counter)
+        print(f"{HEAD} Guessing interface type {interfacetype} based on clues",file=sys.stderr)
         targetres = URIRef(generate_uri(baseuri=args.baseuri, prefix="stub"))
         g.set((targetres, RDF.type, interfacetype))
         name = g.value(res,SDO.name)
