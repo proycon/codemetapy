@@ -44,6 +44,46 @@
 
     {% endif %}
 
+    {% if g.value(targetres, SDO.screenshot)  %}
+    <h3>Screenshots</h3>
+
+    <div class="screenshots">
+        {% for url, res2 in get_triples(g, targetres, SDO.screenshot, SDO.url) %}
+            {% if g.value(res2, SDO.caption) %}
+                <img src="{{ url }}" alt="screenshot: {{ g.value(res2, SDO.caption) }}" title="{{ g.value(res2, SDO.caption) }}" />
+            {% else %}
+                <img src="{{ url }}" alt="screenshot" />
+            {% endif %}
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    {% if g.value(targetres, CODEMETA.referencePublication) or g.value(targetres, SDO.citation) %}
+
+    <h3>References</h3>
+
+    <div class="references">
+        <ul>
+        {% for title, ref in get_triples(g, targetres, CODEMETA.referencePublication, contextgraph=contextgraph) %}
+        {% if ref %}
+        <li>{% include 'reference.html' %}</li>
+        {% else %}
+        <li>{{ title }}</li>
+        {% endif %}
+        {% endfor %}
+
+        {% for title, ref in get_triples(g, targetres, SDO.citation, contextgraph=contextgraph) %}
+        {% if ref %}
+        <li>{% include 'reference.html' %}</li>
+        {% else %}
+        <li>{{ title }}</li>
+        {% endif %}
+        {% endfor %}
+        </ul>
+    </div>
+
+    {% endif %}
+
     <div class="properties">
         <dl>
             <dt class="type">Type</dt>
