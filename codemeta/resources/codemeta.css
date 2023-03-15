@@ -516,3 +516,6 @@ body.page div.cards div.card {
     display: block;
     border: 1px solid black;
 }
+div.screenshots img {
+    max-width: 800px;
+}
