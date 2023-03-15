@@ -33,7 +33,7 @@ nav {
 nav a, nav a:visited {
     color: #000c48;
 }
-div#navbar div#search button.search {
+div#navbar div#search button {
     display: inline-block;
     width: 24px;
     height: 24px;
@@ -42,7 +42,6 @@ div#navbar div#search button.search {
 div#navbar div#search input {
     margin: 0px;
 }
-
 div.leftcolumn {
     flex: 60%;
     padding: 10px;
@@ -515,4 +514,32 @@ table td.group {
 body.page div.cards div.card {
     display: block;
     border: 1px solid black;
+}
+#filters {
+    position: absolute;
+    top: 80px;
+    left: 10px;
+    display: none;
+    max-width: 320px;
+    border: 1px solid #000c48;
+    border-radius: 20px;
+    background: #fff;
+    padding: 5px;
+    text-align: left;
+    font-size: 90%;
+}
+#filters>ul>li {
+    font-weight: bold;
+}
+#filter label {
+    font-weight: normal;
+}
+#filters ul {
+    padding-left: 10px;
+}
+#filters li {
+    padding-left: 0px;
+}
+#filters ul {
+    list-style: none;
 }

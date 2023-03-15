@@ -13,12 +13,16 @@
         <i class="fa fa-keyboard"></i> <a href="{{baseurl}}api/">SPARQL</a>
     </nav>
     <div id="search">
+        <button class="filter" title="Show filters" onclick="document.getElementById('filters').display = 'block'">
         <form method="get" action="{{baseurl}}">
+            <svg fill="currentColor" viewBox="0 0 1000 1000" xmlns="http://www.w3.org/2000/svg"><path d="M976.3,241.2c-0.3,0.5-0.4,1.1-0.7,1.5L635,588.6l0.7,209.2c0.1,10.3-5.3,19.9-14.2,25L400.2,951.3c-4.4,2.6-9.4,3.9-14.4,3.9c-4.9,0-9.8-1.2-14.2-3.8c-8.9-5.1-14.4-14.6-14.4-24.8V592L21.9,242.4c-3.1-4.2-4.4-8.9-5-13.7c-4.1-8.8-6.9-18-6.9-27.8C10,93.7,264,44.8,500,44.8c236,0,490,48.8,490,156.1C990,215.4,985,228.8,976.3,241.2z M407,565.4c3.7,4.9,5.7,11,5.7,17.1v294.5c0,0,112.2-64.1,152.4-87.1c18.8-10.8,14.1-34.9,14.1-67.6c0.1-60.7,0.2-143,0.2-143c-0.1-6.4,2-12.7,6-17.8l256.3-244.9C747.7,343.9,621.6,357,500,357c-124.2,0-253-13.7-347.5-42.1L407,565.4z M500,101.5c-280.3,0-433.2,65.7-433.2,99.4c0,33.7,152.9,99.4,433.2,99.4c234.8,0,379.8-46,420.8-80.8l9.5-11.6c0.4-0.5,0.9-0.7,1.4-1.2c0.9-2,1.5-3.9,1.5-5.7C933.2,167.2,780.3,101.5,500,101.5z"/></path></svg>
+        </button>
             <input name="q" title="Your query, multiple conditions can be separated by a semicolon" value="{{q}}" />
-        <button class="search">
+        <button class="search" title="Search">
             <svg fill="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M16.3 14.9C17.3 13.6 18 11.9 18 10C18 5.6 14.4 2 10 2C5.6 2 2 5.6 2 10C2 14.4 5.6 18 10 18C11.8 18 13.5 17.4 14.9 16.3L20.6 22L22 20.6L16.3 14.9ZM10 16C6.7 16 4 13.3 4 10C4 6.7 6.7 4 10 4C13.3 4 16 6.7 16 10C16 11.3 15.6 12.5 14.9 13.5C14.5 14 14 14.5 13.5 14.9C12.5 15.6 11.3 16 10 16Z"></path></svg>
         </button>
         </form>
     </div>
 </div>
+{% include "filters.html" %}
 {% endif %}
