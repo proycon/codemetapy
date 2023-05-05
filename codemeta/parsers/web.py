@@ -112,6 +112,10 @@ def parse_web(g: Graph, res: Union[URIRef, BNode], url, args: AttribDict) -> Ite
             if not name and soup.title:
                 name = soup.title.text
                 name = name.strip()
+            if not name:
+                for e in soup.find("h1"):
+                    name = e.text
+                    name = name.strip()
 
             if args.with_stypes:
                 targetres = URIRef(generate_uri(name, baseuri=args.baseuri,prefix="webapplication"))
