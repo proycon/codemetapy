@@ -1,4 +1,4 @@
-<div about="{{ res }}" class="card softwaresourcecode" typeof="schema:SoftwareSourceCode">
+<div id="{{ g.value(res, SDO.identifier) }}" about="{{ res }}" class="card softwaresourcecode" typeof="schema:SoftwareSourceCode">
     <div class="topbar">
         <div class="interface">
             <ul>
@@ -219,7 +219,7 @@
                     <a rel="schema:url" href="{{ g.value(targetres, SDO.url) }}">
                         {% if g.value(targetres, SDO.name) %}
                         <strong>Go to {{ g.value(targetres, SDO.name) }}</strong> <em>({{ type_label(g, targetres) }})</em>
-                        {% else %
+                        {% else %}
                         <strong>Go to {{ type_label(g, targetres) }}</strong>
                         {% endif %}
                         <tt>{{ g.value(targetres, SDO.url) }}</tt>

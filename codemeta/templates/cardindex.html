@@ -6,6 +6,10 @@
     <body class="cards">
         {% include "header.html" %}
         {% include "intro.html" %}
+        <div class="toc">
+        {% include "toc.html" %}
+        </div>
+        <div class="cards">
         {% for group, explicit, resources in index %}
         {% if explicit %}
         <div class="group">
@@ -18,6 +22,7 @@
         </div>
         {% endif %}
         {% endfor %}
+        </div>
         {% include 'indexfooter.html' %}
     </body>
 </html>

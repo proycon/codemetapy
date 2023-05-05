@@ -519,3 +519,14 @@ body.page div.cards div.card {
 div.screenshots img {
     max-width: 800px;
 }
+div.toc {
+    min-width: 320px;
+    max-width: 640px;
+    border: 1px solid #cbdfe5;
+    border-radius: 20px;
+    background: #fff;
+    padding: 10px;
+    margin-bottom: 15px;
+    margin-left: auto;
+    margin-right: auto;
+}
