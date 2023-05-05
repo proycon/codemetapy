@@ -1,0 +1,20 @@
+<h2>Table of Contents</h2>
+
+<ul>
+{% for group, explicit, resources in index %}
+{% for res, label in resources %}
+ {% for _, targetres in get_triples(g, res, SDO.targetProduct, abcsort=True) %}
+   {% if ((targetres, RDF.type, SDO.WebApplication) in g or
+     (targetres, RDF.type, SDO.WebSite) in g or
+     (targetres, RDF.type, SDO.NotebookApplication) in g or
+     (targetres, RDF.type, SDO.WebPage) in g) and (targetres, SDO.url,None) in g %}
+     {% if g.value(targetres, SDO.name) %}
+     <li><a href="#{{ g.value(res, SDO.identifier) }}">{{ g.value(targetres, SDO.name) }}</a></li>
+     {% else %}
+     <li><a href="#{{ g.value(res, SDO.identifier) }}">{{ label }}</a></li>
+     {% endif %}
+   {% endif %}
+ {% endfor %}
+{% endfor %}
+{% endfor %}
+</ul>

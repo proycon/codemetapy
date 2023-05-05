@@ -6,6 +6,9 @@
     <body class="cards">
         {% include "header.html" %}
         {% include "intro.html" %}
+        <div class="toc">
+        {% include "servicetoc.html" %}
+        </div>
         {% for group, explicit, resources in index %}
         {% for res, label in resources %}
          {% for _, targetres in get_triples(g, res, SDO.targetProduct, abcsort=True) %}
