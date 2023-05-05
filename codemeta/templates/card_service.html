@@ -20,7 +20,11 @@
         {% if baseuri and toolstore %}
         <a href="{{ res }}" title="Go to the overview page for this tool">
         {% endif %}
+        {% if g.value(targetres, SDO.name) %}
         {{ g.value(targetres, SDO.name) }}
+        {% elif g.value(targetres, SDO.url) %}
+        {{ g.value(targetres, SDO.url).replace("https://","") }}
+        {% endif %}
         {% if baseuri %}
         </a>
         {% endif %}
@@ -196,7 +200,11 @@
         <li class="go">
             <i class="fa fa-globe"></i>
             <a rel="schema:url" href="{{ g.value(targetres, SDO.url) }}">
+                {% if g.value(targetres, SDO.name) %}
                 <strong>Go to {{ g.value(targetres, SDO.name) }}</strong></em>
+                {% else %}
+                <strong>Go to {{ type_label(g, targetres) }}</strong></em>
+                {% end if %}
                 <tt>{{ g.value(targetres, SDO.url) }}</tt>
             </a>
         </li>

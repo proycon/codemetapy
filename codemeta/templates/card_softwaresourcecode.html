@@ -217,7 +217,11 @@
                 <li class="go">
                     <i class="fa fa-globe"></i>
                     <a rel="schema:url" href="{{ g.value(targetres, SDO.url) }}">
+                        {% if g.value(targetres, SDO.name) %}
                         <strong>Go to {{ g.value(targetres, SDO.name) }}</strong> <em>({{ type_label(g, targetres) }})</em>
+                        {% else %
+                        <strong>Go to {{ type_label(g, targetres) }}</strong>
+                        {% endif %}
                         <tt>{{ g.value(targetres, SDO.url) }}</tt>
                     </a>
                     {% if (targetres, SDO.description, None) in g %}
