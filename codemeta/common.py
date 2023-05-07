@@ -285,6 +285,9 @@ class AttribDict(dict):
             return self[key]
         return None
 
+    def __setattr__(self, key, value):
+        super().__setattr__(key,value)
+
 def init_context(args: AttribDict):
     """Initialized the context, ensures all context JSONLDs are downloaded and local filesystem references are used instead"""
 

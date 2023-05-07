@@ -170,10 +170,30 @@ def main():
     if args.exitv and args.validate:
         return 0 if valid else 1
 
+def load(*files, **kwargs) -> Tuple[Graph, Union[URIRef,None], AttribDict, Graph]:
+    """Main entrypoint for library usage"""
+
+    #defaults
+    if not 'strict' in kwargs:
+        kwargs['with_stypes'] = True
+
+    if 'baseuri' in kwargs and not 'baseurl' in kwargs:
+        kwargs['baseurl'] = kwargs['baseuri']
+
+    kwargs['graph'] = True
+    kwargs['inputsources'] = files
+    if 'includecontext' not in kwargs:
+        kwargs['includecontext'] = True
+
+    g, res, args, contextgraph = read(**kwargs) #may deliver a res when args.select is set
+
+    if args.includecontext:
+        g += contextgraph
+
+    return g, res, args, contextgraph
 
 
-
-def serialize(g: Graph, res: Union[Sequence,URIRef,BNode,None], args: AttribDict, contextgraph: Union[Graph,None] = None, sparql_query: Optional[str] = None, **kwargs) -> str:
+def serialize(g: Graph, res: Union[Sequence,URIRef,BNode,None], args: AttribDict, contextgraph: Union[Graph,None] = None, sparql_query: Optional[str] = None, **kwargs) -> Optional[str]:
     if args.output == "json":
         if sparql_query: res = [ x[0]  for x in query(g, sparql_query) ]
         doc = serialize_to_jsonld(g, res, args)
