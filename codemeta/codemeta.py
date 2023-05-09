@@ -40,7 +40,6 @@ import codemeta.parsers.gitapi
 import codemeta.parsers.authors
 import codemeta.validation
 from codemeta.serializers.jsonld import serialize_to_jsonld
-from codemeta.serializers.html import serialize_to_html
 from codemeta.serializers.turtle import serialize_to_turtle
 
 
@@ -95,8 +94,7 @@ def main():
     parser.add_argument('--exact-python-version', dest="exactplatformversion", help="Register the exact python interpreter used to generate the metadata as the runtime platform. Will only register the major version otherwise.", action='store_true',required=False)
     parser.add_argument('--single-author', dest="single_author", help="CodemetaPy will attempt to check if there are multiple authors specified in the author field, if you want to disable this behaviour, set this flag", action='store_true',required=False)
     parser.add_argument('-b', '--baseuri',type=str,help="Base URI for resulting SoftwareSourceCode instances (make sure to add a trailing slash)", action='store',required=False)
-    parser.add_argument('-B', '--baseurl',type=str,help="Base URL in HTML visualizations (make sure to add a trailing slash)", action='store',required=False)
-    parser.add_argument('-o', '--outputtype', dest='output',type=str,help="Output type: json (default), turtle, html", action='store',required=False, default="json")
+    parser.add_argument('-o', '--outputtype', dest='output',type=str,help="Output type: json (default), turtle", action='store',required=False, default="json")
     parser.add_argument('-O','--outputfile',  dest='outputfile',type=str,help="Output file", action='store',required=False)
     parser.add_argument('-i','--inputtype', dest='inputtypes',type=str,help="Metadata input type: python, apt (debian packages), registry, json, yaml. May be a comma seperated list of multiple types if files are passed on the command line", action='store',required=False)
     parser.add_argument('-g','--graph', dest='graph',help="Output a knowledge graph that groups all input files together. Only JSON input files are supported.", action='store_true',required=False)
@@ -109,15 +107,11 @@ def main():
     parser.add_argument('--interpreter', help="Start interactive python interpreter after loading the graph", action='store_true',required=False)
     parser.add_argument('--exitv', help="Set exit status according to validation result. Use with --validate", action='store_true',required=False)
     parser.add_argument('--textv', type=str, help="Set extra text to add to a validation report. Use with --validate", action='store',required=False)
-    parser.add_argument('--intro', type=str, help="Set extra text (HTML) to add to the index page as an introduction", action='store',required=False)
-    parser.add_argument('--css',type=str, help="Associate a CSS stylesheet (URL) with the HTML output, multiple stylesheets can be separated by a comma", action='store',  required=False)
     parser.add_argument('--no-cache',dest="no_cache", help="Do not cache context files, force redownload", action='store_true',  required=False)
     parser.add_argument('--no-extras',dest="no_extras", help="Do not include dependencies that are marked as 'extras', applies only to Python", action='store_true',  required=False)
-    parser.add_argument('--codemetaserver', '--toolstore', dest="toolstore", help="When converting to HTML, link pages together for use with codemeta-server", action='store_true',  required=False)
     parser.add_argument('--strict', dest='strict', help="Strictly adhere to the codemeta standard and disable any extensions on top of it", action='store_true')
     parser.add_argument('--released', help="Signal that this software is released, this affects whether development status maps to either WIP or active", action='store_true')
     parser.add_argument('--trl', help="Attempt to add technology readiness level based on the vocabulary used by the CLARIAH project", action='store_true')
-    parser.add_argument('--title', type=str, help="Title to add when generating HTML pages", action='store')
     parser.add_argument('--identifier-from-file', dest='identifier_from_file', help="Derive the identifier from the filename/module name passed to codemetapy, not from the metadata itself", action='store_true',required=False)
     parser.add_argument('inputsources', nargs='*', help='Input sources, the nature of the source depends on the type, often a file (or use - for standard input, /dev/null to start from scratch without external input), set -i accordingly with the types (must contain as many items as passed!)')
 
@@ -211,14 +205,7 @@ def serialize(g: Graph, res: Union[Sequence,URIRef,BNode,None], args: AttribDict
         else:
             return doc
     elif args.output == "html":
-        if not isinstance(contextgraph, Graph):
-            raise Exception("No contextgraph provided, required for HTML serialisation")
-        doc = serialize_to_html(g, res, args, contextgraph, sparql_query,  **kwargs) #note: sparql query is applied in serialization function if needed
-        if args.outputfile and args.outputfile != "-":
-            with open(args.outputfile,'w',encoding='utf-8') as fp:
-                fp.write(doc)
-        else:
-            return doc
+        raise Exception("Output type html is no longer handled by codemetapy but has moved to codemeta2html: https://github.com/proycon/codemeta2html")
     else:
         raise Exception("No such output type: ", args.output)
 

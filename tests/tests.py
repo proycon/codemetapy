@@ -164,9 +164,6 @@ class BuildTest_Json(unittest.TestCase):
         """Test json serialisation"""
         serialize(self.g, self.res, AttribDict({ "output": "ttl" }), self.contextgraph)
 
-    def test100_serialisation_html(self):
-        """Test html serialisation"""
-        serialize(self.g, self.res, AttribDict({ "output": "html" }), self.contextgraph)
 
 
 class BuildTest_SetupPy(unittest.TestCase):
@@ -225,9 +222,6 @@ class BuildTest_SetupPy(unittest.TestCase):
         """Test json serialisation"""
         serialize(self.g, self.res, AttribDict({ "output": "ttl" }), self.contextgraph)
 
-    def test100_serialisation_html(self):
-        """Test html serialisation"""
-        serialize(self.g, self.res, AttribDict({ "output": "html" }), self.contextgraph)
 
 class BuildTest_GithubAPI(unittest.TestCase):
     """Build codemeta.json from existing codemeta.json (basically a parse, validation/reconciliation and reserialisation)"""
@@ -276,9 +270,6 @@ class BuildTest_JavaPomXML(unittest.TestCase):
         """Test json serialisation"""
         serialize(self.g, self.res, AttribDict({ "output": "ttl" }), self.contextgraph)
 
-    def test100_serialisation_html(self):
-        """Test html serialisation"""
-        serialize(self.g, self.res, AttribDict({ "output": "html" }), self.contextgraph)
 
 class BuildTest_NpmPackageJSON(unittest.TestCase):
     """Build codemeta.json from npm package json"""
@@ -315,9 +306,6 @@ class BuildTest_NpmPackageJSON(unittest.TestCase):
         """Test json serialisation"""
         serialize(self.g, self.res, AttribDict({ "output": "ttl" }), self.contextgraph)
 
-    def test100_serialisation_html(self):
-        """Test html serialisation"""
-        serialize(self.g, self.res, AttribDict({ "output": "html" }), self.contextgraph)
 
 class BuildTest_Web_HTML(unittest.TestCase):
     """Build codemeta.json from webpage metadata"""
@@ -515,9 +503,6 @@ class BuildTest_RustCargoToml(unittest.TestCase):
         """Test json serialisation"""
         serialize(self.g, self.res, AttribDict({ "output": "ttl" }), self.contextgraph)
 
-    def test100_serialisation_html(self):
-        """Test html serialisation"""
-        serialize(self.g, self.res, AttribDict({ "output": "html" }), self.contextgraph)
 
 
 if __name__ == '__main__':
