@@ -122,11 +122,6 @@ def main():
     args = parser.parse_args()
     if not args.strict:
         args.with_stypes = True
-    if args.css:
-        args.css = [ x.strip() for x in args.css.split(",") ]
-
-    if args.baseuri and not args.baseurl:
-        args.baseurl = args.baseuri
 
     if args.trl:
         if args.addcontext is None: args.addcontext = []
