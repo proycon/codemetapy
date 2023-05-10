@@ -227,7 +227,7 @@ def main():
     )
     parser.add_argument(
         "--includecontext",
-        help="Include all context vocabularies in the main graph and express it verbosely in serialisations. This makes the resoluting codemeta.json richer without the need to query certain external vocabularies, at the cost of added redundancy.",
+        help="Include all context vocabularies in the main graph and express it verbosely in serialisations. This makes the resulting codemeta.json richer without the need to query certain external vocabularies, at the cost of added redundancy.",
         action="store_true",
         required=False,
     )
@@ -432,9 +432,10 @@ def reidentify(
     if founduris and not args.baseuri:
         # restore the exact original URI because we did not set a baseuri
         founduri = founduris[0]
-        print(f"Remapping URI to found URI: {res} -> {founduri}", file=sys.stderr)
-        remap_uri(g, res, founduri)
-        res = URIRef(founduri)
+        if res != founduri:
+            print(f"Remapping URI to found URI: {res} -> {founduri}", file=sys.stderr)
+            remap_uri(g, res, founduri)
+            res = URIRef(founduri)
     elif args.baseuri:
         for founduri in founduris:
             if not founduri.startswith("file://"):  # non-local ones only
@@ -458,12 +459,13 @@ def reidentify(
         if not version:
             version = "snapshot"  # if we find no version, we append /snapshot to the URI as a version component, usually referring to the git master/main branch but not any specific version
         uri = args.baseuri + identifier + "/" + str(version)
-        print(
-            f"Remapping URI to (possibly) new identifier and version component: {res} -> {uri}",
-            file=sys.stderr,
-        )
-        remap_uri(g, res, uri)
-        res = URIRef(uri)
+        if res != URIRef(uri):
+            print(
+                f"Remapping URI to (possibly) new identifier and version component: {res} -> {uri}",
+                file=sys.stderr,
+            )
+            remap_uri(g, res, uri)
+            res = URIRef(uri)
     return res
 
 
