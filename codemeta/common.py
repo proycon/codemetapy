@@ -4,12 +4,12 @@ import json
 import requests
 import random
 import re
+
 from collections import Counter, defaultdict
 from tempfile import gettempdir
 from rdflib import Graph, Namespace, URIRef, BNode, Literal
-from rdflib.namespace import RDF, RDFS, SKOS
-from rdflib.compare import graph_diff
-from typing import Union, IO, Sequence, Optional,Generator
+from rdflib.namespace import RDF, RDFS, SKOS #type: ignore
+from typing import Union, Sequence, Optional,Generator
 from collections import OrderedDict
 from nameparser import HumanName
 
@@ -857,7 +857,7 @@ def guess_interfacetype(g: Graph, res: Union[URIRef,BNode], args: AttribDict) ->
         return targetres
 
 
-def get_subgraph(g: Graph, reslist: Sequence[Union[URIRef,BNode]], subgraph: Union[Graph,None] = None, history: set = None ) -> Graph:
+def get_subgraph(g: Graph, reslist: Sequence[Union[URIRef,BNode]], subgraph: Union[Graph,None] = None, history: Optional[set] = None ) -> Graph:
     """Add everything referenced from the specified resource to the new subgraph"""
 
     if subgraph is None:
@@ -896,10 +896,10 @@ def remap_uri(g: Graph, from_uri, to_uri):
         to_uri = URIRef(to_uri)
     for s,p,o in g.triples((from_uri,None,None)):
         g.remove((s,p,o))
-        g.add((to_uri,p,o))
+        g.add((to_uri,p,o)) #type: ignore
     for s,p,o in g.triples((None,None,from_uri)):
         g.remove((s,p,o))
-        g.add((s,p,to_uri))
+        g.add((s,p,to_uri)) #type: ignore
 
 
 def compose(g: Graph, newgraph: Graph, res: URIRef, args: AttribDict):
@@ -927,7 +927,7 @@ def compose(g: Graph, newgraph: Graph, res: URIRef, args: AttribDict):
 
     #there must be NO blank nodes anymore at this point!!! They might collide
     g += newgraph
-    print(f"{HEAD} processed {len(newgraph)} new triples, total is now {len(g)}",file=sys.stderr)
+    print(f"{HEAD} processed {len(newgraph)} new triples, total is now {len(g)}",file=sys.stderr) #type: ignore
 
 def different_domain(res: URIRef, res2: URIRef) -> bool:
     if res.startswith("http") and res2.startswith("http"):
@@ -936,7 +936,7 @@ def different_domain(res: URIRef, res2: URIRef) -> bool:
         return False
 
 
-def correct(g:Graph, res: URIRef, args: AttribDict):
+def correct(g:Graph, res: Union[URIRef,BNode], args: AttribDict):
     """Runs several automatic correction operations on the graph"""
 
     IDENTIFIER = g.value(res, SDO.identifier)
@@ -1019,10 +1019,10 @@ def query(g: Graph, sparql_query: str, restype=SDO.SoftwareSourceCode):
     results = []
     for result in g.query(sparql_query):
         try:
-            if result.res and (result.res, RDF.type, restype) in g:
-                label = g.value(result.res, SDO.name)
+            if result.res and (result.res, RDF.type, restype) in g: # type: ignore
+                label = g.value(result.res, SDO.name) # type: ignore
                 if label:
-                    results.append((result.res, label))
+                    results.append((result.res, label)) # type: ignore
         except AttributeError:
             raise ValueError("Invalid query: Expected ?res in SPARQL query")
     results.sort(key=lambda x: x[1].lower())

@@ -1,13 +1,10 @@
 import sys
 import os
 import datetime
-from rdflib import Graph, Namespace, URIRef, BNode, Literal
-from rdflib.namespace import RDF, SH
-from typing import Union, IO, Sequence, Optional, Tuple
+from rdflib import Graph, URIRef, BNode, Literal
+from rdflib.namespace import RDF, SH # type: ignore
+from typing import Union, Sequence, Optional, Tuple
 from codemeta.common import (
-    init_graph,
-    init_context,
-    CODEMETA,
     AttribDict,
     SDO,
     generate_uri,
@@ -23,7 +20,7 @@ def validate(
     contextgraph: Union[Graph, None] = None,
 ) -> Tuple[bool, Graph]:
     """Validates software metadata using SHACL, generates a validation report and adds it to the SoftwareSourceCode metadata via the schema:review property"""
-    shacl_file: str = args.validate
+    shacl_file: str = args.validate #type: ignore
     if shacl_file.endswith("ttl"):
         shacl_format = "turtle"
     elif shacl_file.endswith(("json", "jsonld")):
@@ -198,5 +195,5 @@ def get_validation_report(
     if (res, RDF.type, SDO.Review):
         return g.value(res, SDO.reviewBody)
     else:
-        for _, _, review in g.triples((res, SDO.review, None)):
+        for _, _, review in g.triples((res, SDO.review, None)): #type: ignore
             return g.value(review, SDO.reviewBody)

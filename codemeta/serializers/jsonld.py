@@ -3,12 +3,10 @@ import json
 import os.path
 from typing import Union, IO, Sequence, Optional
 from rdflib import Graph, URIRef, BNode, Literal
-from rdflib.namespace import SKOS
+from rdflib.namespace import SKOS #type: ignore
 from copy import copy
 from codemeta.common import (
     AttribDict,
-    license_to_spdx,
-    SDO,
     CODEMETA_SOURCE,
     CODEMETA_LOCAL_SOURCE,
     SCHEMA_SOURCE,
@@ -20,7 +18,6 @@ from codemeta.common import (
     init_context,
     REPOSTATUS_LOCAL_SOURCE,
     REPOSTATUS_SOURCE,
-    get_subgraph,
     PREFER_URIREF_PROPERTIES,
     TMPDIR,
     DEVIANT_CONTEXT,

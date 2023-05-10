@@ -1,7 +1,7 @@
 import sys
 from typing import Union
 from rdflib import Graph, URIRef, BNode, Literal
-from rdflib.namespace import RDF
+from rdflib.namespace import RDF #type: ignore
 from codemeta.common import (
     AttribDict,
     add_triple,

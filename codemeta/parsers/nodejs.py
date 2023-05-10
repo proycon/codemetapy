@@ -3,7 +3,7 @@ import json
 import os.path
 from typing import Union, IO
 from rdflib import Graph, URIRef, BNode, Literal
-from rdflib.namespace import RDF
+from rdflib.namespace import RDF #type: ignore 
 from codemeta.common import (
     AttribDict,
     add_triple,
@@ -15,7 +15,7 @@ from codemeta.common import (
     SOFTWARETYPES,
     generate_uri,
 )
-from codemeta.crosswalk import readcrosswalk, CWKey
+from codemeta.crosswalk import CWKey
 
 
 def parse_sourcerepo(value):

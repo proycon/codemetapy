@@ -5,7 +5,7 @@ from typing import Union, Iterator
 import requests
 import yaml
 from rdflib import Graph, URIRef, BNode, Literal
-from rdflib.namespace import RDF
+from rdflib.namespace import RDF #type: ignore
 from codemeta.common import (
     AttribDict,
     SDO,
@@ -139,7 +139,7 @@ def parse_web(
         if scriptblock:
             # Does the site provide proper JSON-LD metadata itself?
             print("    Found a json-ld script block", file=sys.stderr)
-            data = json.loads("".join(scriptblock.contents))
+            data = json.loads("".join(scriptblock.contents)) #type: ignore
         else:
             print("    Parsing site metadata", file=sys.stderr)
             name = get_meta(
@@ -149,7 +149,7 @@ def parse_web(
                 name = soup.title.text
                 name = name.strip()
             if not name:
-                for e in soup.find("h1"):
+                for e in soup.find("h1"): #type: ignore
                     name = e.text
                     name = name.strip()
 
@@ -164,7 +164,7 @@ def parse_web(
 
             targetrestype = SDO.WebApplication
             for e in (soup.find("head"), soup.find("html")):
-                itemtype = e.get("itemtype")
+                itemtype = e.get("itemtype") #type: ignore
                 if itemtype in (
                     "https://schema.org/WebApplication",
                     "http://schema.org/WebApplication",
@@ -296,7 +296,7 @@ def parse_web(
             else:
                 targetres = res
             data = add_missing_url_scheme(data, url)
-            parse_jsonld_data(g, targetres, data, args)
+            parse_jsonld_data(g, targetres, data, args) #type: ignore
             yield targetres
         elif datatype == "openapi":
             raise NotImplementedError  # TODO

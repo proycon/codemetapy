@@ -13,19 +13,14 @@ import argparse
 import json
 import os.path
 import random
-from collections import OrderedDict, defaultdict
-from typing import Union, IO, Optional, Sequence, Tuple
-import copy
-import datetime
+from typing import Union, Optional, Sequence, Tuple
 from pathlib import Path
 import distutils.cmd  # note: will be removed in python 3.12! TODO constraint <= 3.11 in apk/apt-get in Dockerfile
 
 # pylint: disable=C0413
 
-from rdflib import Graph, BNode, URIRef, Literal
+from rdflib import Graph, BNode, URIRef
 from rdflib.namespace import RDF, OWL  # type: ignore
-from rdflib.plugins.shared.jsonld.context import Context
-import rdflib.plugins.serializers.jsonld
 
 from codemeta.common import (
     init_graph,
@@ -415,7 +410,7 @@ def serialize(
         doc = serialize_to_turtle(g, res)
         if args.outputfile and args.outputfile != "-":
             with open(args.outputfile, "wb") as fp:
-                fp.write(doc)
+                fp.write(doc.encode('utf-8'))
         else:
             return doc
     elif args.output == "html":

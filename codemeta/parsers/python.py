@@ -10,7 +10,7 @@ else:
     import importlib.metadata as importlib_metadata  # python 3.8 and above: in standard library
 
 from rdflib import Graph, URIRef, BNode, Literal
-from rdflib.namespace import RDF
+from rdflib.namespace import RDF #type: ignore
 from codemeta.common import (
     AttribDict,
     add_triple,
@@ -221,7 +221,7 @@ def parse_python(
                 )
                 sys.exit(4)
             packagename = pkg.name
-            metadata = pkg.metadata.items()
+            metadata = pkg.metadata.items() #type: ignore
         else:
             metadata = metadata.items()
     else:
@@ -239,22 +239,22 @@ def parse_python(
                 packagename = os.path.basename(packagename)
             # fallback if package is not installed but in local directory:
             context = importlib_metadata.DistributionFinder.Context(
-                name=packagename, path="."
+                name=packagename, path=["."]
             )
             try:
                 pkg = next(
-                    importlib_metadata.MetadataPathFinder().find_distributions(context)
+                    importlib_metadata.MetadataPathFinder().find_distributions(context) #type: ignore
                 )
             except StopIteration:
                 print(f"No such python package: {packagename}", file=sys.stderr)
                 if prevdir:
                     os.chdir(prevdir)
                 sys.exit(4)
-        if isinstance(pkg._path, str):
+        if isinstance(pkg._path, str): #type: ignore
             print(
-                f"Found metadata in {pkg._path}", file=sys.stderr
+                f"Found metadata in {pkg._path}", file=sys.stderr #type: ignore
             )  # pylint: disable=W0212
-        metadata = pkg.metadata.items()
+        metadata = pkg.metadata.items() #type: ignore
         # if prevdir: os.chdir(prevdir)
 
     for key, value in metadata:

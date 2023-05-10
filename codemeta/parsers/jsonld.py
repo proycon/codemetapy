@@ -6,10 +6,6 @@ from typing import Union, IO, Optional
 from codemeta.common import (
     PREFER_URIREF_PROPERTIES,
     AttribDict,
-    REPOSTATUS,
-    license_to_spdx,
-    SDO,
-    CODEMETA,
     SCHEMA_SOURCE,
     CODEMETA_SOURCE,
     SCHEMA_LOCAL_SOURCE,
@@ -18,12 +14,8 @@ from codemeta.common import (
     CODEMETA_SOURCE,
     STYPE_SOURCE,
     STYPE_LOCAL_SOURCE,
-    IODATA_SOURCE,
     IODATA_LOCAL_SOURCE,
     init_context,
-    SINGULAR_PROPERTIES,
-    generate_uri,
-    bind_graph,
     DEVIANT_CONTEXT,
 )
 
@@ -159,7 +151,7 @@ def skolemize(g: Graph, baseuri: Optional[str] = None):
             g.remove((s, p, o))
             # skolemize using hashes
             s = URIRef(authority + basepath + "H" + "%016x" % hashes[s])
-            g.add((s, p, o))
+            g.add((s, p, o)) #type: ignore
         if isinstance(o, BNode):
             g.remove((s, p, o))
             if o in hashes:
@@ -167,7 +159,7 @@ def skolemize(g: Graph, baseuri: Optional[str] = None):
                 o = URIRef(authority + basepath + "H" + "%016x" % hashes[o])
             else:
                 o = o.skolemize(authority=authority, basepath=basepath)
-            g.add((s, p, o))
+            g.add((s, p, o)) #type: ignore
 
 
 def correct_wrong_uris(g: Graph, baseuri: Optional[str]):
@@ -202,7 +194,7 @@ def correct_wrong_uris(g: Graph, baseuri: Optional[str]):
         # commit the change
         if new_obj != o:
             g.remove((s, p, o))
-            g.add((s, p, new_obj))
+            g.add((s, p, new_obj)) #type: ignore
 
 
 def parse_jsonld_data(

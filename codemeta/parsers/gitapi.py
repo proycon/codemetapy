@@ -3,10 +3,9 @@ import requests
 import time
 from os import environ
 from datetime import datetime
-from io import StringIO
-from typing import Union, IO, Optional, Tuple
+from typing import Union, Optional, Tuple
 from rdflib import Graph, URIRef, BNode, Literal
-from rdflib.namespace import RDF
+from rdflib.namespace import RDF #type: ignore
 from codemeta.common import (
     AttribDict,
     SDO,
@@ -15,7 +14,6 @@ from codemeta.common import (
     parse_human_name,
     generate_uri,
 )
-from codemeta.parsers.jsonld import parse_jsonld_data
 
 GITAPI_REPO_BLACKLIST = [
     "https://codeberg.org/",

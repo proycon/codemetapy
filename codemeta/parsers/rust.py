@@ -1,13 +1,12 @@
 import sys
 import tomlkit
 from rdflib import Graph, URIRef, BNode, Literal
-from rdflib.namespace import RDF
+from rdflib.namespace import RDF #type: ignore
 from typing import Union, IO
 from codemeta.common import (
     AttribDict,
     add_triple,
     CODEMETA,
-    SOFTWARETYPES,
     add_authors,
     SDO,
     COMMON_SOURCEREPOS,
@@ -19,7 +18,7 @@ from codemeta.common import (
 def parse_rust(g: Graph, res: Union[URIRef, BNode], file: IO, args: AttribDict):
     data = tomlkit.parse(file.read())
     if "package" in data:
-        for key, value in data["package"].items():
+        for key, value in data["package"].items(): #type: ignore
             if key == "repository":
                 add_triple(g, res, "codeRepository", value, args)
             elif key == "authors":
@@ -45,7 +44,7 @@ def parse_rust(g: Graph, res: Union[URIRef, BNode], file: IO, args: AttribDict):
                 for sourcerepo in COMMON_SOURCEREPOS:
                     if (
                         value.startswith(sourcerepo)
-                        and "repository" not in data["package"]
+                        and "repository" not in data["package"] #type: ignore
                     ):
                         # catch if we're describing the source code repo instead
                         add_triple(g, res, "codeRepository", value, args)
@@ -58,7 +57,7 @@ def parse_rust(g: Graph, res: Union[URIRef, BNode], file: IO, args: AttribDict):
             elif key in ("name", "description", "readme", "license", "version"):
                 add_triple(g, res, key, value, args)
     if "dependencies" in data:
-        for key, value in data["dependencies"].items():
+        for key, value in data["dependencies"].items(): #type: ignore
             if isinstance(value, dict) and "version" in value:
                 add_dependency(g, res, key, value["version"], args)
             elif isinstance(value, str):

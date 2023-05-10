@@ -1,21 +1,9 @@
-import sys
-import json
-import os.path
 from typing import Union, IO
 from rdflib import Graph, URIRef, BNode, Literal
-from rdflib.namespace import RDF
-import lxml
 from codemeta.common import (
     AttribDict,
-    add_triple,
-    CODEMETA,
-    SOFTWARETYPES,
     add_authors,
-    SDO,
-    COMMON_SOURCEREPOS,
-    SOFTWARETYPES,
-    license_to_spdx,
-    generate_uri,
+    SDO
 )
 
 

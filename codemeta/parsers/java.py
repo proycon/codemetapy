@@ -1,23 +1,17 @@
-import sys
-import json
-import os.path
 from typing import Union, IO
 from rdflib import Graph, URIRef, BNode, Literal
-from rdflib.namespace import RDF
+from rdflib.namespace import RDF #type: ignore
 import lxml.etree
 from codemeta.common import (
     AttribDict,
     add_triple,
     CODEMETA,
-    SOFTWARETYPES,
     add_authors,
     SDO,
-    COMMON_SOURCEREPOS,
-    SOFTWARETYPES,
     license_to_spdx,
     generate_uri,
 )
-from codemeta.crosswalk import readcrosswalk, CWKey
+from codemeta.crosswalk import CWKey
 
 POM_NAMESPACE = "http://maven.apache.org/POM/4.0.0"
 
