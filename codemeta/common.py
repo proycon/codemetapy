@@ -289,7 +289,7 @@ class AttribDict(dict):
         super().__setattr__(key,value)
 
 def init_context(args: AttribDict):
-    """Initialized the context, ensures all context JSONLDs are downloaded and local filesystem references are used instead"""
+    """Initialize the context, ensures all context JSONLDs are downloaded and local filesystem references are used instead"""
 
     sources = [ (CODEMETA_LOCAL_SOURCE, CODEMETA_SOURCE), (SCHEMA_LOCAL_SOURCE, SCHEMA_SOURCE), (STYPE_LOCAL_SOURCE, STYPE_SOURCE), (IODATA_LOCAL_SOURCE, IODATA_SOURCE), (REPOSTATUS_LOCAL_SOURCE, REPOSTATUS_SOURCE) ]
     
@@ -385,7 +385,13 @@ def init_graph(args: AttribDict):
                     f.write(r.content)
             print(f"Adding to contextgraph: {localfile}", file=sys.stderr)
             with open(localfile, 'r') as f:
-                contextgraph.parse(f)
+                c = f.read(1)
+                if c == '{':
+                    format = "json-ld"
+                else:
+                    format = None #autodetect (works for turtle)
+                f.seek(0)
+                contextgraph.parse(f, format=format)
 
     return g, contextgraph
 
