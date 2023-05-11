@@ -41,7 +41,7 @@ setup(
     zip_safe=False,
     include_package_data=True,
     package_data = { 'codemeta': ['schema/crosswalk.csv', 'schema/codemeta.jsonld', 'templates/*.html','resources/*.css', 'resources/fa-*' ] },
-    install_requires=[ 'nameparser','importlib_metadata','BeautifulSoup4', 'rdflib >= 6.1.1','pyshacl', 'requests','lxml','pyyaml','pep517','tomlkit','pyproject_parser'],
+    install_requires=[ 'nameparser','importlib_metadata','BeautifulSoup4', 'rdflib >= 6.1.1','pyshacl == 0.20.0', 'requests','lxml','pyyaml','pep517','tomlkit','pyproject_parser'],
     entry_points = {    'console_scripts': [ 'codemetapy = codemeta.codemeta:main' ] },
     cmdclass=cmdclass
 )
