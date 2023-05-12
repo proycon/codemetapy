@@ -1005,8 +1005,8 @@ def generate_uri(identifier: Union[str,None] = None, baseuri: Union[str,None] = 
         for pattern, replacement in IDENTIFIER_MAP:
             identifier = identifier.replace(pattern,replacement) #not the most efficient but it'll do
         identifier = unicodedata.normalize("NFKD", identifier)
-        identifier = re.sub(r"[^a-z0-9]+", "_", identifier).strip("-")
-        identifier = re.sub(r"[_]+", "_", identifier)
+        identifier = re.sub(r"[^a-z0-9]+", "-", identifier).strip("-")
+        identifier = re.sub(r"[-]+", "-", identifier)
     if prefix and prefix[-1] not in ('/','#'):
         prefix += '/'
     if not baseuri:
