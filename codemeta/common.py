@@ -4,6 +4,7 @@ import json
 import requests
 import random
 import re
+import unicodedata
 
 from collections import Counter, defaultdict
 from tempfile import gettempdir
@@ -185,17 +186,7 @@ IDENTIFIER_MAP = [
    ('^', '-ge-'), #used in npm version
    ('>', '-gt-'),
    ('<', '-lt-'),
-   ('=', '-eq-'),
-   (' ', '-'),
-   ('&', '-',),
-   ('/', '-',),
-   ('+', '-',),
-   (':', '-',),
-   (';', '-'),
-   (',',''),
-   ('----', '-'),
-   ('---', '-'),
-   ('--', '-'),
+   ('=', '-eq-')
 ]
 
 #keywords that may be indicative of a certain interface type
@@ -1005,14 +996,17 @@ def urijoin(*args) -> str:
     return s
 
 def generate_uri(identifier: Union[str,None] = None, baseuri: Union[str,None] = None, prefix: str= ""):
-    """Generate an URI (aka IRI)"""
+    """Generate an URI"""
     if not identifier:
         identifier = "N" + "%032x" % random.getrandbits(128)
     else:
         identifier = identifier.lower()
+        #some symbols we handle specially:
         for pattern, replacement in IDENTIFIER_MAP:
             identifier = identifier.replace(pattern,replacement) #not the most efficient but it'll do
-        identifier = identifier.strip("-")
+        identifier = unicodedata.normalize("NFKD", identifier)
+        identifier = re.sub(r"[^a-z0-9]+", "_", identifier).strip("-")
+        identifier = re.sub(r"[_]+", "_", identifier)
     if prefix and prefix[-1] not in ('/','#'):
         prefix += '/'
     if not baseuri:
