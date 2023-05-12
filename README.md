@@ -217,3 +217,10 @@ is available.
 If you want to ship your package with the generated `codemeta.json`,
 then simply add a line saying `codemeta.json` to the file `MANIFEST.in`
 in the root of your project.
+
+## Acknowledgements
+
+This work is conducted at the [KNAW Humanities Cluster](https://huc.knaw.nl/)'s
+[Digital Infrastructure department](https://di.huc.knaw.nl/) in the scope of the 
+[CLARIAH](https://www.clariah.nl) project (CLARIAH-PLUS, NWO grant 184.034.023) as
+part of the FAIR Tool Discovery track of the Shared Development Roadmap.
