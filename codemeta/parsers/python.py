@@ -152,7 +152,10 @@ def parse_url(
 def metadata_from_pyproject(pyproject: pyproject_parser.PyProject):
     if pyproject.project and "name" in pyproject.project:
         return pyproject.project
-    if pyproject.tool and "name" in list(pyproject.tool.values())[0]:
+    elif 'poetry' in pyproject.tool:
+        return pyproject.tool['poetry']
+    elif pyproject.tool and "name" in list(pyproject.tool.values())[0]:
+        #fallback: no poetry but another tool that defines at least a name? 
         return list(pyproject.tool.values())[0]
     return None
 
