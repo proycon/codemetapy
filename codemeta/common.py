@@ -264,6 +264,9 @@ ORDEREDLIST_PROPERTIES = ( SDO.author, SDO.contributor )
 #properties that should prefer URIRef rather than Literal **if and only if** the value is a URI, even though the @context might not make this explicit (e.g. interpret as if @type=@id)
 PREFER_URIREF_PROPERTIES = (SDO.license,  CODEMETA.developmentStatus )
 
+#properties that should prefer Literal rather than URIRef 
+PREFER_LITERAL_PROPERTIES = (SDO.url, SDO.codeRepository, SDO.downloadUrl, SDO.contentUrl, SDO.installUrl, SDO.serviceUrl, SDO.discussionUrl, SDO.targetUrl, SDO.thumbnailUrl, SDO.trackingUrl)
+
 
 
 class AttribDict(dict):
@@ -866,11 +869,14 @@ def get_subgraph(g: Graph, reslist: Sequence[Union[URIRef,BNode]], subgraph: Uni
 
     for res in reslist:
         for pred, obj in g[res]:
-            subgraph.add((res,pred,obj))
             if isinstance(obj, (URIRef, BNode)) and obj not in history:
                 history.add(obj)
                 get_subgraph(g, [obj], subgraph, history)
-            elif isinstance(obj, Literal) and str(obj).startswith(("http","_","/")) and (URIRef(obj),None,None) in g and URIRef(obj) not in history: #incldue with things that are likely references but ended up as a Literal by mistake
+            elif isinstance(obj, Literal) \
+                and str(obj).startswith(("http","_","/")) \
+                and (URIRef(obj),None,None) in g \
+                and pred not in PREFER_LITERAL_PROPERTIES \
+                and URIRef(obj) not in history: #include with things that are likely references but ended up as a Literal by mistake
                 history.add(URIRef(obj))
                 get_subgraph(g, [URIRef(obj)], subgraph, history)
 

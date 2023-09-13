@@ -5,6 +5,7 @@ from rdflib import Graph, URIRef, BNode, Literal
 from typing import Union, IO, Optional
 from codemeta.common import (
     PREFER_URIREF_PROPERTIES,
+    PREFER_LITERAL_PROPERTIES,
     AttribDict,
     SCHEMA_SOURCE,
     CODEMETA_SOURCE,
@@ -191,6 +192,10 @@ def correct_wrong_uris(g: Graph, baseuri: Optional[str]):
                 if prefix and str(o).startswith(prefix):
                     new_obj = Literal(str(o)[len(prefix) :])
                     break
+        elif p in PREFER_LITERAL_PROPERTIES and not isinstance(o, Literal):
+            # turn URIRefs into Literals for properties that prefer a literal
+            new_obj = Literal(o)
+
         # commit the change
         if new_obj != o:
             g.remove((s, p, o))

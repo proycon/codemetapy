@@ -19,6 +19,7 @@ from codemeta.common import (
     REPOSTATUS_LOCAL_SOURCE,
     REPOSTATUS_SOURCE,
     PREFER_URIREF_PROPERTIES,
+    PREFER_LITERAL_PROPERTIES,
     TMPDIR,
     DEVIANT_CONTEXT,
     ORDEREDLIST_PROPERTIES,
@@ -281,7 +282,7 @@ def embed_items(data, itemmap: dict, history: set):
             #    print(f"DEBUG could not embed {data[idkey]}, already in history, returning a reference", file=sys.stderr)
             #    return { idkey: data[idkey] }
         for k, v in data.items():
-            if k not in ("@id", "id") and k not in NOEMBED:
+            if k not in ("@id", "id") and k not in NOEMBED and all( str(x) != k and str(x).split('/')[-1] != k for x in PREFER_LITERAL_PROPERTIES ):
                 # print(f"DEBUG processing key {k}, #history: {len(history)}", file=sys.stderr)
                 data[k] = embed_items(v, itemmap, copy(history))  # recursion step
     elif (
