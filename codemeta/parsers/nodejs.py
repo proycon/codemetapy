@@ -119,6 +119,7 @@ def parse_nodejs(
                         property=SDO.contributor,
                         single_author=True,
                         mail=value.get("email"),
+                        url=value.get("url"),
                         baseuri=args.baseuri,
                     )
                 elif isinstance(value, str):
@@ -134,6 +135,7 @@ def parse_nodejs(
                             property=SDO.contributor,
                             single_author=True,
                             mail=value.get("email"),
+                            url=value.get("url"),
                             baseuri=args.baseuri,
                         )
             elif key in ("dependencies", "devDependencies"):
