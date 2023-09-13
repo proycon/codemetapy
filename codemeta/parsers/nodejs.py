@@ -110,13 +110,19 @@ def parse_nodejs(
                     # npm allows strings like "Barney Rubble <b@rubble.com> (http://barnyrubble.tumblr.com/)"
                     # our add_authors function can handle that directly
                     add_authors(g, res, value, single_author=True, baseuri=args.baseuri)
-            elif key == "contributors":
+            elif key in ("contributors", "maintainers"):
+                if key == "contributors":
+                    prop = SDO.contributor
+                elif key == "maintainers":
+                    prop = SDO.maintainer
+                else:
+                    raise Exception("could not determine property")
                 if isinstance(value, dict) and "name" in value:
                     authors = add_authors(
                         g,
                         res,
                         value["name"],
-                        property=SDO.contributor,
+                        property=prop,
                         single_author=True,
                         mail=value.get("email"),
                         url=value.get("url"),
@@ -124,7 +130,7 @@ def parse_nodejs(
                     )
                 elif isinstance(value, str):
                     add_authors(
-                        g, res, value, property=SDO.contributor, baseuri=args.baseuri
+                        g, res, value, property=prop, baseuri=args.baseuri
                     )
                 elif isinstance(value, (list, tuple)):
                     for value in value:
@@ -132,7 +138,7 @@ def parse_nodejs(
                             g,
                             res,
                             value["name"],
-                            property=SDO.contributor,
+                            property=prop,
                             single_author=True,
                             mail=value.get("email"),
                             url=value.get("url"),
