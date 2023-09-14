@@ -81,7 +81,7 @@ class BuildTest_Json(unittest.TestCase):
         """Testing producer (not exhaustively)"""
         self.assertIn( (self.res,SDO.producer, URIRef("https://huc.knaw.nl")), self.g, "Testing producer")
         self.assertIn( (URIRef("https://huc.knaw.nl"), SDO.name, Literal("KNAW Humanities Cluster")), self.g, "Testing producer name")
-        self.assertIn( (URIRef("https://huc.knaw.nl"), SDO.url, URIRef("https://huc.knaw.nl")), self.g, "Testing producer url")
+        self.assertIn( (URIRef("https://huc.knaw.nl"), SDO.url, Literal("https://huc.knaw.nl")), self.g, "Testing producer url")
 
     def test010_softwarehelp(self):
         """Testing softwareHelp (not exhaustively)"""
@@ -344,7 +344,7 @@ class BuildTest_Web_JSONLD(unittest.TestCase):
         service = self.g.value(self.res, SDO.targetProduct)
         self.assertIsNotNone(service)
         self.assertIn( (service, RDF.type, SDO.WebSite), self.g)
-        self.assertIn( (service, SDO.url, URIRef("https://www.delpher.nl/")), self.g)
+        self.assertIn( (service, SDO.url, Literal("https://www.delpher.nl/")), self.g)
         self.assertIn( (service, SDO.potentialAction, None), self.g) #not testing value
 
 class BuildTest_Compose(unittest.TestCase):
