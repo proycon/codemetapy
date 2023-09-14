@@ -386,6 +386,14 @@ def add_dependency(g: Graph, res: Union[URIRef, BNode], value: str, args: Attrib
             continue
         dependency, depversion = parsedependency(dependency.strip())
         if dependency and not dependency.startswith(("<", ">", "=", "^")):
+            if isinstance(depversion, dict):
+                if 'extra' in depversion and args.no_extras:
+                    continue
+                if 'version' in depversion:
+                    depversion = depversion['version']
+                else:
+                    print(f"Ignoring dependency {dependency}, unable to parse version", file=sys.stderr)
+                    continue
             print(f"Found dependency {dependency} {depversion}", file=sys.stderr)
             depres = URIRef(
                 generate_uri(
