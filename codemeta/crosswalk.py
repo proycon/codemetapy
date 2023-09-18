@@ -10,7 +10,6 @@ class CWKey:
     PROP = "Property"
     PARENT = "Parent Type"
     TYPE = "Type"
-    DESCRIPTION = "Description"
     PYPI = "Python Distutils (PyPI)"
     DEBIAN = "Debian Package"
     R = "R Package Description"
@@ -28,17 +27,29 @@ def readcrosswalk(sourcekeys=(CWKey.PYPI, CWKey.DEBIAN, CWKey.NODEJS, CWKey.MAVE
     crosswalk[CWKey.PYPI]["summary"] = "description"
     props = {}
     crosswalkfile = os.path.join(os.path.dirname(__file__), "schema", "crosswalk.csv")
+
+    #Descriptions are in a separate CSV file:
+    descriptionfile = os.path.join(os.path.dirname(__file__), "schema", "properties_description.csv")
+    descriptions = {}
+    with open(descriptionfile, "r", encoding="utf-8") as f:
+        reader = csv.DictReader(f)
+        for row in reader:
+            descriptions[row[CWKey.PROP]] = row['Description']
+
     with open(crosswalkfile, "r", encoding="utf-8") as f:
         reader = csv.DictReader(f)
         for row in reader:
+            description = descriptions.get(row[CWKey.PROP],"")
+            if not description: description = ""
             props[row[CWKey.PROP]] = {
                 "PARENT": row[CWKey.PARENT],
                 "TYPE": row[CWKey.TYPE],
-                "DESCRIPTION": row[CWKey.DESCRIPTION],
+                "DESCRIPTION": description
             }
             for sourcekey in sourcekeys:
                 if row[sourcekey]:
                     for key in [x.strip().lower() for x in row[sourcekey].split("/")]:
                         crosswalk[sourcekey][key] = row[CWKey.PROP]
+
 
     return props, crosswalk
