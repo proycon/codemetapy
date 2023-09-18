@@ -291,6 +291,32 @@ def parse_python(
                 )
             elif key == "Author-email":
                 continue  # already handled by the above
+            elif key == "maintainers" and isinstance(value, (list, tuple)):  # pyproject
+                for e in value:
+                    if isinstance(e, str):
+                        add_authors(g, res, e, prop=SDO.maintainer, single_author=True, baseuri=args.baseuri)
+                    elif isinstance(e, dict) and "name" in e:
+                        add_authors(
+                            g,
+                            res,
+                            e["name"],
+                            prop=SDO.maintainer,
+                            single_author=True,
+                            mail=e.get("mail", ""),
+                            baseuri=args.baseuri,
+                        )
+            elif key == "Maintainer" and pkg:  # distutils
+                add_authors(
+                    g,
+                    res,
+                    value,
+                    prop=SDO.maintainer,
+                    single_author=args.single_author,
+                    mail=pkg.metadata.get("Maintainer-email", ""),
+                    baseuri=args.baseuri,
+                )
+            elif key == "Maintainer-email":
+                continue  # already handled by the above
             elif key == "Project-URL":
                 if "," in value:
                     label, url = value.split(",", 1)  # according to spec
