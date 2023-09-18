@@ -85,7 +85,7 @@ def alt_sort_key(data) -> str:
             return data["identifier"]
     elif isinstance(data, str):
         return data
-    return "~"  # just a high alphanumeric character so it ends up after normal (ascii) stuff
+    return "~" + repr(data)  # just sort by raw representiation so we ensure output is always deterministic, we prefix it with a high alphanumeric character so it ends up after normal (ascii) stuff we do know how to sort
 
 
 def sort_by_position(data: Union[list, dict, tuple, str]) -> Union[list, dict, str]:
