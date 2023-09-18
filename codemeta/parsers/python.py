@@ -331,6 +331,17 @@ def parse_python(
                     parse_url(label, url, g, res, crosswalk, args)
             elif key == "repository":
                 add_triple(g, res, "codeRepository", value, args)
+            elif key == "homepage":
+                add_triple(g, res, "url", value, args)
+            elif key == "documentation":
+                add_triple(g, res, "softwareHelp", value, args)
+            elif key == "readme":
+                if value.startswith("http"):
+                    #this is actually against the pyproject.toml spec (it expects a path)
+                    add_triple(g, res, "readme", value, args)
+                else:
+                    #this is in accordance with the spec, but we can't deal with it because we can't convert it to a url (github encodes the git branch in it and we don't know it (and the master/main change complicates best guesses), other platforms may do something similar)
+                    print("WARNING: Readme value seems not to be a URL, can not unambiguously resolve it to a URL either.. ignoring..", file=sys.stderr)
             elif key == "dependencies":
                 if isinstance(value, dict):
                     for k, v in value.items():
