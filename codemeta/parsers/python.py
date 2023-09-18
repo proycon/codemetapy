@@ -294,13 +294,13 @@ def parse_python(
             elif key == "maintainers" and isinstance(value, (list, tuple)):  # pyproject
                 for e in value:
                     if isinstance(e, str):
-                        add_authors(g, res, e, prop=SDO.maintainer, single_author=True, baseuri=args.baseuri)
+                        add_authors(g, res, e, property=SDO.maintainer, single_author=True, baseuri=args.baseuri)
                     elif isinstance(e, dict) and "name" in e:
                         add_authors(
                             g,
                             res,
                             e["name"],
-                            prop=SDO.maintainer,
+                            property=SDO.maintainer,
                             single_author=True,
                             mail=e.get("mail", ""),
                             baseuri=args.baseuri,
@@ -310,7 +310,7 @@ def parse_python(
                     g,
                     res,
                     value,
-                    prop=SDO.maintainer,
+                    property=SDO.maintainer,
                     single_author=args.single_author,
                     mail=pkg.metadata.get("Maintainer-email", ""),
                     baseuri=args.baseuri,
