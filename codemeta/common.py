@@ -792,7 +792,9 @@ def enrich(g: Graph, res: URIRef, args: AttribDict):
     if not g.value(res, SDO.maintainer) and (res, SDO.author,None) in g:
         print(f"{HEAD} considering first author as maintainer",file=sys.stderr)
         for _,_,o in iter_ordered_list(g, res, SDO.author):
-            g.add((res, SDO.maintainer, o))
+            mail = g.value(o,SDO.email)
+            if mail is not None and str(mail).lower().find("unknown") == -1 and str(mail).lower().find("noreply") == -1 and str(mail).lower().find("no-reply") == -1:
+                g.add((res, SDO.maintainer, o))
             break
 
     maintainers = list(g.triples((res, SDO.maintainer,None)))
