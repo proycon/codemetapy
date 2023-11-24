@@ -31,6 +31,11 @@ def parse_rust(g: Graph, res: Union[URIRef, BNode], file: IO, args: AttribDict):
                         add_authors(
                             g, res, value, single_author=True, baseuri=args.baseuri
                         )
+                else:
+                    print(
+                        "WARNING: authors in Cargo.toml should be a list or string",
+                        file=sys.stderr,
+                    )
             elif key == "keywords":
                 if isinstance(value, (list, tuple)):
                     for keyword in value:
