@@ -793,7 +793,7 @@ def enrich(g: Graph, res: URIRef, args: AttribDict):
         print(f"{HEAD} considering first author as maintainer",file=sys.stderr)
         for _,_,o in iter_ordered_list(g, res, SDO.author):
             mail = g.value(o,SDO.email)
-            if mail is not None and str(mail).lower().find("unknown") == -1 and str(mail).lower().find("noreply") == -1 and str(mail).lower().find("no-reply") == -1:
+            if mail is None or (mail is not None and str(mail).lower().find("unknown") == -1 and str(mail).lower().find("noreply") == -1 and str(mail).lower().find("no-reply") == -1): #filters out maintainers with invalid e-mail addresses (does retain maintainers without mail address at all)
                 g.add((res, SDO.maintainer, o))
             break
 
