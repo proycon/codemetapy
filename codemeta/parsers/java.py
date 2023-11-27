@@ -184,6 +184,7 @@ def parse_java(
                 orgres = URIRef(
                     generate_uri(org_name, baseuri=args.baseuri, prefix="org")
                 )
+                g.add((orgres, RDF.type, SDO.Organization))
                 g.add((orgres, SDO.name, Literal(org_name)))
                 if org_url:
                     g.add((orgres, SDO.url, Literal(org_url)))
