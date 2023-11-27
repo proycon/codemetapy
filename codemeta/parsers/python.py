@@ -2,6 +2,7 @@ import sys
 import os
 import importlib
 import re
+import ast
 from typing import Union, IO
 
 if sys.version_info.minor < 8:
@@ -31,6 +32,11 @@ def splitdependencies(s: str):
     """Split a string of multiple (python) dependencies"""
     begin = 0
     depth = 0
+    if s and s.find("{") != -1 and s.strip()[-1] == "}":
+        # dependency is a dict-like structures usually from pyproject.toml {'version':.. , 'extras':... }, it does not contain multiple, return as is
+        yield s
+        return
+    #normal behaviour; PEP-style dependency parsing
     for i, c in enumerate(s):
         if c == "(":
             depth += 1
@@ -53,6 +59,7 @@ def parsedependency(s: str):
         s.find("~") if s.find("~") != -1 else 999999,
         s.find("=") if s.find("=") != -1 else 999999,
         s.find("^") if s.find("^") != -1 else 999999,
+        s.find("{") if s.find("{") != -1 else 999999,
     )
     if end != 999999:
         identifier = s[:end]
@@ -66,7 +73,20 @@ def parsedependency(s: str):
             break
     if versionbegin != -1:
         operator = s[end:versionbegin].strip()
-        if operator in ("=", "=="):
+        if s[versionbegin] == "{":
+            version = s[versionbegin:].strip()
+            if version and version[0] == "{" and version[-1] == "}":
+                try:
+                    data = ast.literal_eval(version)
+                    if 'version' in data:
+                        return identifier, data['version']
+                    else:
+                        print("Unable to parse dependency version (key not found):", version,file=sys.stderr)
+                        version = ""
+                except:
+                    print("Unable to parse dependency version: ", version,file=sys.stderr)
+                    version = ""
+        elif operator in ("=", "=="):
             version = s[versionbegin:].strip()
         else:
             version = operator + " " + s[versionbegin:].strip()
