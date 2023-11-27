@@ -7,7 +7,7 @@
     ],
     "@id": "https://github.com/proycon/codemetapy.git",
     "@type": "SoftwareSourceCode",
-    "applicationCategory": "Software Development",
+    "applicationCategory": [ "Software Development", "https://w3id.org/nwo-research-fields#ComputerScience", "https://vocabs.dariah.eu/tadirah/converting" ],
     "audience": {
         "@id": "/audience/developers",
         "@type": "Audience",
@@ -25,6 +25,7 @@
         "url": "https://proycon.anaproy.nl"
     },
     "codeRepository": "https://github.com/proycon/codemetapy.git",
+    "contIntegration": "https://github.com/proycon/codemetapy/actions/",
     "contributor": {
         "@id": "https://orcid.org/0000-0002-1046-0006",
         "@type": "Person",
@@ -107,6 +108,20 @@
         "Python 3.10",
         "Python 3.11",
         "Python 3.12"
+    ],
+    "softwareHelp": [
+        {
+            "@type": "WebSite", 
+            "name": "README: Installation and usage instructions",
+            "url": "https://github.com/proycon/codemetapy/blob/master/README.md",
+            "description": "Installation and usage instructions"
+        },
+        {
+            "@type": "WebSite", 
+            "name": "The CodeMeta Project",
+            "url": "https://codemeta.github.io/",
+            "description": "Describes the underlying software metadata model (not specific to codemetapy)"
+        }
     ],
     "softwareRequirements": [
         {
