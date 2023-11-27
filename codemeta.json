@@ -37,7 +37,7 @@
         "url": "https://proycon.anaproy.nl"
     },
     "dateCreated": "2018-04-16T10:54:22Z+0200",
-    "dateModified": "2023-05-24T16:20:47Z+0200",
+    "dateModified": "2023-10-27T12:55:47Z+0100",
     "description": "Codemetapy is a command-line tool and python library to work with the codemeta software metadata standard. Codemeta builds upon schema.org and defines a vocabulary for describing software source code. It maps various existing metadata standards to a unified vocabulary. Codemetapy allows you to generate codemeta from various sources.",
     "developmentStatus": [ "https://www.repostatus.org/#active", "https://w3id.org/research-technology-readiness-levels#Level7ReleaseCandidate" ],
 	"funding": [
@@ -105,7 +105,8 @@
         "Python 3",
         "Python 3.7",
         "Python 3.10",
-        "Python 3.11"
+        "Python 3.11",
+        "Python 3.12"
     ],
     "softwareRequirements": [
         {
@@ -180,5 +181,5 @@
         "runtimePlatform": "Python 3"
     }],
     "url": "https://github.com/proycon/codemetapy.git",
-    "version": "2.5.1"
+    "version": "2.5.2"
 }
