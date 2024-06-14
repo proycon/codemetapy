@@ -15,7 +15,7 @@ import os.path
 import random
 from typing import Union, Optional, Sequence, Tuple
 from pathlib import Path
-import distutils.cmd  # note: will be removed in python 3.12! TODO constraint <= 3.11 in apk/apt-get in Dockerfile
+import setuptools
 
 # pylint: disable=C0413
 
@@ -66,7 +66,7 @@ from codemeta.serializers.turtle import serialize_to_turtle
 #        super(PostInstallCommand, self).run()
 
 
-class CodeMetaCommand(distutils.cmd.Command):
+class CodeMetaCommand(setuptools.Command):
     description = "Generate a codemeta.json file or update an existing one, note that the package must be installed first for this to work!"
     user_options = [
         (
