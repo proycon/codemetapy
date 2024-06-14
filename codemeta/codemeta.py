@@ -97,9 +97,9 @@ class CodeMetaCommand(setuptools.Command):
             outputfile = "-"
         else:
             outputfile = codemetafile
-        print("Writing codemeta metadata to " + outputfile, file=sys.stderr)
         if os.path.exists(codemetafile):
-            build(
+            print("Writing codemeta metadata to " + outputfile, file=sys.stderr)
+            g, res, args, contextgraph = build(
                 input="json,python",
                 output="json",
                 outputfile=outputfile,
@@ -107,13 +107,17 @@ class CodeMetaCommand(setuptools.Command):
                 with_entrypoints=self.with_entrypoints,
             )
         else:
-            build(
+            print("Writing codemeta metadata to stdout", file=sys.stderr)
+            g, res, args, contextgraph = build(
                 input="python",
                 output="json",
                 outputfile=outputfile,
                 inputsources=[self.distribution.metadata.name],
                 with_entrypoints=self.with_entrypoints,
             )
+        output = serialize(g, res, args, contextgraph)
+        if self.dry_run:
+            print(output)
 
 
 props, crosswalk = codemeta.crosswalk.readcrosswalk()
