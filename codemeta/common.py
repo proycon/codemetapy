@@ -39,7 +39,7 @@ ORCID = Namespace("http://orcid.org/")
 CODEMETAPY = Namespace("https://github.com/proycon/codemetapy/") #An extra internal namespace, usually not used for any serialisations
 
 SCHEMA_SOURCE = "https://schema.org" #even though URL is https:// the RDF IRIs are all http://!
-CODEMETA_SOURCE = "https://w3id.org/codemeta/v3.0"
+CODEMETA_SOURCE = "https://w3id.org/codemeta/3.0"
 CODEMETA2_SOURCE = "https://doi.org/10.5063/schema/codemeta-2.0"
 STYPE_SOURCE = "https://w3id.org/software-types"
 IODATA_SOURCE = "https://w3id.org/software-iodata"
