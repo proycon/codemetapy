@@ -1,6 +1,6 @@
 {
     "@context": [
-        "https://w3id.org/codemeta/v3.0",
+        "https://doi.org/10.5063/schema/codemeta-2.0",
         "http://schema.org",
         "https://w3id.org/software-types",
         "https://w3id.org/software-iodata"
@@ -152,7 +152,7 @@
         }
     ],
 	"issueTracker": "https://github.com/LanguageMachines/frog/issues",
-	"continuousIntegration": "https://travis-ci.org/LanguageMachines/frog",
+	"contIntegration": "https://travis-ci.org/LanguageMachines/frog",
 	"releaseNotes": "https://github.com/LanguageMachines/frog/releases",
 	"developmentStatus": [ "https://www.repostatus.org/#active", "https://w3id.org/research-technology-readiness-levels#Level9Proven" ],
 	"keywords":  [ "nlp", "natural language processing", "pos", "lemma", "ner", "parser", "tagger", "part-of-speech tagging", "lemmatisation", "dependency parsing", "shallow parsing", "dutch" ],
@@ -190,7 +190,7 @@
     "dateCreated": "2011-03-31T12:35:01Z+0000",
     "dateModified": "2022-07-21T13:17:06Z+0200",
     "applicationSuite": "Frog",
-    "isSourceCodeOf": [
+    "targetProduct": [
         {
             "@type": "SoftwareLibrary",
             "executableName": "libfrog",

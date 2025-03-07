@@ -13,11 +13,14 @@ from codemeta.common import (
     SCHEMA_SOURCE,
     CODEMETA_LOCAL_SOURCE,
     CODEMETA_SOURCE,
+    CODEMETA2_SOURCE,
     STYPE_SOURCE,
     STYPE_LOCAL_SOURCE,
     IODATA_LOCAL_SOURCE,
     init_context,
     DEVIANT_CONTEXT,
+    CODEMETA,
+    SDO
 )
 
 
@@ -37,6 +40,7 @@ def rewrite_context(context: Union[list, str], args: AttribDict) -> list:
                 elif (
                     v.startswith("https://doi.org/10.5063/schema")
                     or v == CODEMETA_SOURCE
+                    or v == CODEMETA2_SOURCE
                 ):
                     context[i] = CODEMETA_LOCAL_SOURCE
                 elif v.startswith(STYPE_SOURCE):
@@ -162,6 +166,27 @@ def skolemize(g: Graph, baseuri: Optional[str] = None):
                 o = o.skolemize(authority=authority, basepath=basepath)
             g.add((s, p, o)) #type: ignore
 
+def codemeta2to3(g: Graph):
+    """Convert codemeta 2 to codemeta 3"""
+    #rewrite contIntegration to continuousIntegration (codemeta 2 -> codemeta 3) 
+    for s,p,o in g.triples((None, SDO.contIntegration, None)): #unknown properties fall back to schema namespace
+        print(f"[CODEMETA 2 TO 3] Updating contIntegration -> continuousIntegration",file=sys.stderr)
+        g.remove((s,p,o))
+        g.add((s,CODEMETA.continuousIntegration,o))
+
+    #codemeta 2 -> 3
+    for s,p,o in g.triples((None, SDO.embargoDate, None)): #unknown properties fall back to schema namespace
+        print(f"[CODEMETA 2 TO 3] Updating embargoDate -> embargoEndDate",file=sys.stderr)
+        g.remove((s,p,o))
+        g.add((s,CODEMETA.embargoEndDate,o))
+
+    #rewrite targetProduct to isSourceCodeOf (codemeta 2 -> codemeta 3) 
+    for s,p,o in g.triples((None, SDO.targetProduct, None)):
+        if not isinstance(o, Literal):
+            print(f"[CODEMETA 2 TO 3] Updating targetProduct -> isSourceCodeOf",file=sys.stderr)
+            g.remove((s,p,o))
+            g.add((s,CODEMETA.isSourceCodeOf,o))
+
 
 def correct_wrong_uris(g: Graph, baseuri: Optional[str]):
     """Certain Literals should be URIRefs when possible, and some URIRefs are misinterpreted by rdflib and should be Literals."""
@@ -239,6 +264,8 @@ def parse_jsonld_data(
         ),
         args.baseuri,
     )
+    codemeta2to3(g)
     correct_wrong_uris(g, args.baseuri)
+
 
     return founduri  # return found uri (if any)

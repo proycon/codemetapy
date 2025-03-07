@@ -106,4 +106,4 @@ def parse_debian(
         )
         g.add((sapp, RDF.type, interfacetype))
         g.add((sapp, SDO.name, name))
-        g.add((res, SDO.targetProduct, sapp))
+        g.add((res, CODEMETA.isSourceCodeOf, sapp))

@@ -44,7 +44,7 @@ class BuildTest_Json(unittest.TestCase):
         """Testing some codemeta URL References"""
         self.assertIn( (self.res, CODEMETA.developmentStatus, URIRef("https://www.repostatus.org/#active")), self.g)
         self.assertIn( (self.res, CODEMETA.issueTracker, URIRef("https://github.com/LanguageMachines/frog/issues")), self.g)
-        self.assertIn( (self.res, CODEMETA.contIntegration, URIRef("https://travis-ci.org/LanguageMachines/frog")), self.g)
+        self.assertIn( (self.res, CODEMETA.continuousIntegration, URIRef("https://travis-ci.org/LanguageMachines/frog")), self.g)
         self.assertIn( (self.res, CODEMETA.readme, URIRef("https://github.com/LanguageMachines/frog/blob/master/README.md")), self.g)
 
     def test005_os(self):
@@ -102,10 +102,10 @@ class BuildTest_Json(unittest.TestCase):
 
     def test013_targetproduct(self):
         """Testing target product"""
-        targetproducts = [ x[2] for x in self.g.triples((self.res, SDO.targetProduct, None)) ]
-        self.assertEqual(len(targetproducts), 5, "Testing number of target products")
+        targetapps = [ x[2] for x in self.g.triples((self.res, CODEMETA.isSourceCodeOf, None)) ]
+        self.assertEqual(len(targetapps), 5, "Testing number of target products")
         found = set()
-        for x in targetproducts:
+        for x in targetapps:
             name = self.g.value(x, SDO.name)
             self.assertIsNotNone(name)
             if name == Literal("libfrog"):
@@ -126,10 +126,10 @@ class BuildTest_Json(unittest.TestCase):
 
     def test014_iodata(self):
         """Testing IO data"""
-        targetproducts = [ x[2] for x in self.g.triples((self.res, SDO.targetProduct, None)) ]
-        self.assertEqual(len(targetproducts), 5, "Testing number of target products")
+        targetapps = [ x[2] for x in self.g.triples((self.res, CODEMETA.isSourceCodeOf, None)) ]
+        self.assertEqual(len(targetapps), 5, "Testing number of target products")
         found = False
-        for x in targetproducts:
+        for x in targetapps:
             name = self.g.value(x, SDO.name)
             if name == Literal("frog"):
                 for _,_, y in self.g.triples((x, SOFTWAREIODATA.consumesData, None)):
@@ -154,7 +154,7 @@ class BuildTest_Json(unittest.TestCase):
         self.assertTrue( all(isinstance(x, dict) and x['@type'] == "Person" for x in data['author']), "Testing whether all authors are schema:Person")
         self.assertIsInstance(data['developmentStatus'], list, "Testing whether we have two development statusses in a list")
         self.assertTrue( all(isinstance(x, dict) and x['@type'] == "SoftwareApplication" for x in data['softwareRequirements']), "Testing softwareRequirements")
-        self.assertTrue( all(isinstance(x, dict) and x['@type'] in ("CommandLineApplication","SoftwareLibrary") for x in data['targetProduct']), "Testing targetProducts")
+        self.assertTrue( all(isinstance(x, dict) and x['@type'] in ("CommandLineApplication","SoftwareLibrary") for x in data['isSourceCodeOf']), "Testing targetProducts")
         self.assertTrue( all(isinstance(x, dict) and x['@type'] in ("ScholarlyArticle","TechArticle") and isinstance(x['author'],list) and x['isPartOf']['@type'] == "PublicationIssue" for x in data['referencePublication']), "Testing referencePublication")
         self.assertEqual(data['softwareHelp']['@id'], "https://frognlp.readthedocs.io", "Testing softwareHelp ID")
         self.assertEqual(data['softwareHelp']['url'], "https://frognlp.readthedocs.io", "Testing softwareHelp URL")
@@ -164,6 +164,13 @@ class BuildTest_Json(unittest.TestCase):
         """Test json serialisation"""
         serialize(self.g, self.res, AttribDict({ "output": "ttl" }), self.contextgraph)
 
+
+class BuildTest2_Json(BuildTest_Json):
+    """Build codemeta.json from existing codemeta.json (basically a parse, validation/reconciliation and reserialisation), codemeta 2 version"""
+
+    def setUp(self):
+        #relies on automatically guessing the type
+        self.g, self.res, self.args, self.contextgraph = build(inputsources=["frog.codemeta2.json"])
 
 
 class BuildTest_SetupPy(unittest.TestCase):
@@ -319,7 +326,7 @@ class BuildTest_Web_HTML(unittest.TestCase):
         self.assertIsInstance( self.g, Graph )
         self.assertIsInstance( self.res, URIRef)
         self.assertIn( (self.res, RDF.type, SDO.SoftwareSourceCode), self.g)
-        service = self.g.value(self.res, SDO.targetProduct)
+        service = self.g.value(self.res, CODEMETA.isSourceCodeOf)
         self.assertIsNotNone(service)
         self.assertIn( (service, RDF.type, SDO.WebApplication), self.g)
         self.assertIn( (service, SDO.url, Literal("https://shebanq.ancient-data.org/")), self.g)
@@ -341,7 +348,7 @@ class BuildTest_Web_JSONLD(unittest.TestCase):
         self.assertIsInstance( self.g, Graph )
         self.assertIsInstance( self.res, URIRef)
         self.assertIn( (self.res, RDF.type, SDO.SoftwareSourceCode), self.g)
-        service = self.g.value(self.res, SDO.targetProduct)
+        service = self.g.value(self.res, CODEMETA.isSourceCodeOf)
         self.assertIsNotNone(service)
         self.assertIn( (service, RDF.type, SDO.WebSite), self.g)
         self.assertIn( (service, SDO.url, Literal("https://www.delpher.nl/")), self.g)

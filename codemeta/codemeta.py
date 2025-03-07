@@ -694,8 +694,8 @@ def build(**kwargs) -> Tuple[Graph, URIRef, AttribDict, Graph]:
             ):
                 if targetres and args.with_stypes:
                     found = True
-                    print(f"Adding service (targetProduct) {source}", file=sys.stderr)
-                    g.add((res, SDO.targetProduct, targetres))
+                    print(f"Adding service (isSourceCodeOf) {source}", file=sys.stderr)
+                    g.add((res, CODEMETA.isSourceCodeOf, targetres))
             if not found:
                 print(f"(no metadata found at remote URL)", file=sys.stderr)
         elif inputtype in ("github", "gitlab", "gitapi"):

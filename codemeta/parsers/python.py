@@ -499,7 +499,7 @@ def add_entrypoint(
         except:
             pass
     version = g.value(res, SDO.version) or "snapshot"
-    targetproduct = URIRef(
+    targetapp = URIRef(
         generate_uri(
             name,
             baseuri=args.baseuri,
@@ -508,15 +508,15 @@ def add_entrypoint(
         + "/"
         + str(version)
     )
-    g.add((targetproduct, RDF.type, interfacetype))
-    g.add((targetproduct, SDO.name, Literal(name)))
+    g.add((targetapp, RDF.type, interfacetype))
+    g.add((targetapp, SDO.name, Literal(name)))
     if description:
-        g.add((targetproduct, SDO.description, Literal(description)))
-    g.add((targetproduct, SOFTWARETYPES.executableName, Literal(name)))
+        g.add((targetapp, SDO.description, Literal(description)))
+    g.add((targetapp, SOFTWARETYPES.executableName, Literal(name)))
     if args.exactplatformversion:
         g.add(
             (
-                targetproduct,
+                targetapp,
                 SDO.runtimePlatform,
                 Literal(
                     "Python "
@@ -529,8 +529,8 @@ def add_entrypoint(
             )
         )
     else:
-        g.add((targetproduct, SDO.runtimePlatform, Literal("Python 3")))
-    g.add((res, SDO.targetProduct, targetproduct))
+        g.add((targetapp, SDO.runtimePlatform, Literal("Python 3")))
+    g.add((res, CODEMETA.isSourceCodeOf, targetapp))
 
 
 def test_and_set_library(
@@ -553,14 +553,14 @@ def test_and_set_library(
         )
 
     if (not found_entrypoints and not isweb) or islibrary:
-        targetproduct = URIRef(
+        targetapp = URIRef(
             generate_uri(packagename, baseuri=args.baseuri, prefix="softwarelibrary")
         )
-        g.add((targetproduct, RDF.type, SOFTWARETYPES.SoftwareLibrary))
-        g.add((targetproduct, SDO.name, Literal(packagename)))
+        g.add((targetapp, RDF.type, SOFTWARETYPES.SoftwareLibrary))
+        g.add((targetapp, SDO.name, Literal(packagename)))
         g.add(
             (
-                targetproduct,
+                targetapp,
                 SOFTWARETYPES.executableName,
                 Literal(re.sub(r"[-_.]+", "-", packagename).lower()),
             )
@@ -568,7 +568,7 @@ def test_and_set_library(
         if args.exactplatformversion:
             g.add(
                 (
-                    targetproduct,
+                    targetapp,
                     SDO.runtimePlatform,
                     Literal(
                         "Python "
@@ -581,7 +581,7 @@ def test_and_set_library(
                 )
             )
         else:
-            g.add((targetproduct, SDO.runtimePlatform, Literal("Python 3")))
+            g.add((targetapp, SDO.runtimePlatform, Literal("Python 3")))
 
 
 def test_and_set_identifier(g: Graph, res: Union[URIRef, BNode], args: AttribDict):

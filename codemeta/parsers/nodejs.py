@@ -190,7 +190,7 @@ def parse_nodejs(
                                 os.path.basename(execname),
                             )
                         )
-                        g.add((res, SDO.targetProduct, sapp))
+                        g.add((res, CODEMETA.isSourceCodeOf, sapp))
                 elif isinstance(value, str) and args.with_stypes:
                     sapp = URIRef(
                         generate_uri(
@@ -202,7 +202,7 @@ def parse_nodejs(
                     g.add((sapp, RDF.type, SOFTWARETYPES.CommandLineApplication))
                     g.add((sapp, SDO.name, data["name"]))  # from parent
                     g.add((sapp, SOFTWARETYPES.executableName, os.path.basename(value)))
-                    g.add((res, SDO.targetProduct, sapp))
+                    g.add((res, CODEMETA.isSourceCodeOf, sapp))
             elif key == "engines":
                 if isinstance(value, dict):
                     for key, versioninfo in value.items():
@@ -226,4 +226,4 @@ def parse_nodejs(
         g.add((sapp, RDF.type, SDO.WebApplication))
         g.add((sapp, SDO.name, Literal(data["name"])))  # from parent
         g.add((sapp, SDO.version, Literal(data["version"])))  # from parent
-        g.add((res, SDO.targetProduct, sapp))
+        g.add((res, CODEMETA.isSourceCodeOf, sapp))
