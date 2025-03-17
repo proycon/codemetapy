@@ -263,7 +263,7 @@ SINGULAR_PROPERTIES = ( SDO.name, SDO.version, SDO.description, SDO.dateCreated,
 ORDEREDLIST_PROPERTIES = ( SDO.author, SDO.contributor )
 
 #properties that should prefer URIRef rather than Literal **if and only if** the value is a URI, even though the @context might not make this explicit (e.g. interpret as if @type=@id)
-PREFER_URIREF_PROPERTIES = (SDO.license,  CODEMETA.developmentStatus, CODEMETA.continuousIntegration )
+PREFER_URIREF_PROPERTIES = (SDO.license,  CODEMETA.developmentStatus, CODEMETA.continuousIntegration, SDO.applicationCategory )
 
 #properties that should prefer Literal rather than URIRef 
 PREFER_LITERAL_PROPERTIES = (SDO.url, SDO.codeRepository, SDO.downloadUrl, SDO.contentUrl, SDO.installUrl, SDO.serviceUrl, SDO.discussionUrl, SDO.targetUrl, SDO.thumbnailUrl, SDO.trackingUrl)
