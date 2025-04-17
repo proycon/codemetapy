@@ -10,9 +10,11 @@ from codemeta.common import (
     AttribDict,
     SDO,
     CODEMETA,
+    REPOSTATUS,
     license_to_spdx,
     parse_human_name,
     generate_uri,
+    delete_repostatus,
 )
 
 GITAPI_REPO_BLACKLIST = [
@@ -192,6 +194,17 @@ def _parse_github(
     if response.get("has_issues", False) and response.get("html_url"):
         g.add((res, CODEMETA.issueTracker, Literal(response["html_url"] + "/issues")))
 
+    if response.get("archived", False):
+        reponame = response.get("full_name") #namespace/repo
+        releases_api_url = f"https://api.github.com/repos/{reponame}/releases"
+        releases = rate_limit_get(releases_api_url, "github")
+        if (res, CODEMETA.developmentStatus, REPOSTATUS.active) in g or (res, CODEMETA.developmentStatus, REPOSTATUS.inactive) or len(releases) > 0:
+            delete_repostatus(g,res)
+            g.add((res,CODEMETA.developmentStatus, REPOSTATUS.unsupported))
+        else:
+            delete_repostatus(g,res)
+            g.add((res,CODEMETA.developmentStatus, REPOSTATUS.abandoned))
+
     if "owner" in response:
         owner = response["owner"]["login"]
         owner_api_url = f"{users_api_url}{owner}"
@@ -227,6 +240,8 @@ def _parse_github(
                 g.add((owner_res, SDO.email, Literal(response.get("email"))))
             if response.get("blog"):
                 g.add((owner_res, SDO.url, Literal(response.get("blog"))))
+
+
 
 
 gitlab_crosswalk_table = {
