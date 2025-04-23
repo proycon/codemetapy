@@ -309,8 +309,17 @@ def parse_python(
                     mail=pkg.metadata.get("Author-email", ""),
                     baseuri=args.baseuri,
                 )
-            elif key == "Author-email":
-                continue  # already handled by the above
+            elif key == "Author-email": # importlib.metadata
+                add_authors(
+                    g,
+                    res,
+                    value=pkg.metadata.get("Author-email", "").rsplit("<")[0],
+                    single_author=True,
+                    mail=pkg.metadata.get("Author-email", "")
+                    .rsplit("<")[-1]
+                    .rstrip(">"),
+                    baseuri=args.baseuri,
+                )
             elif key == "maintainers" and isinstance(value, (list, tuple)):  # pyproject
                 for e in value:
                     if isinstance(e, str):
@@ -335,8 +344,17 @@ def parse_python(
                     mail=pkg.metadata.get("Maintainer-email", ""),
                     baseuri=args.baseuri,
                 )
-            elif key == "Maintainer-email":
-                continue  # already handled by the above
+            elif key == "Maintainer-email": # importlib.metadata
+                add_authors(
+                    g,
+                    res,
+                    value=pkg.metadata.get("Maintainer-email", "").rsplit("<")[0],
+                    single_author=True,
+                    mail=pkg.metadata.get("Maintainer-email", "")
+                    .rsplit("<")[-1]
+                    .rstrip(">"),
+                    baseuri=args.baseuri,
+                )
             elif key == "Project-URL":
                 if "," in value:
                     label, url = value.split(",", 1)  # according to spec
