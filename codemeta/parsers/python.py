@@ -309,7 +309,7 @@ def parse_python(
                     mail=pkg.metadata.get("Author-email", ""),
                     baseuri=args.baseuri,
                 )
-            elif key == "Author-email": # importlib.metadata
+            elif key == "Author-email" and pkg: # importlib.metadata
                 add_authors(
                     g,
                     res,
@@ -347,7 +347,7 @@ def parse_python(
                     mail=pkg.metadata.get("Maintainer-email", ""),
                     baseuri=args.baseuri,
                 )
-            elif key == "Maintainer-email": # importlib.metadata
+            elif key == "Maintainer-email" and pkg: # importlib.metadata
                 add_authors(
                     g,
                     res,
