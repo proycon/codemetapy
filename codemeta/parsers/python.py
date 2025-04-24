@@ -301,26 +301,24 @@ def parse_python(
                             baseuri=args.baseuri,
                         )
             elif key == "Author" and pkg:  # distutils
+                only_mail = pkg.metadata.get("Author-email", "")
+                if not re.match(r'^[\w._%+-]+@[\w.-]+(\.[\w]+)+$',only_mail):
+                    only_mail = ""
                 add_authors(
                     g,
                     res,
                     value,
                     single_author=args.single_author,
-                    mail=pkg.metadata.get("Author-email", ""),
+                    mail=only_mail,
                     baseuri=args.baseuri,
                 )
             elif key == "Author-email" and pkg: # importlib.metadata
+                #this contains both the name and the email (name <email>) and may contain multiple such pairs seperated by a comma
                 add_authors(
                     g,
                     res,
-                    value=(pkg.metadata.get("Author-email", "").rsplit("<")[0])
-                    .strip()
-                    .removeprefix('"')
-                    .removesuffix('"'),
-                    single_author=True,
-                    mail=pkg.metadata.get("Author-email", "")
-                    .rsplit("<")[-1]
-                    .rstrip(">"),
+                    value,
+                    single_author=False,
                     baseuri=args.baseuri,
                 )
             elif key == "maintainers" and isinstance(value, (list, tuple)):  # pyproject
@@ -338,29 +336,28 @@ def parse_python(
                             baseuri=args.baseuri,
                         )
             elif key == "Maintainer" and pkg:  # distutils
+                only_mail = pkg.metadata.get("Maintainer-email", "")
+                if not re.match(r'^[\w._%+-]+@[\w.-]+(\.[\w]+)+$',only_mail):
+                    only_mail = ""
                 add_authors(
                     g,
                     res,
                     value,
                     property=SDO.maintainer,
-                    single_author=args.single_author,
-                    mail=pkg.metadata.get("Maintainer-email", ""),
+                    single_author=False,
+                    mail=only_mail,
                     baseuri=args.baseuri,
                 )
             elif key == "Maintainer-email" and pkg: # importlib.metadata
-                add_authors(
-                    g,
-                    res,
-                    value=(pkg.metadata.get("Maintainer-email", "").rsplit("<")[0])
-                    .strip()
-                    .removeprefix('"')
-                    .removesuffix('"'),
-                    single_author=True,
-                    mail=pkg.metadata.get("Maintainer-email", "")
-                    .rsplit("<")[-1]
-                    .rstrip(">"),
-                    baseuri=args.baseuri,
-                )
+                #this contains both the name and the email (name <email>) and may contain multiple such pairs seperated by a comma
+                    add_authors(
+                        g,
+                        res,
+                        value,
+                        property=SDO.maintainer,
+                        single_author=False,
+                        baseuri=args.baseuri,
+                    )
             elif key == "Project-URL":
                 if "," in value:
                     label, url = value.split(",", 1)  # according to spec

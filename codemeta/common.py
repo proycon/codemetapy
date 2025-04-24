@@ -531,13 +531,14 @@ def add_triple(g: Graph, res: Union[URIRef, BNode],key, value, args: AttribDict,
 
 def add_authors(g: Graph, res: Union[URIRef, BNode], value, property=SDO.author, single_author = False,  **kwargs):
     """Parse and add authors and their e-mail addresses"""
+
     if single_author:
-        names = [value.strip()]
+        names = [value.strip()] #mails/urls/affiliations may be tucked away with the name, will be extracted later
         mails = [ kwargs.get('mail',"") ]
         urls = [ kwargs.get('url',"") ]
         orgs = [ kwargs.get('organization',"") ]
     else:
-        names = value.strip().split(",")
+        names = list(split_comma_rfc822(value.strip())) #mails/urls/affiliations may be tucked away with the name, will be extracted later
         mails = kwargs.get("mail","").strip().split(",")
         urls = kwargs.get('url',"").strip().split(",")
         orgs = kwargs.get('organization',"").strip().split(",")
@@ -561,7 +562,7 @@ def add_authors(g: Graph, res: Union[URIRef, BNode], value, property=SDO.author,
             org = None
 
         if not mail:
-            #mails and urls may be tucked away with the name
+            #mails, urls and affiliations may be tucked away with the name
             # npm allows strings like "Barney Rubble <b@rubble.com> (http://barnyrubble.tumblr.com/)"
             # we do the same, alternatively we allow affiliations:
             #       "Barney Rubble <b@rubble.com> (Barney's Chocolate Factory)"
@@ -576,7 +577,7 @@ def add_authors(g: Graph, res: Union[URIRef, BNode], value, property=SDO.author,
                     else:
                         org = extra
 
-        firstname, lastname = parse_human_name(name.strip())
+        firstname, lastname = parse_human_name(name.strip(" \"\t\n")) #this also strips quotes that might be here for RFC-822-like entries
 
         author = URIRef(generate_uri(firstname + "-" + lastname, kwargs.get('baseuri'), prefix="person"))
         if skip_duplicates:
@@ -600,7 +601,7 @@ def add_authors(g: Graph, res: Union[URIRef, BNode], value, property=SDO.author,
         if org:
             orgres = URIRef(generate_uri(org, kwargs.get('baseuri'), prefix="org"))
             g.add((orgres, RDF.type, SDO.Organization))
-            g.add((orgres, SDO.name, Literal(org.strip())))
+            g.add((orgres, SDO.name, Literal(org.strip("() ")))) #  needed to cleanup after the regexp and to prevent other accidents
             g.add((author, SDO.affiliation, orgres))
 
         if property in ORDEREDLIST_PROPERTIES:
@@ -691,6 +692,41 @@ def get_last_component(uri):
         return uri
     else:
         return uri[index+1:]
+
+def split_comma_rfc822(s):
+    #splits comma seperated authors with optional mail addresses
+    stack = []
+    begin = 0
+    for i, c in enumerate(s):
+        print(i, c, stack)
+        if c == "," and not stack:
+            yield s[begin:i].strip()
+            begin = i + 1
+        elif c == "\"":
+            if stack and stack[-1] == c:
+                stack = stack[:-1]
+            else:
+                stack.append(c)
+        elif c in ("(","[","<","{"):
+            stack.append(c)
+        elif c == ")":
+            if stack and stack[-1] == "(":
+                stack = stack[:-1]
+        elif c == "]":
+            if stack and stack[-1] == "[":
+                stack = stack[:-1]
+        elif c == ">":
+            if stack and stack[-1] == "<":
+                stack = stack[:-1]
+        elif c == "}":
+            if stack and stack[-1] == "{":
+                stack = stack[:-1]
+
+    if begin < len(s):
+        yield s[begin:].strip()
+
+
+
 
 def reconcile(g: Graph, res: URIRef, args: AttribDict):
     """Reconcile possible conflicts in the graph and issue warnings."""
