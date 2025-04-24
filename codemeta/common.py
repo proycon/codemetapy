@@ -698,7 +698,6 @@ def split_comma_rfc822(s):
     stack = []
     begin = 0
     for i, c in enumerate(s):
-        print(i, c, stack)
         if c == "," and not stack:
             yield s[begin:i].strip()
             begin = i + 1
