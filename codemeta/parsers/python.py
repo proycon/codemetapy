@@ -280,6 +280,8 @@ def parse_python(
         metadata = pkg.metadata.items() #type: ignore
         # if prevdir: os.chdir(prevdir)
 
+    author_mail_processed = False
+    maintainer_mail_processed = False
     for key, value in metadata:
         if key == "Classifier":  # importlib.metadata
             parse_classifier(value, g, res, crosswalk, args)
@@ -304,6 +306,8 @@ def parse_python(
                 only_mail = pkg.metadata.get("Author-email", "")
                 if not re.match(r'^[\w._%+-]+@[\w.-]+(\.[\w]+)+$',only_mail):
                     only_mail = ""
+                else:
+                    author_mail_processed = True
                 add_authors(
                     g,
                     res,
@@ -312,7 +316,7 @@ def parse_python(
                     mail=only_mail,
                     baseuri=args.baseuri,
                 )
-            elif key == "Author-email" and pkg: # importlib.metadata
+            elif key == "Author-email" and pkg and not author_mail_processed: # importlib.metadata
                 #this contains both the name and the email (name <email>) and may contain multiple such pairs seperated by a comma
                 add_authors(
                     g,
@@ -339,6 +343,8 @@ def parse_python(
                 only_mail = pkg.metadata.get("Maintainer-email", "")
                 if not re.match(r'^[\w._%+-]+@[\w.-]+(\.[\w]+)+$',only_mail):
                     only_mail = ""
+                else:
+                    maintainer_mail_processed = True
                 add_authors(
                     g,
                     res,
@@ -348,16 +354,16 @@ def parse_python(
                     mail=only_mail,
                     baseuri=args.baseuri,
                 )
-            elif key == "Maintainer-email" and pkg: # importlib.metadata
+            elif key == "Maintainer-email" and pkg and not maintainer_mail_processed: # importlib.metadata
                 #this contains both the name and the email (name <email>) and may contain multiple such pairs seperated by a comma
-                    add_authors(
-                        g,
-                        res,
-                        value,
-                        property=SDO.maintainer,
-                        single_author=False,
-                        baseuri=args.baseuri,
-                    )
+                add_authors(
+                    g,
+                    res,
+                    value,
+                    property=SDO.maintainer,
+                    single_author=False,
+                    baseuri=args.baseuri,
+                )
             elif key == "Project-URL":
                 if "," in value:
                     label, url = value.split(",", 1)  # according to spec
