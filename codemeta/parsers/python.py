@@ -313,7 +313,10 @@ def parse_python(
                 add_authors(
                     g,
                     res,
-                    value=pkg.metadata.get("Author-email", "").rsplit("<")[0],
+                    value=(pkg.metadata.get("Author-email", "").rsplit("<")[0])
+                    .strip()
+                    .removeprefix('"')
+                    .removesuffix('"'),
                     single_author=True,
                     mail=pkg.metadata.get("Author-email", "")
                     .rsplit("<")[-1]
@@ -348,7 +351,10 @@ def parse_python(
                 add_authors(
                     g,
                     res,
-                    value=pkg.metadata.get("Maintainer-email", "").rsplit("<")[0],
+                    value=(pkg.metadata.get("Maintainer-email", "").rsplit("<")[0])
+                    .strip()
+                    .removeprefix('"')
+                    .removesuffix('"'),
                     single_author=True,
                     mail=pkg.metadata.get("Maintainer-email", "")
                     .rsplit("<")[-1]
