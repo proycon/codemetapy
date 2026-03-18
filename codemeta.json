@@ -100,11 +100,8 @@
     },
     "readme": "https://github.com/proycon/codemetapy/blob/README.rst",
     "runtimePlatform": [
-        "Python 3.6",
-        "Python 3.8",
-        "Python 3.9",
         "Python 3",
-        "Python 3.7",
+        "Python 3.9",
         "Python 3.10",
         "Python 3.11",
         "Python 3.12",
