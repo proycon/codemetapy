@@ -1,3 +1,9 @@
+<a id="v3.0.4"></a>
+# v3.0.4 - 2026-03-18
+
+* Dependency version bump for pyshacl and rdflib (thanks to [@AutumnIsilme](https://github.com/AutumnIsilme))
+* Dropped Python 3.8 support
+
 <a id="v3.0.3"></a>
 # v3.0.3 - 2025-04-24
 
