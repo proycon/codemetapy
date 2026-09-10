@@ -365,7 +365,7 @@ def parse_python(
                     baseuri=args.baseuri,
                 )
             elif key == "Project-URL":
-                if "," in value:
+                if isinstance(value,str) and "," in value:
                     label, url = value.split(",", 1)  # according to spec
                     label = label.strip()
                     url = url.strip()
@@ -383,12 +383,15 @@ def parse_python(
             elif key == "documentation":
                 add_triple(g, res, "softwareHelp", value, args)
             elif key == "readme":
-                if value.startswith("http"):
+                if isinstance(value,str) and value.startswith("http"):
                     #this is actually against the pyproject.toml spec (it expects a path)
                     add_triple(g, res, "readme", value, args)
                 else:
                     #this is in accordance with the spec, but we can't deal with it because we can't convert it to a url (github encodes the git branch in it and we don't know it (and the master/main change complicates best guesses), other platforms may do something similar)
                     print("WARNING: Readme value seems not to be a URL, can not unambiguously resolve it to a URL either.. ignoring..", file=sys.stderr)
+            elif key.lower() == "license" and not isinstance(value,str) and hasattr(value,'expression'):
+                #license is a License object from pyproject_parser
+                add_triple(g, res, "license", getattr(value,'expression'), args)
             elif key == "dependencies":
                 if isinstance(value, dict):
                     for k, v in value.items():
