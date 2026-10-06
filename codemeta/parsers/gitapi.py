@@ -17,9 +17,8 @@ from codemeta.common import (
     delete_repostatus,
 )
 
+#We don't have support for these yet
 GITAPI_REPO_BLACKLIST = [
-    "https://codeberg.org/",
-    "http://codeberg.org",
     "https://git.sr.ht/",
     "https://bitbucket.com/",
 ]
@@ -47,6 +46,8 @@ def get_repo_kind(source: str) -> Optional[str]:
         repo_kind = "github"
     elif "gitlab.com/" in source:
         repo_kind = "gitlab"
+    elif "codeberg.org/" in source:
+        repo_kind = "forgejo"
     elif f"{scheme}{host}/" not in GITAPI_REPO_BLACKLIST:
         # we have another URL that may or may not be a private gitlab instance, test
         if f"{scheme}{host}/" in repo_type_cache:
@@ -72,9 +73,10 @@ def parse(
 ) -> str:
     source, scheme, host = _parse_source(source)
 
-    github_suffix = source.replace(scheme + host, "")[1:]
+    github_suffix = source.replace(scheme + host, "")[1:] #owner/repo
     gitlab_suffix = github_suffix.replace("/", "%2F")
     gitlab_repo_api_url = f"{scheme}{host}/api/v4/projects/{gitlab_suffix}"
+    forgejo_repo_api_url = f"{scheme}{host}/api/v1/repos/{github_suffix}"
 
     if repo_kind == "github":
         response = rate_limit_get(
@@ -84,6 +86,9 @@ def parse(
     elif repo_kind == "gitlab":
         response = rate_limit_get(gitlab_repo_api_url, "gitlab")
         _parse_gitlab(response, g, res, f"{scheme}{host}", args)
+    elif repo_kind == "forgejo":
+        response = rate_limit_get(forgejo_repo_api_url, "forgejo")
+        _parse_forgejo(response, g, res, f"{scheme}{host}", args)
     else:
         raise ValueError(f"Not a git API, repo_kind={repo_kind}")
 
@@ -323,3 +328,60 @@ def _parse_gitlab(
     # Object X must be an rdflib term:  g.add((URIRef(response_creator_url_field), SDO.author, response_creator_name))
     # g.add((res, SDO.maintainer, owner_res))
     # if response_owner.get('work_information'): is like company?
+
+forgejo_crosswalk_table = {
+    SDO.codeRepository: "html_url",
+    SDO.dateCreated: "created_at",
+    SDO.dateModified: "updated_at",
+    SDO.description: "description",
+    SDO.url: "website",
+    SDO.name: "name",
+}
+
+def _parse_forgejo(
+    response: dict, g: Graph, res: Union[URIRef, BNode], source: str, args: AttribDict
+):
+    """Query and parse from the github API"""
+    print(f"    Parsing Forgejo API response", file=sys.stderr)
+
+    # repo = response['name']
+    for prop, key in forgejo_crosswalk_table.items():
+        if key in response and response[key]:
+            g.add((res, prop, Literal(response[key])))
+
+    if response.get("topics"):
+        for topic in response["topics"]:
+            g.add((res, SDO.keywords, Literal(topic)))
+
+    if response.get("has_issues", False) and response.get("html_url"):
+        g.add((res, CODEMETA.issueTracker, Literal(response["html_url"] + "/issues")))
+
+    if response.get("archived", False):
+        release_counter = response.get("release_counter", 0)
+        if (res, CODEMETA.developmentStatus, REPOSTATUS.active) in g or (res, CODEMETA.developmentStatus, REPOSTATUS.inactive) or release_counter > 0:
+            delete_repostatus(g,res)
+            g.add((res,CODEMETA.developmentStatus, REPOSTATUS.unsupported))
+        else:
+            delete_repostatus(g,res)
+            g.add((res,CODEMETA.developmentStatus, REPOSTATUS.abandoned))
+
+    if "owner" in response:
+        response = response['owner']
+        owner_res = None
+        if response.get("full_name"):
+            firstname, lastname = parse_human_name(response["full_name"])
+            owner_res = URIRef(
+                generate_uri(firstname + "-" + lastname, args.baseuri, prefix="person") #forgejo doesn't distinguish persons and organisations? assume person
+            )
+            g.add((owner_res, RDF.type, SDO.Person))
+            g.add((owner_res, SDO.givenName, Literal(firstname)))
+            g.add((owner_res, SDO.familyName, Literal(lastname)))
+            g.add((res, SDO.author, owner_res))
+            g.add((res, SDO.maintainer, owner_res))
+        if owner_res:
+            if response.get("email"):
+                if response['email'].find("noreply") == -1:
+                    g.add((owner_res, SDO.email, Literal(response.get("email"))))
+            if response.get("website"):
+                g.add((owner_res, SDO.url, Literal(response.get("website"))))
+

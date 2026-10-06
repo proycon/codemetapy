@@ -698,7 +698,7 @@ def build(**kwargs) -> Tuple[Graph, URIRef, AttribDict, Graph]:
                     g.add((res, CODEMETA.isSourceCodeOf, targetres))
             if not found:
                 print(f"(no metadata found at remote URL)", file=sys.stderr)
-        elif inputtype in ("github", "gitlab", "gitapi"):
+        elif inputtype in ("github", "gitlab", "gitapi", "forgejo"):
             # e.g. transform git@gitlab.com/X in https://gitlab.com/X
             source = re.sub(r"git@(.*):", r"https://\1/", source)
             if source.endswith(".git"):

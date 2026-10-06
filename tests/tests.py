@@ -231,7 +231,7 @@ class BuildTest_SetupPy(unittest.TestCase):
 
 
 class BuildTest_GithubAPI(unittest.TestCase):
-    """Build codemeta.json from existing codemeta.json (basically a parse, validation/reconciliation and reserialisation)"""
+    """Build codemeta.json from GitHub API"""
 
     def setUp(self):
         #relies on automatically guessing the type
@@ -249,6 +249,26 @@ class BuildTest_GithubAPI(unittest.TestCase):
         self.assertIn( str(self.g.value(self.res, CODEMETA.issueTracker)), "https://github.com/proycon/labirinto/issues")
         self.assertIn( (self.res, SDO.description, None), self.g) #doesn't test actual value
         self.assertIn( (self.res, SDO.keywords, Literal("codemeta")), self.g)
+
+class BuildTest_ForgejoAPI(unittest.TestCase):
+    """Build codemeta.json from Codeberg API"""
+
+    def setUp(self):
+        #relies on automatically guessing the type
+        #deliberately picked software that is end-of-life and will not change much anymore
+        self.g, self.res, self.args, self.contextgraph = build(inputsources=["https://codeberg.org/proycon/textsurf"])
+
+    def test001_api(self):
+        """Testing codeberg API response"""
+        #this is a single combined test to save API queries
+        self.assertIsInstance( self.g, Graph )
+        self.assertIsInstance( self.res, URIRef)
+        self.assertIn( (self.res, RDF.type, SDO.SoftwareSourceCode), self.g)
+        self.assertIn( (self.res, SDO.name, Literal("textsurf")), self.g)
+        self.assertIn( str(self.g.value(self.res, SDO.codeRepository)), "https://codeberg.org/proycon/textsurf")
+        self.assertIn( str(self.g.value(self.res, CODEMETA.issueTracker)), "https://codeberg.org/proycon/textsurf/issues")
+        self.assertIn( (self.res, SDO.description, None), self.g) #doesn't test actual value
+        self.assertIn( (self.res, SDO.keywords, Literal("text")), self.g)
 
 class BuildTest_JavaPomXML(unittest.TestCase):
     """Build codemeta.json from pom.xml"""
